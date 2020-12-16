@@ -1,0 +1,1 @@
+enum BlockType { combined, single }
