@@ -33,6 +33,57 @@ class _GridUIViewState extends State<GridUIView> {
     return screenWidth / rows;
   }
 
+  ///Return a grid block
+  Widget createGridBlock(int rows) {
+    double blockSize = getBlockSize(rows);
+
+    return Container(
+      height: blockSize,
+      child: ListView.builder(
+        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
+        itemCount: rows,
+        itemBuilder: (context, rowIndex) {
+          return Container(
+            width: blockSize,
+            child: Center(
+              child: Icon(Icons.add, color: Colors.white),
+            ),
+            decoration: BoxDecoration(
+                color: Colors.black,
+                border: Border.all(color: Colors.white, width: 2)),
+          );
+        },
+      ),
+    );
+  }
+
+  ///Return a combined block
+  Widget createGridCombinedBlock(
+      int rows, int combinedBlockWidth, double combinedBlockHeight) {
+    return Draggable(
+      child: Container(
+        width: getBlockSize(rows) * combinedBlockWidth,
+        decoration: BoxDecoration(
+            color: Colors.orange,
+            border: Border.all(color: Colors.white, width: 2)),
+      ),
+      feedback: Container(
+        height: getBlockSize(rows) * combinedBlockHeight,
+        width: getBlockSize(rows) * combinedBlockWidth,
+        decoration: BoxDecoration(
+            color: Colors.orange,
+            border: Border.all(color: Colors.white, width: 2)),
+      ),
+      childWhenDragging: Container(
+        width: getBlockSize(rows) * combinedBlockWidth,
+        decoration: BoxDecoration(
+            color: Colors.grey,
+            border: Border.all(color: Colors.white, width: 2)),
+      ),
+    );
+  }
+
   ///Creates empty blocks above/below combined group
   Widget createEmptyBlocks(int columns, int rows, double blockSize) {
     return ListView.builder(
@@ -41,25 +92,7 @@ class _GridUIViewState extends State<GridUIView> {
       shrinkWrap: true,
       itemCount: columns,
       itemBuilder: (context, columnIndex) {
-        return Container(
-          height: blockSize,
-          child: ListView.builder(
-            shrinkWrap: true,
-            scrollDirection: Axis.horizontal,
-            itemCount: rows,
-            itemBuilder: (context, rowIndex) {
-              return Container(
-                width: blockSize,
-                child: Center(
-                  child: Icon(Icons.add, color: Colors.white),
-                ),
-                decoration: BoxDecoration(
-                    color: Colors.black,
-                    border: Border.all(color: Colors.white, width: 2)),
-              );
-            },
-          ),
-        );
+        return createGridBlock(rows);
       },
     );
   }
@@ -121,32 +154,7 @@ class _GridUIViewState extends State<GridUIView> {
                             * EACH COLUMN
                             * -----------
                             =============*/
-                            return Container(
-                                height: getBlockSize(rows),
-                                child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: 1,
-                                    itemBuilder: (context,
-                                        blocksBeforeCombinedBlockRowIndex) {
-                                      /*==================================================
-                                      * EACH ROW
-                                      * --------
-                                      * 
-                                      * Each entry results in a block created (Height is
-                                      * inherited from parent Container)
-                                      ==================================================*/
-                                      return Container(
-                                        width: getBlockSize(rows),
-                                        decoration: BoxDecoration(
-                                            color: Colors.black,
-                                            border: Border.all(
-                                                color: Colors.white, width: 2)),
-                                        child: Center(
-                                          child: Icon(Icons.add,
-                                              color: Colors.white),
-                                        ),
-                                      );
-                                    }));
+                            return createGridBlock(rows);
                           }));
                 } else {
                   /*===============
@@ -162,15 +170,8 @@ class _GridUIViewState extends State<GridUIView> {
                     * 
                     * (Height is inherited from parent Container)
                     ==================================================*/
-                    return Container(
-                      width: getBlockSize(rows) * combinedBlockWidth,
-                      decoration: BoxDecoration(
-                          color: Colors.orange,
-                          border: Border.all(color: Colors.white, width: 2)),
-                      child: Center(
-                        child: Icon(Icons.add, color: Colors.white),
-                      ),
-                    );
+                    return createGridCombinedBlock(rows, combinedBlockWidth,
+                        double.parse("$combinedGroupHeight"));
                   } else {
                     /*===================
                      * EMPTY BLOCKS AFTER
@@ -198,26 +199,7 @@ class _GridUIViewState extends State<GridUIView> {
                                 * EACH COLUMN
                                 * ------------
                                 =============*/
-                                return Container(
-                                    height: getBlockSize(rows),
-                                    child: ListView.builder(
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: 1,
-                                        itemBuilder: (context,
-                                            blocksAfterCombinedBlockRowIndex) {
-                                          return Container(
-                                            width: getBlockSize(rows),
-                                            decoration: BoxDecoration(
-                                                color: Colors.black,
-                                                border: Border.all(
-                                                    color: Colors.white,
-                                                    width: 2)),
-                                            child: Center(
-                                              child: Icon(Icons.add,
-                                                  color: Colors.white),
-                                            ),
-                                          );
-                                        }));
+                                return createGridBlock(rows);
                               }));
                     } else {
                       return Container();
@@ -287,47 +269,16 @@ class _GridUIViewState extends State<GridUIView> {
                                     itemCount: combinedGroupHeight,
                                     itemBuilder: (context,
                                         blocksBeforeCombinedBlockColumnIndex) {
-                                      return Container(
-                                          height: getBlockSize(
-                                              totalNumberOfIndividualRows),
-                                          child: ListView.builder(
-                                              padding: EdgeInsets.all(0),
-                                              shrinkWrap: true,
-                                              scrollDirection: Axis.horizontal,
-                                              itemCount: 1,
-                                              itemBuilder: (context,
-                                                  blocksBeforeCombinedBlockRowIndex) {
-                                                return Container(
-                                                  width: getBlockSize(
-                                                      totalNumberOfIndividualRows),
-                                                  decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      border: Border.all(
-                                                          color: Colors.white,
-                                                          width: 2)),
-                                                  child: Center(
-                                                    child: Icon(Icons.add,
-                                                        color: Colors.white),
-                                                  ),
-                                                );
-                                              }));
+                                      return createGridBlock(rows);
                                     }));
                           } else {
                             if (!hasCombinedBlockBeenBuilt) {
                               hasCombinedBlockBeenBuilt = true;
 
-                              return Container(
-                                width:
-                                    getBlockSize(totalNumberOfIndividualRows) *
-                                        combinedBlockWidth,
-                                decoration: BoxDecoration(
-                                    color: Colors.orange,
-                                    border: Border.all(
-                                        color: Colors.white, width: 2)),
-                                child: Center(
-                                  child: Icon(Icons.add, color: Colors.white),
-                                ),
-                              );
+                              return createGridCombinedBlock(
+                                  rows,
+                                  combinedBlockWidth,
+                                  double.parse("$combinedGroupHeight"));
                             } else {
                               if (rowsAfterChecked < numberOfRowsAfter) {
                                 rowsAfterChecked++;
@@ -342,32 +293,7 @@ class _GridUIViewState extends State<GridUIView> {
                                         itemCount: combinedGroupHeight,
                                         itemBuilder: (context,
                                             blocksAfterCombinedBlockColumnIndex) {
-                                          return Container(
-                                              height: getBlockSize(
-                                                  totalNumberOfIndividualRows),
-                                              child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  itemCount: 1,
-                                                  itemBuilder: (context,
-                                                      blocksAfterCombinedBlockRowIndex) {
-                                                    return Container(
-                                                      width: getBlockSize(
-                                                          totalNumberOfIndividualRows),
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.black,
-                                                          border: Border.all(
-                                                              color:
-                                                                  Colors.white,
-                                                              width: 2)),
-                                                      child: Center(
-                                                        child: Icon(Icons.add,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    );
-                                                  }));
+                                          return createGridBlock(rows);
                                         }));
                               } else {
                                 return Container();
@@ -395,46 +321,16 @@ class _GridUIViewState extends State<GridUIView> {
                                     itemCount: combinedGroupHeight,
                                     itemBuilder: (context,
                                         blocksBeforeCombinedBlockColumnIndex) {
-                                      return Container(
-                                          height: getBlockSize(
-                                              totalNumberOfIndividualRows),
-                                          child: ListView.builder(
-                                              shrinkWrap: true,
-                                              scrollDirection: Axis.horizontal,
-                                              itemCount: 1,
-                                              itemBuilder: (context,
-                                                  blocksBeforeCombinedBlockRowIndex) {
-                                                return Container(
-                                                  width: getBlockSize(
-                                                      totalNumberOfIndividualRows),
-                                                  decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      border: Border.all(
-                                                          color: Colors.white,
-                                                          width: 2)),
-                                                  child: Center(
-                                                    child: Icon(Icons.add,
-                                                        color: Colors.white),
-                                                  ),
-                                                );
-                                              }));
+                                      return createGridBlock(rows);
                                     }));
                           } else {
                             if (!hasCombinedBlockBeenBuilt) {
                               hasCombinedBlockBeenBuilt = true;
 
-                              return Container(
-                                width:
-                                    getBlockSize(totalNumberOfIndividualRows) *
-                                        combinedBlockWidth,
-                                decoration: BoxDecoration(
-                                    color: Colors.orange,
-                                    border: Border.all(
-                                        color: Colors.white, width: 2)),
-                                child: Center(
-                                  child: Icon(Icons.add, color: Colors.white),
-                                ),
-                              );
+                              return createGridCombinedBlock(
+                                  rows,
+                                  combinedBlockWidth,
+                                  double.parse("$combinedGroupHeight"));
                             } else {
                               return Container();
                             }
@@ -508,29 +404,7 @@ class _GridUIViewState extends State<GridUIView> {
                                     itemCount: combinedGroupHeight,
                                     itemBuilder: (context,
                                         blocksBeforeCombinedBlockColumnIndex) {
-                                      return Container(
-                                          height: getBlockSize(numberOfRows),
-                                          child: ListView.builder(
-                                              shrinkWrap: true,
-                                              padding: EdgeInsets.all(0),
-                                              scrollDirection: Axis.horizontal,
-                                              itemCount: 1,
-                                              itemBuilder: (context,
-                                                  blocksBeforeCombinedBlockRowIndex) {
-                                                return Container(
-                                                  width: getBlockSize(
-                                                      numberOfRows),
-                                                  decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      border: Border.all(
-                                                          color: Colors.white,
-                                                          width: 2)),
-                                                  child: Center(
-                                                    child: Icon(Icons.add,
-                                                        color: Colors.white),
-                                                  ),
-                                                );
-                                              }));
+                                      return createGridBlock(rows);
                                     }));
                           } else {
                             if (!hasCombinedBlockBeingBuilt) {
@@ -562,85 +436,18 @@ class _GridUIViewState extends State<GridUIView> {
                                               numberOfBlocksAboveCombinedBlock,
                                           itemBuilder: (context,
                                               combinedBlocksAboveIndex) {
-                                            return Container(
-                                                height:
-                                                    getBlockSize(numberOfRows),
-                                                child: ListView.builder(
-                                                    scrollDirection:
-                                                        Axis.horizontal,
-                                                    shrinkWrap: true,
-                                                    physics:
-                                                        NeverScrollableScrollPhysics(),
-                                                    padding: EdgeInsets.all(0),
-                                                    itemCount:
-                                                        combinedBlockWidth,
-                                                    itemBuilder: (context,
-                                                        blocksAboveCombinedBlockRowIndex) {
-                                                      return Container(
-                                                        width: getBlockSize(
-                                                            numberOfRows),
-                                                        decoration: BoxDecoration(
-                                                            color: Colors.black,
-                                                            border: Border.all(
-                                                                color: Colors
-                                                                    .white,
-                                                                width: 2)),
-                                                        child: Center(
-                                                          child: Icon(Icons.add,
-                                                              color:
-                                                                  Colors.white),
-                                                        ),
-                                                      );
-                                                    }));
+                                            return createGridBlock(rows);
                                           },
                                         );
                                       } else {
                                         if (!hasInnerCombinedBlockBeenBuilt) {
                                           hasInnerCombinedBlockBeenBuilt = true;
 
-                                          return ListView.builder(
-                                            padding: EdgeInsets.all(0),
-                                            shrinkWrap: true,
-                                            physics:
-                                                NeverScrollableScrollPhysics(),
-                                            itemCount: 1,
-                                            itemBuilder: (context,
-                                                innerCombinedBlockColumn) {
-                                              return Container(
-                                                height:
-                                                    getBlockSize(numberOfRows) *
-                                                        combinedBlockHeight,
-                                                padding: EdgeInsets.all(0),
-                                                child: ListView.builder(
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  shrinkWrap: true,
-                                                  physics:
-                                                      NeverScrollableScrollPhysics(),
-                                                  itemCount: combinedBlockWidth,
-                                                  itemBuilder: (context,
-                                                      innerCombinedBlockRow) {
-                                                    return Container(
-                                                      width: getBlockSize(
-                                                              numberOfRows) *
-                                                          combinedBlockWidth,
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.orange,
-                                                          border: Border.all(
-                                                              color:
-                                                                  Colors.white,
-                                                              width: 2)),
-                                                      child: Center(
-                                                        child: Icon(Icons.add,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                          );
+                                          return createGridCombinedBlock(
+                                              rows,
+                                              combinedBlockWidth,
+                                              double.parse(
+                                                  "$combinedGroupHeight"));
                                         } else {
                                           if (blocksBelowChecked <
                                               numberOfBlocksBelowCombinedBlock) {
@@ -655,40 +462,7 @@ class _GridUIViewState extends State<GridUIView> {
                                                     numberOfBlocksBelowCombinedBlock,
                                                 itemBuilder: (context,
                                                     blocksBelowCombinedBlockColumnIndex) {
-                                                  return Container(
-                                                      padding:
-                                                          EdgeInsets.all(0),
-                                                      height: getBlockSize(
-                                                          numberOfRows),
-                                                      child: ListView.builder(
-                                                          padding:
-                                                              EdgeInsets.all(0),
-                                                          shrinkWrap: true,
-                                                          scrollDirection:
-                                                              Axis.horizontal,
-                                                          itemCount:
-                                                              combinedBlockWidth,
-                                                          itemBuilder: (context,
-                                                              blocksBelowCombinedBlockRowIndex) {
-                                                            return Container(
-                                                              width: getBlockSize(
-                                                                  numberOfRows),
-                                                              decoration: BoxDecoration(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  border: Border.all(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      width:
-                                                                          2)),
-                                                              child: Center(
-                                                                child: Icon(
-                                                                    Icons.add,
-                                                                    color: Colors
-                                                                        .white),
-                                                              ),
-                                                            );
-                                                          }));
+                                                  return createGridBlock(rows);
                                                 });
                                           } else {
                                             return Container();
@@ -710,32 +484,7 @@ class _GridUIViewState extends State<GridUIView> {
                                         itemCount: combinedGroupHeight,
                                         itemBuilder: (context,
                                             blocksAfterCombinedBlockColumnIndex) {
-                                          return Container(
-                                              height:
-                                                  getBlockSize(numberOfRows),
-                                              child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  itemCount: 1,
-                                                  itemBuilder: (context,
-                                                      blocksAfterCombinedBlockRowIndex) {
-                                                    return Container(
-                                                      width: getBlockSize(
-                                                          numberOfRows),
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.black,
-                                                          border: Border.all(
-                                                              color:
-                                                                  Colors.white,
-                                                              width: 2)),
-                                                      child: Center(
-                                                        child: Icon(Icons.add,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    );
-                                                  }));
+                                          return createGridBlock(rows);
                                         }));
                               } else {
                                 return Container();
@@ -763,29 +512,7 @@ class _GridUIViewState extends State<GridUIView> {
                                     itemCount: combinedGroupHeight,
                                     itemBuilder: (context,
                                         blocksBeforeCombinedBlockColumnIndex) {
-                                      return Container(
-                                          height: getBlockSize(numberOfRows),
-                                          child: ListView.builder(
-                                              shrinkWrap: true,
-                                              padding: EdgeInsets.all(0),
-                                              scrollDirection: Axis.horizontal,
-                                              itemCount: 1,
-                                              itemBuilder: (context,
-                                                  blocksBeforeCombinedBlockRowIndex) {
-                                                return Container(
-                                                  width: getBlockSize(
-                                                      numberOfRows),
-                                                  decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      border: Border.all(
-                                                          color: Colors.white,
-                                                          width: 2)),
-                                                  child: Center(
-                                                    child: Icon(Icons.add,
-                                                        color: Colors.white),
-                                                  ),
-                                                );
-                                              }));
+                                      return createGridBlock(rows);
                                     }));
                           } else {
                             if (!hasCombinedBlockBeingBuilt) {
@@ -817,85 +544,18 @@ class _GridUIViewState extends State<GridUIView> {
                                               numberOfBlocksAboveCombinedBlock,
                                           itemBuilder: (context,
                                               combinedBlocksAboveIndex) {
-                                            return Container(
-                                                height:
-                                                    getBlockSize(numberOfRows),
-                                                child: ListView.builder(
-                                                    scrollDirection:
-                                                        Axis.horizontal,
-                                                    shrinkWrap: true,
-                                                    physics:
-                                                        NeverScrollableScrollPhysics(),
-                                                    padding: EdgeInsets.all(0),
-                                                    itemCount:
-                                                        combinedBlockWidth,
-                                                    itemBuilder: (context,
-                                                        blocksAboveCombinedBlockRowIndex) {
-                                                      return Container(
-                                                        width: getBlockSize(
-                                                            numberOfRows),
-                                                        decoration: BoxDecoration(
-                                                            color: Colors.black,
-                                                            border: Border.all(
-                                                                color: Colors
-                                                                    .white,
-                                                                width: 2)),
-                                                        child: Center(
-                                                          child: Icon(Icons.add,
-                                                              color:
-                                                                  Colors.white),
-                                                        ),
-                                                      );
-                                                    }));
+                                            return createGridBlock(rows);
                                           },
                                         );
                                       } else {
                                         if (!hasInnerCombinedBlockBeenBuilt) {
                                           hasInnerCombinedBlockBeenBuilt = true;
 
-                                          return ListView.builder(
-                                            padding: EdgeInsets.all(0),
-                                            shrinkWrap: true,
-                                            physics:
-                                                NeverScrollableScrollPhysics(),
-                                            itemCount: 1,
-                                            itemBuilder: (context,
-                                                innerCombinedBlockColumn) {
-                                              return Container(
-                                                height:
-                                                    getBlockSize(numberOfRows) *
-                                                        combinedBlockHeight,
-                                                padding: EdgeInsets.all(0),
-                                                child: ListView.builder(
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  shrinkWrap: true,
-                                                  physics:
-                                                      NeverScrollableScrollPhysics(),
-                                                  itemCount: combinedBlockWidth,
-                                                  itemBuilder: (context,
-                                                      innerCombinedBlockRow) {
-                                                    return Container(
-                                                      width: getBlockSize(
-                                                              numberOfRows) *
-                                                          combinedBlockWidth,
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.orange,
-                                                          border: Border.all(
-                                                              color:
-                                                                  Colors.white,
-                                                              width: 2)),
-                                                      child: Center(
-                                                        child: Icon(Icons.add,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                          );
+                                          return createGridCombinedBlock(
+                                              rows,
+                                              combinedBlockWidth,
+                                              double.parse(
+                                                  "$combinedGroupHeight"));
                                         } else {
                                           if (blocksBelowChecked <
                                               numberOfBlocksBelowCombinedBlock) {
@@ -910,40 +570,7 @@ class _GridUIViewState extends State<GridUIView> {
                                                     numberOfBlocksBelowCombinedBlock,
                                                 itemBuilder: (context,
                                                     blocksBelowCombinedBlockColumnIndex) {
-                                                  return Container(
-                                                      padding:
-                                                          EdgeInsets.all(0),
-                                                      height: getBlockSize(
-                                                          numberOfRows),
-                                                      child: ListView.builder(
-                                                          padding:
-                                                              EdgeInsets.all(0),
-                                                          shrinkWrap: true,
-                                                          scrollDirection:
-                                                              Axis.horizontal,
-                                                          itemCount:
-                                                              combinedBlockWidth,
-                                                          itemBuilder: (context,
-                                                              blocksBelowCombinedBlockRowIndex) {
-                                                            return Container(
-                                                              width: getBlockSize(
-                                                                  numberOfRows),
-                                                              decoration: BoxDecoration(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  border: Border.all(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      width:
-                                                                          2)),
-                                                              child: Center(
-                                                                child: Icon(
-                                                                    Icons.add,
-                                                                    color: Colors
-                                                                        .white),
-                                                              ),
-                                                            );
-                                                          }));
+                                                  return createGridBlock(rows);
                                                 });
                                           } else {
                                             return Container();
