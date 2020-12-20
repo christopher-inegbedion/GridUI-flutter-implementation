@@ -20,8 +20,8 @@ class GridUIView extends StatefulWidget {
     return state;
   }
 
-  void change(int row) {
-    state.change(row);
+  void change(int cols) {
+    state.change(cols);
   }
 }
 
@@ -40,14 +40,24 @@ class _GridUIViewState extends State<GridUIView> {
     return screenWidth / rows;
   }
 
-  void change(int rowChange) {
+  void change(int colsChange) {
     setState(() {
-      rows = rowChange;
+      columns = colsChange;
     });
   }
 
   ///Creates a single block
-  Widget createSingleBlock() {}
+  Widget createSingleBlock(double blockSize) {
+    return Container(
+      width: blockSize,
+      child: Center(
+        child: Icon(Icons.add, color: Colors.white),
+      ),
+      decoration: BoxDecoration(
+          color: Colors.black,
+          border: Border.all(color: Colors.white, width: 2)),
+    );
+  }
 
   ///Create a combined block
   Widget createCombinedBlock() {}
@@ -68,15 +78,7 @@ class _GridUIViewState extends State<GridUIView> {
             scrollDirection: Axis.horizontal,
             itemCount: rows,
             itemBuilder: (context, rowIndex) {
-              return Container(
-                width: blockSize,
-                child: Center(
-                  child: Icon(Icons.add, color: Colors.white),
-                ),
-                decoration: BoxDecoration(
-                    color: Colors.black,
-                    border: Border.all(color: Colors.white, width: 2)),
-              );
+              return createSingleBlock(blockSize);
             },
           ),
         );
@@ -95,181 +97,155 @@ class _GridUIViewState extends State<GridUIView> {
   Widget createCombinedGroupWith1CombinedBlock(int emptyRowsBefore,
       int emptyRowsAfter, int combinedBlockWidth, int combinedGroupHeight) {
     int blocksBeforeChecked = 0;
-    int blocksAfterChecked = 0;
     bool hasCombinedBlockBeingBuilt = false;
     int rows = emptyRowsBefore + combinedBlockWidth + emptyRowsAfter;
 
-    return ListView.builder(
-      physics: NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.all(0),
-      shrinkWrap: true,
-      itemCount: 1,
-      itemBuilder: (context, columnIndex) {
-        /*======================
-         * COMBINED BLOCK COLUMN
-         * ---------------------
-         =======================*/
-        return Container(
-            height: getBlockSize(rows) * double.parse("$combinedGroupHeight"),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: rows - (combinedBlockWidth - 1),
-              itemBuilder: (context, rowIndex) {
-                /*====================
+    return Container(
+        height: getBlockSize(rows) * combinedGroupHeight,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: 3,
+          itemBuilder: (context, rowIndex) {
+            /*====================
+                 * Build each combined group section (i.e the empty blocks before, the combined block and the empty blocks after)
+                 =====================*/
+
+            /* ===================
                  * EMPTY BLOCKS BEFORE
                  * -------------------
                  =====================*/
-                if (blocksBeforeChecked < emptyRowsBefore) {
-                  blocksBeforeChecked++;
+            if (blocksBeforeChecked < 1) {
+              blocksBeforeChecked++;
 
-                  /*==================================================
-                   * EACH ROW
-                   * --------
-                   * 
-                   * Each entry results in a block created (Height is
-                   * inherited from parent Container)
-                   ==================================================*/
-                  return Container(
-                      width: getBlockSize(rows),
-                      child: ListView.builder(
+              /*==================================================
+              * EACH ROW
+              * --------
+              * 
+              * Each entry results in a block created (Height is
+              * inherited from parent Container)
+              ==================================================*/
+              return Container(
+                width: getBlockSize(rows) * emptyRowsBefore,
+                child: ListView.builder(
+                    physics: NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.all(0),
+                    itemCount:
+                        combinedGroupHeight, //Each column before the combined block
+                    itemBuilder:
+                        (context, blocksBeforeCombinedBlockColumnIndex) {
+                      /*===========
+                          * EACH COLUMN
+                          * -----------
+                          =============*/
+                      return Container(
+                        height: getBlockSize(rows),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
                           physics: NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.all(0),
-                          itemCount: combinedGroupHeight,
-                          itemBuilder:
-                              (context, blocksBeforeCombinedBlockColumnIndex) {
-                            /*===========
-                            * EACH COLUMN
-                            * -----------
-                            =============*/
+                          padding: EdgeInsets.zero,
+                          itemCount: emptyRowsBefore,
+                          itemBuilder: (context, blocksBeforeBlocks) {
                             return Container(
-                                height: getBlockSize(rows),
-                                child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: 1,
-                                    itemBuilder: (context,
-                                        blocksBeforeCombinedBlockRowIndex) {
-                                      /*==================================================
-                                      * EACH ROW
-                                      * --------
-                                      * 
-                                      * Each entry results in a block created (Height is
-                                      * inherited from parent Container)
-                                      ==================================================*/
-                                      return Container(
-                                        width: getBlockSize(rows),
-                                        decoration: BoxDecoration(
-                                            color: Colors.black,
-                                            border: Border.all(
-                                                color: Colors.white, width: 2)),
-                                        child: Center(
-                                          child: Icon(Icons.add,
-                                              color: Colors.white),
-                                        ),
-                                      );
-                                    }));
-                          }));
-                } else {
-                  /*===============
+                              width: getBlockSize(rows),
+                              decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  border: Border.all(
+                                      color: Colors.white, width: 2)),
+                              child: Center(
+                                child: Icon(Icons.add, color: Colors.white),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }),
+              );
+            } else {
+              /*===============
                    * COMBINED BLOCK
                    * --------------
                    ================*/
-                  if (!hasCombinedBlockBeingBuilt) {
-                    hasCombinedBlockBeingBuilt = true;
+              if (!hasCombinedBlockBeingBuilt) {
+                hasCombinedBlockBeingBuilt = true;
 
-                    /*==================================================
+                /*==================================================
                     * COMBINED BLOCK WIDTH
                     * ---------------------
                     * 
                     * (Height is inherited from parent Container)
                     ==================================================*/
-                    return Draggable(
-                      child: Container(
-                        width: getBlockSize(rows) * combinedBlockWidth,
-                        decoration: BoxDecoration(
-                            color: Colors.orange,
-                            border: Border.all(color: Colors.white, width: 2)),
-                        child: Center(
-                          child: Icon(Icons.add, color: Colors.white),
-                        ),
-                      ),
-                      feedback: Container(
-                        height: getBlockSize(rows) *
-                            double.parse("$combinedGroupHeight"),
-                        width: getBlockSize(rows) * combinedBlockWidth,
-                        decoration: BoxDecoration(
-                            color: Colors.orange,
-                            border: Border.all(color: Colors.white, width: 2)),
-                        child: Center(
-                          child: Icon(Icons.add, color: Colors.white),
-                        ),
-                      ),
-                      childWhenDragging: Container(
-                        width: getBlockSize(rows) * combinedBlockWidth,
-                        decoration: BoxDecoration(
-                            color: Colors.grey,
-                            border: Border.all(color: Colors.white, width: 2)),
-                        child: Center(
-                          child: Icon(Icons.add, color: Colors.white),
-                        ),
-                      ),
-                    );
-                  } else {
-                    /*===================
-                     * EMPTY BLOCKS AFTER
-                     * ------------------
-                     ====================*/
-                    if (blocksAfterChecked < emptyRowsAfter) {
-                      blocksAfterChecked++;
-
-                      /*==================================================
-                      * EACH ROW
-                      * --------
-                      * 
-                      * Each entry results in a block created (Height is
-                      * inherited from parent Container)
-                      ==================================================*/
-                      return Container(
-                          width: getBlockSize(rows),
+                return Draggable(
+                  child: Container(
+                    width: getBlockSize(rows) * combinedBlockWidth,
+                    decoration: BoxDecoration(
+                        color: Colors.orange,
+                        border: Border.all(color: Colors.white, width: 2)),
+                    child: Center(
+                      child: Icon(Icons.add, color: Colors.white),
+                    ),
+                  ),
+                  feedback: Container(
+                    height: getBlockSize(rows) *
+                        double.parse("$combinedGroupHeight"),
+                    width: getBlockSize(rows) * combinedBlockWidth,
+                    decoration: BoxDecoration(
+                        color: Colors.orange,
+                        border: Border.all(color: Colors.white, width: 2)),
+                    child: Center(
+                      child: Icon(Icons.add, color: Colors.white),
+                    ),
+                  ),
+                  childWhenDragging: Container(
+                    width: getBlockSize(rows) * combinedBlockWidth,
+                    decoration: BoxDecoration(
+                        color: Colors.grey,
+                        border: Border.all(color: Colors.white, width: 2)),
+                    child: Center(
+                      child: Icon(Icons.add, color: Colors.white),
+                    ),
+                  ),
+                );
+              } else {
+                return Container(
+                  width: getBlockSize(rows) * emptyRowsAfter,
+                  child: ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.all(0),
+                      itemCount:
+                          combinedGroupHeight, //Each column before the combined block
+                      itemBuilder:
+                          (context, blocksBeforeCombinedBlockColumnIndex) {
+                        /*===========
+                          * EACH COLUMN
+                          * -----------
+                          =============*/
+                        return Container(
+                          height: getBlockSize(rows),
                           child: ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.all(0),
-                              itemCount: combinedGroupHeight,
-                              itemBuilder: (context,
-                                  blocksAfterCombinedBlockColumnIndex) {
-                                /*============
-                                * EACH COLUMN
-                                * ------------
-                                =============*/
-                                return Container(
-                                    height: getBlockSize(rows),
-                                    child: ListView.builder(
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: 1,
-                                        itemBuilder: (context,
-                                            blocksAfterCombinedBlockRowIndex) {
-                                          return Container(
-                                            width: getBlockSize(rows),
-                                            decoration: BoxDecoration(
-                                                color: Colors.black,
-                                                border: Border.all(
-                                                    color: Colors.white,
-                                                    width: 2)),
-                                            child: Center(
-                                              child: Icon(Icons.add,
-                                                  color: Colors.white),
-                                            ),
-                                          );
-                                        }));
-                              }));
-                    } else {
-                      return Container();
-                    }
-                  }
-                }
-              },
-            ));
-      },
-    );
+                            scrollDirection: Axis.horizontal,
+                            physics: NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            itemCount: emptyRowsAfter,
+                            itemBuilder: (context, blocksBeforeBlocks) {
+                              return Container(
+                                width: getBlockSize(rows),
+                                decoration: BoxDecoration(
+                                    color: Colors.black,
+                                    border: Border.all(
+                                        color: Colors.white, width: 2)),
+                                child: Center(
+                                  child: Icon(Icons.add, color: Colors.white),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      }),
+                );
+              }
+            }
+          },
+        ));
   }
 
   ///Create a combined group with 2 or more combined blocks

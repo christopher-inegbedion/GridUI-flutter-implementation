@@ -1,13 +1,13 @@
 {
-    "grid_columns": 3,
+    "grid_columns": 15,
     "grid_rows": 6,
     "combined_groups": [
         {
             "combined_group_type": "SINGLE_COMBINED_GROUP",
             "columns_above": 1,
-            "columns_below": 1,
+            "columns_below": 10,
             "number_of_columns": 1,
-            "number_of_rows": 6,
+            "number_of_rows": 15,
             "combined_blocks": [
                 {
                     "number_of_rows_left": 2,
@@ -19,7 +19,7 @@
                         "type": "COMBINED",
                         "content": null,
                         "number_of_rows": 2,
-                        "number_of_columns": 1
+                        "number_of_columns": 2
                     }
                 }
             ]

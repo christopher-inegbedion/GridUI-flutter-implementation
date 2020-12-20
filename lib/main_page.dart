@@ -33,29 +33,33 @@ class _GridPageState extends State<GridPage> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: Column(
-          children: [
-            Container(
-              child: Row(
-                children: [
-                  FlatButton(
-                    color: Colors.white,
-                    child: Text(
-                      "Change",
-                    ),
-                    onPressed: () {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        setState(() {
-                          gridView.change(9);
+        body: SingleChildScrollView(
+          child: Stack(
+            children: [
+              grid.combinedGroups == null
+                  ? CircularProgressIndicator()
+                  : gridView,
+              Container(
+                child: Row(
+                  children: [
+                    FlatButton(
+                      color: Colors.white,
+                      child: Text(
+                        "Change",
+                      ),
+                      onPressed: () {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          setState(() {
+                            gridView.change(9);
+                          });
                         });
-                      });
-                    },
-                  )
-                ],
+                      },
+                    )
+                  ],
+                ),
               ),
-            ),
-            grid.combinedGroups == null ? CircularProgressIndicator() : gridView
-          ],
+            ],
+          ),
         ),
       ),
     );
