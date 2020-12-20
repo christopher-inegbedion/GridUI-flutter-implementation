@@ -5,14 +5,13 @@ import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
-import 'package:grid_ui_implementation/models/grid_content.dart';
 
 class Grid {
   static Grid instance;
 
   int gridColumns;
   int gridRows;
-  List<GridContent> gridCombinedGroups;
+  List<CombinedGroup> combinedGroups; //each combined group in the grid
 
   Grid._();
 
@@ -21,24 +20,33 @@ class Grid {
     return instance;
   }
 
+  ///Load the grid's data from JSON file
   Future<Grid> loadJSON(String path) async {
     Map<String, dynamic> gridJSON = await parseJsonFromAssets(path);
 
+    ///Number of columns in the grid
     this.gridColumns = gridJSON["grid_columns"];
-    this.gridRows = gridJSON["grid_rows"];
-    this.gridCombinedGroups = [];
 
-    for (Map<String, dynamic> item in gridJSON["combined_groups"]) {
+    ///Number or rows in the grid
+    this.gridRows = gridJSON["grid_rows"];
+
+    ///All combined groups in the grid
+    this.combinedGroups = [];
+    // print("${gridJSON["combined_groups"]}");
+
+    ///Create each combined group object and asign each to [combinedGroups]
+    for (Map<String, dynamic> combinedGroupFromJSON
+        in gridJSON["combined_groups"]) {
       List<CombinedBlockInGroup> allCombinedGroups = [];
 
-      for (Map<String, dynamic> combinedBlocks in item["combined_group"]
-          ["combined_blocks"]) {
+      ///Create each combined group's combined block
+      for (Map<String, dynamic> combinedBlocks
+          in combinedGroupFromJSON["combined_blocks"]) {
         Block block = new Block(
-          BlockType.combined, //TODO: Fix this
+          BlockType.combined,
           combinedBlocks["block"]["content"],
           combinedBlocks["block"]["number_of_rows"],
           combinedBlocks["block"]["number_of_columns"],
-          // combinedBlocks["block"]["type"],
         );
 
         CombinedBlockInGroup combinedBlockInGroup = new CombinedBlockInGroup(
@@ -54,15 +62,14 @@ class Grid {
 
       CombinedGroup combinedGroup = new CombinedGroup(
           convertFromStringToCombinedGroupType(
-              item["combined_group"]["combined_group_type"]),
-          item["combined_group"]["number_of_columns"],
-          item["combined_group"]["number_of_rows"],
+              combinedGroupFromJSON["combined_group_type"]),
+          combinedGroupFromJSON["columns_above"],
+          combinedGroupFromJSON["columns_below"],
+          combinedGroupFromJSON["number_of_columns"],
+          combinedGroupFromJSON["number_of_rows"],
           allCombinedGroups);
 
-      GridContent gridContent = new GridContent(item["columns_above_count"],
-          item["columns_below_count"], combinedGroup);
-
-      gridCombinedGroups.add(gridContent);
+      combinedGroups.add(combinedGroup);
     }
 
     return getInstance();
@@ -84,5 +91,13 @@ class Grid {
     return rootBundle
         .loadString(assetsPath)
         .then((jsonStr) => jsonDecode(jsonStr));
+  }
+
+  Map<String, dynamic> toJSON(Grid grid) {
+    return {
+      "gridColumns": gridColumns,
+      "gridRows": gridRows,
+      "combinedGroups": combinedGroups
+    };
   }
 }

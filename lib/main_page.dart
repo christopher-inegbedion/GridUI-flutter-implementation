@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
 
-import 'models/grid_content.dart';
-
 class GridPage extends StatefulWidget {
   @override
   _GridPageState createState() => _GridPageState();
@@ -11,11 +9,23 @@ class GridPage extends StatefulWidget {
 
 class _GridPageState extends State<GridPage> {
   Grid grid;
+  GridUIView gridView;
+  String path;
 
   @override
   void initState() {
     super.initState();
     grid = Grid.getInstance();
+    grid.loadJSON("assets/json/test_grid.json").then((value) {
+      setState(() {
+        grid.gridColumns = value.gridColumns;
+        grid.gridRows = value.gridRows;
+        grid.combinedGroups = value.combinedGroups;
+
+        gridView =
+            GridUIView(grid.gridColumns, grid.gridRows, grid.combinedGroups);
+      });
+    });
   }
 
   @override
@@ -23,16 +33,30 @@ class _GridPageState extends State<GridPage> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: FutureBuilder(
-            future: grid.loadJSON("assets/json/test_grid.json"),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                return GridUIView(
-                    grid.gridColumns, grid.gridRows, grid.gridCombinedGroups);
-              } else {
-                return Container();
-              }
-            }),
+        body: Column(
+          children: [
+            Container(
+              child: Row(
+                children: [
+                  FlatButton(
+                    color: Colors.white,
+                    child: Text(
+                      "Change",
+                    ),
+                    onPressed: () {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        setState(() {
+                          gridView.change(9);
+                        });
+                      });
+                    },
+                  )
+                ],
+              ),
+            ),
+            grid.combinedGroups == null ? CircularProgressIndicator() : gridView
+          ],
+        ),
       ),
     );
   }

@@ -1,102 +1,28 @@
 {
-    "grid_columns": 13,
-    "grid_rows": 3,
+    "grid_columns": 3,
+    "grid_rows": 6,
     "combined_groups": [
         {
-            "columns_above_count": 2,
-            "columns_below_count": 0,
-            "combined_group": {
-                "combined_group_type": "SINGLE_COMBINED_GROUP",
-                "number_of_columns": 1,
-                "number_of_rows": 3,
-                "combined_blocks": [
-                    {
-                        "number_of_rows_left": 0,
-                        "number_of_rows_right": 1,
-                        "number_of_columns_above": 0,
-                        "number_of_columns_below": 0,
-                        "position_in_combined_group": 1,
-                        "block": {
-                            "type": "COMBINED",
-                            "content": null,
-                            "number_of_rows": 2,
-                            "number_of_columns": 1
-                        }
+            "combined_group_type": "SINGLE_COMBINED_GROUP",
+            "columns_above": 1,
+            "columns_below": 1,
+            "number_of_columns": 1,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 2,
+                    "number_of_rows_right": 2,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "type": "COMBINED",
+                        "content": null,
+                        "number_of_rows": 2,
+                        "number_of_columns": 1
                     }
-                ]
-            }
-        },
-        {
-            "columns_above_count": 1,
-            "columns_below_count": 0,
-            "combined_group": {
-                "combined_group_type": "SINGLE_COMBINED_GROUP",
-                "number_of_columns": 2,
-                "number_of_rows": 3,
-                "combined_blocks": [
-                    {
-                        "number_of_rows_left": 0,
-                        "number_of_rows_right": 0,
-                        "number_of_columns_above": 0,
-                        "number_of_columns_below": 0,
-                        "position_in_combined_group": 1,
-                        "block": {
-                            "type": "COMBINED",
-                            "content": null,
-                            "number_of_rows": 3,
-                            "number_of_columns": 2
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "columns_above_count": 1,
-            "columns_below_count": 0,
-            "combined_group": {
-                "combined_group_type": "SINGLE_COMBINED_GROUP",
-                "number_of_columns": 2,
-                "number_of_rows": 3,
-                "combined_blocks": [
-                    {
-                        "number_of_rows_left": 0,
-                        "number_of_rows_right": 2,
-                        "number_of_columns_above": 0,
-                        "number_of_columns_below": 0,
-                        "position_in_combined_group": 1,
-                        "block": {
-                            "type": "COMBINED",
-                            "content": null,
-                            "number_of_rows": 1,
-                            "number_of_columns": 2
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "columns_above_count": 2,
-            "columns_below_count": 0,
-            "combined_group": {
-                "combined_group_type": "SINGLE_COMBINED_GROUP",
-                "number_of_columns": 2,
-                "number_of_rows": 3,
-                "combined_blocks": [
-                    {
-                        "number_of_rows_left": 1,
-                        "number_of_rows_right": 0,
-                        "number_of_columns_above": 0,
-                        "number_of_columns_below": 0,
-                        "position_in_combined_group": 1,
-                        "block": {
-                            "type": "COMBINED",
-                            "content": null,
-                            "number_of_rows": 2,
-                            "number_of_columns": 2
-                        }
-                    }
-                ]
-            }
+                }
+            ]
         }
     ]
 }
