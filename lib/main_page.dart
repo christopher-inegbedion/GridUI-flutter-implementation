@@ -15,6 +15,7 @@ class _GridPageState extends State<GridPage> {
   @override
   void initState() {
     super.initState();
+    print("new");
     grid = Grid.getInstance();
     grid.loadJSON("assets/json/test_grid.json").then((value) {
       setState(() {
