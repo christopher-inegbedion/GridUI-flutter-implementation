@@ -40,25 +40,25 @@ class _GridPageState extends State<GridPage> {
               grid.combinedGroups == null
                   ? CircularProgressIndicator()
                   : gridView,
-              Container(
-                child: Row(
-                  children: [
-                    FlatButton(
-                      color: Colors.white,
-                      child: Text(
-                        "Change",
-                      ),
-                      onPressed: () {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          setState(() {
-                            gridView.change(9);
-                          });
-                        });
-                      },
-                    )
-                  ],
-                ),
-              ),
+              // Container(
+              //   child: Row(
+              //     children: [
+              //       FlatButton(
+              //         color: Colors.white,
+              //         child: Text(
+              //           "Change",
+              //         ),
+              //         onPressed: () {
+              //           WidgetsBinding.instance.addPostFrameCallback((_) {
+              //             setState(() {
+              //               gridView.change(9);
+              //             });
+              //           });
+              //         },
+              //       )
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ),
