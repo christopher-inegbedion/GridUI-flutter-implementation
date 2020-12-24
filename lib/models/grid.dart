@@ -17,12 +17,19 @@ class Grid {
 
   static Grid getInstance() {
     if (instance == null) instance = Grid._();
+
     return instance;
   }
 
   ///Load the grid's data from JSON file
-  Future<Grid> loadJSON(String path) async {
-    Map<String, dynamic> gridJSON = await parseJsonFromAssets(path);
+  Future<Grid> loadJSON(String path,
+      {bool fromNetwork = false, String grid}) async {
+    Map<String, dynamic> gridJSON;
+    if (fromNetwork) {
+      gridJSON = jsonDecode(grid);
+    } else {
+      gridJSON = await parseJsonFromAssets(path);
+    }
 
     ///Number of columns in the grid
     this.gridColumns = gridJSON["grid_columns"];
@@ -99,5 +106,230 @@ class Grid {
       "gridRows": gridRows,
       "combinedGroups": combinedGroups
     };
+  }
+
+  CombinedGroup getSpecificCombinedGroup(int index) {
+    return combinedGroups[index - 1];
+  }
+
+  CombinedBlockInGroup getSpecificCombinedBlockInGroup(
+      int index, CombinedGroup combinedGroup) {
+    return combinedGroup.combinedBlocks[index - 1];
+  }
+
+  Block getSpecificBlock(CombinedBlockInGroup blockInGroup) {
+    return blockInGroup.block;
+  }
+
+  int getNumberOfRowsBeforeCombinedBlock(
+      int blockIndex, int combinedGroupIndex) {
+    CombinedGroup combinedGroup = getSpecificCombinedGroup(combinedGroupIndex);
+    CombinedBlockInGroup combinedBlockInGroup =
+        getSpecificCombinedBlockInGroup(blockIndex, combinedGroup);
+    Block block = combinedBlockInGroup.block;
+    int totalCombinedGroupNumberOfRows = combinedGroup.numberOfRows;
+    int combinedBlockWidth = block.numberOfRows;
+    int numberOfBlocksAfter = 0;
+
+    if (blockIndex == combinedGroup.combinedBlocks.length) {
+      numberOfBlocksAfter = combinedBlockInGroup.numberOfRowsRight;
+    } else {
+      //get each combined block in the combined group
+      for (int i = 1; i < combinedGroup.combinedBlocks.length; i++) {
+        //check if the combined block looking at is the last
+        if (i + blockIndex == combinedGroup.combinedBlocks.length) {
+          int blocksBefore =
+              getSpecificCombinedBlockInGroup(i + blockIndex, combinedGroup)
+                  .numberOfRowsLeft;
+          int combinedBlockWidth =
+              getSpecificCombinedBlockInGroup(i + blockIndex, combinedGroup)
+                  .block
+                  .numberOfRows;
+          int blocksAfter =
+              getSpecificCombinedBlockInGroup(i + blockIndex, combinedGroup)
+                  .numberOfRowsRight;
+          // print("block $i in combined group, before $blocksBefore");
+          // print("block $i in combined group, width $combinedBlockWidth");
+          // print("block $i in combined group, after $blocksAfter");
+
+          numberOfBlocksAfter +=
+              blocksBefore + combinedBlockWidth + blocksAfter;
+        } else {
+          int blocksBefore = getSpecificCombinedBlockInGroup(i, combinedGroup)
+              .numberOfRowsLeft;
+          int combinedBlockWidth =
+              getSpecificCombinedBlockInGroup(i, combinedGroup)
+                  .block
+                  .numberOfRows;
+          numberOfBlocksAfter += blocksBefore + combinedBlockWidth;
+          // print("block $i in combined group, before $blocksBefore");
+        }
+      }
+    }
+
+    int rowsBeforeCombinedBlock = totalCombinedGroupNumberOfRows -
+        (combinedBlockWidth + numberOfBlocksAfter);
+
+    // print(numberOfBlocksAfter);
+    // print(combinedBlockWidth);
+    // print(
+    //     "for block $blockIndex in $combinedGroupIndex there are $rowsBeforeCombinedBlock's before the block");
+
+    return rowsBeforeCombinedBlock;
+  }
+
+  int getNumberofColumnsAboveCombinedBlock(
+      int blockIndex, int combinedGroupIndex) {
+    CombinedGroup combinedGroup = getSpecificCombinedGroup(combinedGroupIndex);
+    CombinedBlockInGroup combinedBlockInGroup =
+        getSpecificCombinedBlockInGroup(blockIndex, combinedGroup);
+    Block block = combinedBlockInGroup.block;
+    int columnsAboveCombinedBlock = 0;
+
+    if (combinedGroup.combinedGroupType ==
+        CombinedGroupType.MULTIPLE_COMBINED_GROUP_DIFF_HEIGHT) {
+      int combinedGroupHeight = combinedGroup.numberOfColumns;
+      int numberOfEmptyColumnsAbove = combinedGroup.columnsAbove;
+      if (combinedGroupIndex == 1) {
+        int blockHeight = block.numberOfColumns;
+        int numberOfEmptyColumnsAboveCombinedBlock =
+            combinedBlockInGroup.numberOfColumnsAbove;
+        int numberOfEmptyColumnsBelowCombinedBlock =
+            combinedBlockInGroup.numberOfColumnsBelow;
+        int excessColumnsAbove = (numberOfEmptyColumnsBelowCombinedBlock +
+                numberOfEmptyColumnsAboveCombinedBlock) -
+            blockHeight;
+        if (block.numberOfColumns == combinedGroupHeight) {
+          excessColumnsAbove = 0;
+        }
+
+        return combinedGroup.numberOfColumns +
+            combinedGroup.columnsAbove +
+            excessColumnsAbove;
+      } else if (combinedGroupIndex == instance.combinedGroups.length) {
+        int combinedGroupHeight = combinedGroup.numberOfColumns;
+        int numberOfEmptyColumnsAbove = combinedGroup.columnsAbove;
+        // int numberOfEmptyColumnsBelow = combinedGroup.columnsBelow;
+        for (int i = 1; i < instance.combinedGroups.length; i++) {
+          // print(getSpecificCombinedGroup(i).numberOfColumns);
+          int height = getSpecificCombinedGroup(i).numberOfColumns;
+          int numberOfEmptyColumnsAbove =
+              getSpecificCombinedGroup(i).columnsAbove;
+          columnsAboveCombinedBlock += height + numberOfEmptyColumnsAbove;
+          // print('bub');
+        }
+
+        int blockHeight = block.numberOfColumns;
+        int numberOfEmptyColumnsAboveCombinedBlock =
+            combinedBlockInGroup.numberOfColumnsAbove;
+        int numberOfEmptyColumnsBelowCombinedBlock =
+            combinedBlockInGroup.numberOfColumnsBelow;
+        int excessColumnsAbove = (numberOfEmptyColumnsBelowCombinedBlock +
+                numberOfEmptyColumnsAboveCombinedBlock) -
+            blockHeight;
+        if (block.numberOfColumns == combinedGroupHeight) {
+          excessColumnsAbove = 0;
+        }
+
+        return columnsAboveCombinedBlock +
+            combinedGroupHeight +
+            numberOfEmptyColumnsAbove +
+            excessColumnsAbove;
+      } else {
+        int combinedGroupHeight = combinedGroup.numberOfColumns;
+        int numberOfEmptyColumnsAbove = combinedGroup.columnsAbove;
+        // int numberOfEmptyColumnsBelow = combinedGroup.columnsBelow;
+        for (int i = 0;
+            i < instance.combinedGroups.length - combinedGroupIndex;
+            i++) {
+          // print(getSpecificCombinedGroup(i + 1).numberOfColumns);
+          int height = getSpecificCombinedGroup(i + 1).numberOfColumns;
+          int numberOfEmptyColumnsAbove =
+              getSpecificCombinedGroup(i + 1).columnsAbove;
+          columnsAboveCombinedBlock += height + numberOfEmptyColumnsAbove;
+          // print('bub');
+        }
+
+        int blockHeight = block.numberOfColumns;
+        int numberOfEmptyColumnsAboveCombinedBlock =
+            combinedBlockInGroup.numberOfColumnsAbove;
+        int numberOfEmptyColumnsBelowCombinedBlock =
+            combinedBlockInGroup.numberOfColumnsBelow;
+        int excessColumnsAbove = (numberOfEmptyColumnsBelowCombinedBlock +
+                numberOfEmptyColumnsAboveCombinedBlock) -
+            blockHeight;
+        if (block.numberOfColumns == combinedGroupHeight) {
+          excessColumnsAbove = 0;
+        }
+
+        return columnsAboveCombinedBlock +
+            combinedGroupHeight +
+            numberOfEmptyColumnsAbove -
+            numberOfEmptyColumnsBelowCombinedBlock +
+            excessColumnsAbove;
+      }
+    } else {
+      if (combinedGroupIndex == 1) {
+        return combinedGroup.numberOfColumns + combinedGroup.columnsAbove;
+      } else if (combinedGroupIndex == instance.combinedGroups.length) {
+        int combinedGroupHeight = combinedGroup.numberOfColumns;
+        int numberOfEmptyColumnsAbove = combinedGroup.columnsAbove;
+        // int numberOfEmptyColumnsBelow = combinedGroup.columnsBelow;
+        for (int i = 1; i < instance.combinedGroups.length; i++) {
+          // print(getSpecificCombinedGroup(i).numberOfColumns);
+          int height = getSpecificCombinedGroup(i).numberOfColumns;
+          int numberOfEmptyColumnsAbove =
+              getSpecificCombinedGroup(i).columnsAbove;
+          columnsAboveCombinedBlock += height + numberOfEmptyColumnsAbove;
+          // print('bub');
+        }
+
+        return columnsAboveCombinedBlock +
+            combinedGroupHeight +
+            numberOfEmptyColumnsAbove;
+      } else {
+        int combinedGroupHeight = combinedGroup.numberOfColumns;
+        int numberOfEmptyColumnsAbove = combinedGroup.columnsAbove;
+        // int numberOfEmptyColumnsBelow = combinedGroup.columnsBelow;
+        for (int i = 0;
+            i < instance.combinedGroups.length - combinedGroupIndex;
+            i++) {
+          // print(getSpecificCombinedGroup(i + 1).numberOfColumns);
+          int height = getSpecificCombinedGroup(i + 1).numberOfColumns;
+          int numberOfEmptyColumnsAbove =
+              getSpecificCombinedGroup(i + 1).columnsAbove;
+          columnsAboveCombinedBlock += height + numberOfEmptyColumnsAbove;
+          // print('bub');
+        }
+
+        return columnsAboveCombinedBlock +
+            combinedGroupHeight +
+            numberOfEmptyColumnsAbove;
+      }
+    }
+  }
+
+  int getBlockStartColumn(int blockIndex, int combinedGroupIndex) {
+    int rowsBeforeCombinedBlock =
+        getNumberOfRowsBeforeCombinedBlock(blockIndex, combinedGroupIndex);
+    int columnsAboveCombinedBlock =
+        getNumberofColumnsAboveCombinedBlock(blockIndex, combinedGroupIndex);
+    Block block = getSpecificCombinedBlockInGroup(
+            blockIndex, getSpecificCombinedGroup(combinedGroupIndex))
+        .block;
+
+    return columnsAboveCombinedBlock - block.numberOfColumns;
+  }
+
+  int getBlockStartRow(int blockIndex, int combinedGroupIndex) {
+    int rowsBeforeCombinedBlock =
+        getNumberOfRowsBeforeCombinedBlock(blockIndex, combinedGroupIndex);
+    int columnsAboveCombinedBlock =
+        getNumberofColumnsAboveCombinedBlock(blockIndex, combinedGroupIndex);
+    Block block = getSpecificCombinedBlockInGroup(
+            blockIndex, getSpecificCombinedGroup(combinedGroupIndex))
+        .block;
+
+    return rowsBeforeCombinedBlock;
   }
 }

@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
+import 'package:grid_ui_implementation/models/comb_block_drag_info.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
+import 'package:grid_ui_implementation/models/grid.dart';
+import 'package:http/http.dart' as http;
 
 class GridUIView extends StatefulWidget {
   int rows;
@@ -19,8 +25,16 @@ class GridUIView extends StatefulWidget {
     return state;
   }
 
-  void change(int cols) {
-    state.change(cols);
+  void changeCols(int cols) {
+    state.changeCols(cols);
+  }
+
+  void changeRows(int rows) {
+    state.changeRows(rows);
+  }
+
+  void changeGrid(List<CombinedGroup> data) {
+    state.data = data;
   }
 }
 
@@ -39,95 +53,179 @@ class _GridUIViewState extends State<GridUIView> {
     return screenWidth / rows;
   }
 
-  void change(int colsChange) {
+  Future<String> getGridFromServer(String url) async {
+    http.Response response = await http.get(url);
+    String grid;
+
+    if (response.statusCode == 200) {
+      grid = response.body;
+    } else {
+      grid = '';
+    }
+
+    return grid;
+  }
+
+  Future<String> postGridToServer(String url, Map<String, String> data) async {
+    http.Response response = await http.post(url, body: data);
+    String grid;
+
+    if (response.statusCode == 200) {
+      grid = response.body;
+    } else {
+      grid = '';
+    }
+
+    return grid;
+  }
+
+  void moveCombinedBlock(int startColumn, int startRow, int height, int width) {
+    Map<String, String> data = {
+      'start_column': startColumn.toString(),
+      'start_row': startRow.toString(),
+      'height': height.toString(),
+      'width': width.toString()
+    };
+    postGridToServer("http://192.168.44.1:5000/move", data).then((val) {
+      Grid.getInstance()
+          .loadJSON("", fromNetwork: true, grid: val)
+          .then((value) {
+        setState(() {
+          columns = value.gridColumns;
+          rows = value.gridRows;
+          changeData(value.combinedGroups);
+        });
+      });
+    });
+  }
+
+  void changeCols(int colsChange) {
     setState(() {
       columns = colsChange;
     });
   }
 
+  void changeRows(int rowsChange) {
+    setState(() {
+      rows = rowsChange;
+    });
+  }
+
+  void changeData(List data) {
+    setState(() {
+      this.data = data;
+    });
+  }
+
   ///Creates a single block
   Widget createSingleBlock(double blockSize,
-      [int gridPosition, int blockColumns, int blockRow]) {
+      [int gridPosition,
+      int singleBlockSection,
+      int blockColumns,
+      int blockRow]) {
     bool dropped = false;
     return DragTarget(
-      builder: (context, List<String> candidateData, rejectedData) {
-        return Container(
-          width: blockSize,
-          child: Center(
-            child: Icon(Icons.add, color: Colors.white),
+      builder: (context, List<CombBlockDragInformation> candidateData,
+          rejectedData) {
+        return GestureDetector(
+          onTap: () {
+            print("column: $blockColumns");
+          },
+          child: Container(
+            width: blockSize,
+            child: Center(
+              child: Icon(Icons.add, color: Colors.white),
+            ),
+            decoration: BoxDecoration(
+                color: Colors.black,
+                border: Border.all(color: Colors.white, width: 2)),
           ),
-          decoration: BoxDecoration(
-              color: Colors.black,
-              border: Border.all(color: Colors.white, width: 2)),
         );
       },
-      onWillAccept: (data) {
+      onWillAccept: (CombBlockDragInformation data) {
+        CombBlockDragInformation dragInformation = data;
         print(
-            "hovering at grid position: $gridPosition, block column $blockColumns, block row $blockRow");
-        return false;
+            "block quadrant: ${dragInformation.blockQuadrantDraggingFrom}, hovering at grid position: $gridPosition, block position: $singleBlockSection");
+        return true;
+      },
+      onAccept: (data) {
+        // CombBlockDragInformation dragInformation = null;
       },
     );
   }
 
   ///Create a combined block
-  Widget createCombinedBlock({double height = 0.0, double width}) {
+  Widget createCombinedBlock(
+      int gridSection, int combinedBlockSection, Block block,
+      {double height = 0.0, double width}) {
     double numberOfColumns = height / getBlockSize(rows);
     double numberOfRows = width / getBlockSize(rows);
-    print(numberOfRows);
     int blockQuadrant =
         0; //stores the value of the quadrant from which the user began dragging the combined block
 
-    return Draggable(
-      data: "data",
+    CombBlockDragInformation dragInformation = CombBlockDragInformation(
+        block: block, blockQuadrantDraggingFrom: blockQuadrant);
+    return LongPressDraggable(
+      data: dragInformation,
       child: Container(
           width: width,
           decoration: BoxDecoration(
               color: Colors.orange,
               border: Border.all(color: Colors.white, width: 2)),
-          child: Stack(
-            children: [
-              Center(
-                child: Icon(Icons.add, color: Colors.white),
-              ),
-              ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: numberOfColumns.toInt(),
-                  itemBuilder: (context, colIndex) {
-                    return Container(
-                        height: getBlockSize(rows),
-                        child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            shrinkWrap: true,
-                            itemCount: numberOfRows.toInt(),
-                            itemBuilder: (context, rowIndex) {
-                              return GestureDetector(
-                                onTapDown: (details) {
-                                  if (numberOfRows > 1) {
-                                    if (colIndex != 0) {
-                                      //if the user is not holding a quadrant from the first column
-                                      blockQuadrant =
-                                          colIndex + colIndex + rowIndex + 1;
-                                      print(
-                                          "quadrant ${colIndex + colIndex + rowIndex + 1}");
-                                    } else {
-                                      blockQuadrant = rowIndex + 1;
-                                      print("quadrant ${rowIndex + 1}");
-                                    }
-                                  } else {
-                                    blockQuadrant = colIndex + 1;
-                                    print("quadrant ${colIndex + 1}");
-                                  }
-                                },
-                                child: Container(
-                                  width: getBlockSize(rows),
-                                  height: getBlockSize(rows),
-                                  decoration: BoxDecoration(color: null),
-                                ),
-                              );
-                            }));
-                  })
-            ],
-          )),
+          child: ListView.builder(
+              itemCount: numberOfColumns.toInt(),
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (context, colIndex) {
+                return Container(
+                    height: getBlockSize(rows),
+                    child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: numberOfRows.toInt(),
+                        itemBuilder: (context, rowIndex) {
+                          return GestureDetector(
+                            onTap: () {
+                              int combinedBlockStartColumn = Grid.getInstance()
+                                  .getBlockStartColumn(
+                                      combinedBlockSection, gridSection);
+                              int combinedBlockStartRow = Grid.getInstance()
+                                  .getBlockStartRow(
+                                      combinedBlockSection, gridSection);
+                              int combinedBlockWidth = numberOfRows.toInt();
+                              int combinedBlockHeight = numberOfColumns.toInt();
+
+                              // print(numberOfColumns);
+
+                              moveCombinedBlock(
+                                  combinedBlockStartColumn,
+                                  combinedBlockStartRow,
+                                  combinedBlockHeight,
+                                  combinedBlockWidth);
+                            },
+                            onTapDown: (details) {
+                              if (numberOfRows > 1) {
+                                //if the user is not holding a quadrant from the first column
+                                blockQuadrant =
+                                    colIndex + colIndex + rowIndex + 1;
+                                dragInformation.blockQuadrantDraggingFrom =
+                                    blockQuadrant;
+                                // print(
+                                //     "quadrant ${colIndex + colIndex + rowIndex + 1}");
+                              } else {
+                                blockQuadrant = colIndex + 1;
+                                dragInformation.blockQuadrantDraggingFrom =
+                                    blockQuadrant;
+                                // print("quadrant ${colIndex + 1}");
+                              }
+                            },
+                            child: Container(
+                              width: getBlockSize(rows),
+                              height: getBlockSize(rows),
+                              decoration: BoxDecoration(color: null),
+                            ),
+                          );
+                        }));
+              })),
       feedback: Container(
         height: height,
         width: width,
@@ -159,7 +257,7 @@ class _GridUIViewState extends State<GridUIView> {
       shrinkWrap: true,
       itemCount: columns,
       itemBuilder: (context, columnIndex) {
-        print(gridSection);
+        // print(gridSection);
 
         // print("here");
         return Container(
@@ -187,6 +285,8 @@ class _GridUIViewState extends State<GridUIView> {
   ///[combinedGroupHeight] param
   ///
   Widget createCombinedGroupWith1CombinedBlock(
+      int gridSection,
+      int combinedBlockSection,
       int totalRows,
       int emptyRowsBefore,
       int emptyRowsAfter,
@@ -195,6 +295,7 @@ class _GridUIViewState extends State<GridUIView> {
     bool hasEmptyBlocksBeforeBeingBuilt = false;
     bool hasCombinedBlockBeingBuilt = false;
     // int totalRows = emptyRowsBefore + combinedBlockWidth + emptyRowsAfter;
+    int singleBlockSection = 0;
 
     return Container(
         height: getBlockSize(totalRows) * combinedGroupHeight,
@@ -203,6 +304,7 @@ class _GridUIViewState extends State<GridUIView> {
           itemCount:
               3, //each combined group section(blocks before|comb. block|blocks after)
           itemBuilder: (context, rowIndex) {
+            singleBlockSection++;
             /*====================
              * Build each combined group section (i.e the empty blocks before, the combined block and the empty blocks after)
              =====================*/
@@ -212,14 +314,6 @@ class _GridUIViewState extends State<GridUIView> {
              ========================================*/
             if (!hasEmptyBlocksBeforeBeingBuilt) {
               hasEmptyBlocksBeforeBeingBuilt = true;
-
-              /*==================================================
-              * EACH ROW
-              * --------
-              * 
-              * Each entry results in a block created (Height is
-              * inherited from parent Container)
-              ==================================================*/
               return Container(
                 width: getBlockSize(totalRows) * emptyRowsBefore,
                 child: ListView.builder(
@@ -227,8 +321,7 @@ class _GridUIViewState extends State<GridUIView> {
                     padding: EdgeInsets.all(0),
                     itemCount:
                         combinedGroupHeight, //Each column before the combined block
-                    itemBuilder:
-                        (context, blocksBeforeCombinedBlockColumnIndex) {
+                    itemBuilder: (context, columnIndex) {
                       /*============
                        * EACH COLUMN
                        =============*/
@@ -239,17 +332,13 @@ class _GridUIViewState extends State<GridUIView> {
                           physics: NeverScrollableScrollPhysics(),
                           padding: EdgeInsets.zero,
                           itemCount: emptyRowsBefore,
-                          itemBuilder: (context, blocksBeforeBlocks) {
-                            return Container(
-                              width: getBlockSize(totalRows),
-                              decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  border: Border.all(
-                                      color: Colors.white, width: 2)),
-                              child: Center(
-                                child: Icon(Icons.add, color: Colors.white),
-                              ),
-                            );
+                          itemBuilder: (context, rowIndex) {
+                            return createSingleBlock(
+                                getBlockSize(totalRows),
+                                gridSection,
+                                singleBlockSection,
+                                columnIndex + 1,
+                                rowIndex + 1);
                           },
                         ),
                       );
@@ -258,11 +347,13 @@ class _GridUIViewState extends State<GridUIView> {
             } else {
               /*===============
                * COMBINED BLOCK
-               * --------------
                ================*/
               if (!hasCombinedBlockBeingBuilt) {
                 hasCombinedBlockBeingBuilt = true;
+                Block block = Block(BlockType.combined, null,
+                    combinedGroupHeight, combinedBlockWidth);
                 return createCombinedBlock(
+                    gridSection, combinedBlockSection, block,
                     height: getBlockSize(totalRows) * combinedGroupHeight,
                     width: getBlockSize(totalRows) * combinedBlockWidth);
               } else {
@@ -276,8 +367,7 @@ class _GridUIViewState extends State<GridUIView> {
                       padding: EdgeInsets.all(0),
                       itemCount:
                           combinedGroupHeight, //Each column before the combined block
-                      itemBuilder:
-                          (context, blocksAfterCombinedBlockColumnIndex) {
+                      itemBuilder: (context, columnIndex) {
                         return Container(
                           height: getBlockSize(totalRows),
                           child: ListView.builder(
@@ -285,8 +375,13 @@ class _GridUIViewState extends State<GridUIView> {
                             physics: NeverScrollableScrollPhysics(),
                             padding: EdgeInsets.zero,
                             itemCount: emptyRowsAfter,
-                            itemBuilder: (context, blocksAfterBlocks) {
-                              return createSingleBlock(getBlockSize(totalRows));
+                            itemBuilder: (context, rowIndex) {
+                              return createSingleBlock(
+                                  getBlockSize(totalRows),
+                                  gridSection,
+                                  singleBlockSection,
+                                  columnIndex + 1,
+                                  rowIndex + 1);
                             },
                           ),
                         );
@@ -305,9 +400,11 @@ class _GridUIViewState extends State<GridUIView> {
   ///
   ///
   Widget createCombinedGroupWithMultipleCombinedBlocks(
+      int gridSection,
       int totalNumberOfIndividualRows,
       int combinedGroupHeight,
       List<List> combinedBlocks) {
+    int combinedBlockSection = 0;
     return Container(
       height: getBlockSize(totalNumberOfIndividualRows) * combinedGroupHeight,
       child: ListView.builder(
@@ -317,22 +414,43 @@ class _GridUIViewState extends State<GridUIView> {
           shrinkWrap: true,
           itemCount: combinedBlocks.length,
           itemBuilder: (context, combinedBlockBlockIndex) {
+            combinedBlockSection++;
+
             int numberOfRowsBefore = combinedBlocks[combinedBlockBlockIndex][1];
             int numberOfRowsAfter = combinedBlocks[combinedBlockBlockIndex][2];
             int combinedBlockWidth = combinedBlocks[combinedBlockBlockIndex][0];
-            int totalNumberOfRowsForCombinedBlock =
-                numberOfRowsBefore + combinedBlockWidth + numberOfRowsAfter;
 
-            return Container(
-              width: getBlockSize(totalNumberOfIndividualRows) *
-                  totalNumberOfRowsForCombinedBlock,
-              child: createCombinedGroupWith1CombinedBlock(
-                  totalNumberOfIndividualRows,
-                  numberOfRowsBefore,
-                  numberOfRowsAfter,
-                  combinedBlockWidth,
-                  combinedGroupHeight),
-            );
+            if (combinedBlockBlockIndex + 1 != combinedBlocks.length) {
+              int totalNumberOfRowsForCombinedBlock =
+                  numberOfRowsBefore + combinedBlockWidth + 0;
+              return Container(
+                width: getBlockSize(totalNumberOfIndividualRows) *
+                    totalNumberOfRowsForCombinedBlock,
+                child: createCombinedGroupWith1CombinedBlock(
+                    gridSection,
+                    combinedBlockSection,
+                    totalNumberOfIndividualRows,
+                    numberOfRowsBefore,
+                    0,
+                    combinedBlockWidth,
+                    combinedGroupHeight),
+              );
+            } else {
+              int totalNumberOfRowsForCombinedBlock =
+                  numberOfRowsBefore + combinedBlockWidth + numberOfRowsAfter;
+              return Container(
+                width: getBlockSize(totalNumberOfIndividualRows) *
+                    totalNumberOfRowsForCombinedBlock,
+                child: createCombinedGroupWith1CombinedBlock(
+                    gridSection,
+                    combinedBlockSection,
+                    totalNumberOfIndividualRows,
+                    numberOfRowsBefore,
+                    numberOfRowsAfter,
+                    combinedBlockWidth,
+                    combinedGroupHeight),
+              );
+            }
           }),
     );
   }
@@ -344,7 +462,11 @@ class _GridUIViewState extends State<GridUIView> {
   ///Example: Combined block with height of 2, width of 2, 3 blocks before, 2 blocks after, 1 block above, 2 blocks below  = [2, 2, 3, 2, 1, 2]
   ///
   Widget createCombinedGroupWithMultipleCombinedBlocksOfDiffHeight(
-      int numberOfRows, int combinedGroupHeight, List<List> combinedBlocks) {
+      int gridSection,
+      int numberOfRows,
+      int combinedGroupHeight,
+      List<List> combinedBlocks) {
+    int combinedBlockSection = 0;
     return ListView.builder(
         physics: NeverScrollableScrollPhysics(),
         padding: EdgeInsets.all(0),
@@ -360,6 +482,7 @@ class _GridUIViewState extends State<GridUIView> {
                   scrollDirection: Axis.horizontal,
                   itemCount: combinedBlocks.length,
                   itemBuilder: (context, rowIndex) {
+                    combinedBlockSection++;
                     int blocksBeforeChecked = 0;
                     int blocksAfterChecked = 0;
                     bool hasCombinedBlockBeingBuilt = false;
@@ -399,8 +522,7 @@ class _GridUIViewState extends State<GridUIView> {
                                     physics: NeverScrollableScrollPhysics(),
                                     padding: EdgeInsets.all(0),
                                     itemCount: combinedGroupHeight,
-                                    itemBuilder: (context,
-                                        blocksBeforeCombinedBlockColumnIndex) {
+                                    itemBuilder: (context, columnIndex) {
                                       return Container(
                                           height: getBlockSize(numberOfRows),
                                           child: ListView.builder(
@@ -408,10 +530,12 @@ class _GridUIViewState extends State<GridUIView> {
                                               padding: EdgeInsets.all(0),
                                               scrollDirection: Axis.horizontal,
                                               itemCount: 1,
-                                              itemBuilder: (context,
-                                                  blocksBeforeCombinedBlockRowIndex) {
+                                              itemBuilder: (context, rowIndex) {
                                                 return createSingleBlock(
-                                                    getBlockSize(numberOfRows));
+                                                    getBlockSize(numberOfRows),
+                                                    gridSection,
+                                                    columnIndex,
+                                                    rowIndex);
                                               }));
                                     }));
                           } else {
@@ -461,7 +585,10 @@ class _GridUIViewState extends State<GridUIView> {
                                                         blocksAboveCombinedBlockRowIndex) {
                                                       return createSingleBlock(
                                                           getBlockSize(
-                                                              numberOfRows));
+                                                              numberOfRows),
+                                                          gridSection,
+                                                          columnIndex,
+                                                          rowIndex);
                                                     }));
                                           },
                                         );
@@ -492,7 +619,15 @@ class _GridUIViewState extends State<GridUIView> {
                                                   itemCount: combinedBlockWidth,
                                                   itemBuilder: (context,
                                                       innerCombinedBlockRow) {
+                                                    Block block = Block(
+                                                        BlockType.combined,
+                                                        null,
+                                                        combinedGroupHeight,
+                                                        combinedBlockWidth);
                                                     return createCombinedBlock(
+                                                        gridSection,
+                                                        combinedBlockSection,
+                                                        block,
                                                         height: getBlockSize(
                                                                 numberOfRows) *
                                                             combinedBlockHeight,
@@ -517,8 +652,8 @@ class _GridUIViewState extends State<GridUIView> {
                                                 padding: EdgeInsets.all(0),
                                                 itemCount:
                                                     numberOfBlocksBelowCombinedBlock,
-                                                itemBuilder: (context,
-                                                    blocksBelowCombinedBlockColumnIndex) {
+                                                itemBuilder:
+                                                    (context, columnIndex) {
                                                   return Container(
                                                       padding:
                                                           EdgeInsets.all(0),
@@ -533,10 +668,13 @@ class _GridUIViewState extends State<GridUIView> {
                                                           itemCount:
                                                               combinedBlockWidth,
                                                           itemBuilder: (context,
-                                                              blocksBelowCombinedBlockRowIndex) {
+                                                              rowIndex) {
                                                             return createSingleBlock(
                                                                 getBlockSize(
-                                                                    numberOfRows));
+                                                                    numberOfRows),
+                                                                gridSection,
+                                                                columnIndex,
+                                                                rowIndex);
                                                           }));
                                                 });
                                           } else {
@@ -558,8 +696,7 @@ class _GridUIViewState extends State<GridUIView> {
                                         physics: NeverScrollableScrollPhysics(),
                                         padding: EdgeInsets.all(0),
                                         itemCount: combinedGroupHeight,
-                                        itemBuilder: (context,
-                                            blocksAfterCombinedBlockColumnIndex) {
+                                        itemBuilder: (context, columnIndex) {
                                           return Container(
                                               height:
                                                   getBlockSize(numberOfRows),
@@ -568,11 +705,14 @@ class _GridUIViewState extends State<GridUIView> {
                                                   scrollDirection:
                                                       Axis.horizontal,
                                                   itemCount: 1,
-                                                  itemBuilder: (context,
-                                                      blocksAfterCombinedBlockRowIndex) {
+                                                  itemBuilder:
+                                                      (context, rowIndex) {
                                                     return createSingleBlock(
                                                         getBlockSize(
-                                                            numberOfRows));
+                                                            numberOfRows),
+                                                        gridSection,
+                                                        columnIndex,
+                                                        rowIndex);
                                                   }));
                                         }));
                               } else {
@@ -601,8 +741,7 @@ class _GridUIViewState extends State<GridUIView> {
                                     physics: NeverScrollableScrollPhysics(),
                                     padding: EdgeInsets.all(0),
                                     itemCount: combinedGroupHeight,
-                                    itemBuilder: (context,
-                                        blocksBeforeCombinedBlockColumnIndex) {
+                                    itemBuilder: (context, columnIndex) {
                                       return Container(
                                           height: getBlockSize(numberOfRows),
                                           child: ListView.builder(
@@ -610,10 +749,12 @@ class _GridUIViewState extends State<GridUIView> {
                                               padding: EdgeInsets.all(0),
                                               scrollDirection: Axis.horizontal,
                                               itemCount: 1,
-                                              itemBuilder: (context,
-                                                  blocksBeforeCombinedBlockRowIndex) {
+                                              itemBuilder: (context, rowIndex) {
                                                 return createSingleBlock(
-                                                    getBlockSize(numberOfRows));
+                                                    getBlockSize(numberOfRows),
+                                                    gridSection,
+                                                    columnIndex,
+                                                    rowIndex);
                                               }));
                                     }));
                             //Combined block
@@ -646,8 +787,7 @@ class _GridUIViewState extends State<GridUIView> {
                                           shrinkWrap: true,
                                           itemCount:
                                               numberOfBlocksAboveCombinedBlock,
-                                          itemBuilder: (context,
-                                              combinedBlocksAboveIndex) {
+                                          itemBuilder: (context, columnIndex) {
                                             return Container(
                                                 height:
                                                     getBlockSize(numberOfRows),
@@ -660,11 +800,14 @@ class _GridUIViewState extends State<GridUIView> {
                                                     padding: EdgeInsets.all(0),
                                                     itemCount:
                                                         combinedBlockWidth,
-                                                    itemBuilder: (context,
-                                                        blocksAboveCombinedBlockRowIndex) {
+                                                    itemBuilder:
+                                                        (context, rowIndex) {
                                                       return createSingleBlock(
                                                           getBlockSize(
-                                                              numberOfRows));
+                                                              numberOfRows),
+                                                          gridSection,
+                                                          columnIndex,
+                                                          rowIndex);
                                                     }));
                                           },
                                         );
@@ -695,7 +838,15 @@ class _GridUIViewState extends State<GridUIView> {
                                                   itemCount: combinedBlockWidth,
                                                   itemBuilder: (context,
                                                       innerCombinedBlockRow) {
+                                                    Block block = Block(
+                                                        BlockType.combined,
+                                                        null,
+                                                        combinedGroupHeight,
+                                                        combinedBlockWidth);
                                                     return createCombinedBlock(
+                                                        gridSection,
+                                                        combinedBlockSection,
+                                                        block,
                                                         height: getBlockSize(
                                                                 numberOfRows) *
                                                             combinedBlockHeight,
@@ -720,8 +871,8 @@ class _GridUIViewState extends State<GridUIView> {
                                                 padding: EdgeInsets.all(0),
                                                 itemCount:
                                                     numberOfBlocksBelowCombinedBlock,
-                                                itemBuilder: (context,
-                                                    blocksBelowCombinedBlockColumnIndex) {
+                                                itemBuilder:
+                                                    (context, columnIndex) {
                                                   return Container(
                                                       padding:
                                                           EdgeInsets.all(0),
@@ -736,10 +887,13 @@ class _GridUIViewState extends State<GridUIView> {
                                                           itemCount:
                                                               combinedBlockWidth,
                                                           itemBuilder: (context,
-                                                              blocksBelowCombinedBlockRowIndex) {
+                                                              rowIndex) {
                                                             return createSingleBlock(
                                                                 getBlockSize(
-                                                                    numberOfRows));
+                                                                    numberOfRows),
+                                                                gridSection,
+                                                                columnIndex,
+                                                                rowIndex);
                                                           }));
                                                 });
                                           } else {
@@ -777,21 +931,22 @@ class _GridUIViewState extends State<GridUIView> {
                 bool hasAboveBeenBuilt = false;
                 bool hasCombinedGroupBeenBuilt = false;
                 bool hasBelowBeenBuilt = false;
+                int combinedGroupSection = 0;
+                gridSectionPosition++;
 
                 return ListView.builder(
                     physics: NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     itemCount: 3, //each combined group section
+                    // ignore: missing_return
                     itemBuilder: (context, index) {
-                      gridSectionPosition++;
-
                       CombinedGroup combinedGroup = data[combGroupIndex];
                       int columnsAbove = combinedGroup.columnsAbove;
                       int columnsBelow = combinedGroup.columnsBelow;
                       // int combinedGroupHeight = combinedGroup.numberOfColumns;
                       int combinedGroupRows = combinedGroup.numberOfRows;
-
-                      //Blocks bove
+                      combinedGroupSection++;
+                      //Blocks above
                       if (!hasAboveBeenBuilt) {
                         hasAboveBeenBuilt = true;
                         return createEmptyBlocks(gridSectionPosition,
@@ -813,6 +968,8 @@ class _GridUIViewState extends State<GridUIView> {
                             int combinedBlockWidth = block.numberOfRows;
                             int combinedGroupHeight = block.numberOfColumns;
                             return createCombinedGroupWith1CombinedBlock(
+                                gridSectionPosition,
+                                1,
                                 (emptyRowsBefore +
                                     combinedBlockWidth +
                                     emptyRowsAfter),
@@ -845,6 +1002,7 @@ class _GridUIViewState extends State<GridUIView> {
                             }
 
                             return createCombinedGroupWithMultipleCombinedBlocks(
+                                gridSectionPosition,
                                 combinedGroupRows,
                                 combinedGroupHeight,
                                 combinedBlocksList);
@@ -879,6 +1037,7 @@ class _GridUIViewState extends State<GridUIView> {
                               ]);
                             }
                             return createCombinedGroupWithMultipleCombinedBlocksOfDiffHeight(
+                                gridSectionPosition,
                                 combinedGroupRows,
                                 combinedGroupHeight,
                                 combinedBlocksList);
@@ -889,6 +1048,8 @@ class _GridUIViewState extends State<GridUIView> {
                             hasBelowBeenBuilt = true;
                             return createEmptyBlocks(gridSectionPosition,
                                 columnsBelow, rows, getBlockSize(rows));
+                          } else {
+                            return Container();
                           }
                         }
                       }
