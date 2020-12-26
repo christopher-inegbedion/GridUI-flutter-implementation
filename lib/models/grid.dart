@@ -332,4 +332,118 @@ class Grid {
 
     return rowsBeforeCombinedBlock;
   }
+
+  int getBlockColumn(
+      int gridSection, int combinedGroupSection, int blockColumn) {
+    int numberOfCombinedGroups = combinedGroups.length;
+    CombinedGroup combinedGroup = getSpecificCombinedGroup(gridSection);
+    int numberOfColumnsAboveCombinedGroup = combinedGroup.columnsAbove;
+    int combinedGroupHeight = combinedGroup.numberOfColumns;
+    int totalColumnsAbove = 0;
+
+    if (gridSection == 1) {
+      if (combinedGroupSection == 1) {
+        return blockColumn;
+      } else if (combinedGroupSection == 2) {
+        return numberOfColumnsAboveCombinedGroup + blockColumn;
+      } else if (combinedGroupSection == 3) {
+        //do nothing
+        return -1;
+      }
+    } else {
+      if (combinedGroupSection == 1) {
+        for (int i = 1; i < gridSection; i++) {
+          int columnsAbove = getSpecificCombinedGroup(i).columnsAbove;
+          int height = getSpecificCombinedGroup(i).numberOfColumns;
+          totalColumnsAbove += columnsAbove + height;
+        }
+
+        return totalColumnsAbove + blockColumn;
+      } else if (combinedGroupSection == 2) {
+        for (int i = 1; i < gridSection; i++) {
+          int columnsAbove = getSpecificCombinedGroup(i).columnsAbove;
+          int height = getSpecificCombinedGroup(i).numberOfColumns;
+          totalColumnsAbove += columnsAbove + height;
+        }
+
+        return totalColumnsAbove +
+            numberOfColumnsAboveCombinedGroup +
+            blockColumn;
+      } else if (combinedGroupSection == 3) {
+        for (int i = 1; i < numberOfCombinedGroups; i++) {
+          int columnsAbove = getSpecificCombinedGroup(i).columnsAbove;
+          int height = getSpecificCombinedGroup(i).numberOfColumns;
+          totalColumnsAbove += columnsAbove + height;
+        }
+
+        return totalColumnsAbove +
+            numberOfColumnsAboveCombinedGroup +
+            combinedGroupHeight +
+            blockColumn;
+      }
+    }
+  }
+
+  int getBlockRow(int gridSection, int combinedGroupSection,
+      int combinedBlockInGroupSection, int blockRow) {
+    int numberOfCombinedGroups = combinedGroups.length;
+    CombinedGroup combinedGroup = getSpecificCombinedGroup(gridSection);
+    int numberOfColumnsAboveCombinedGroup = combinedGroup.columnsAbove;
+    int combinedGroupHeight = combinedGroup.numberOfColumns;
+    int totalColumnsAbove = 0;
+
+    if (gridSection == 1) {
+      if (combinedGroupSection == 1) {
+        return blockRow;
+      } else if (combinedGroupSection == 2) {
+        if (combinedBlockInGroupSection == 1) {
+          return blockRow;
+        } else {
+          int combinedBlockToTheLeftPosition = combinedBlockInGroupSection - 1;
+
+          int combinedBlockRow =
+              getBlockStartRow(combinedBlockToTheLeftPosition, gridSection) +
+                  blockRow;
+          Block combinedBlockToTheLeft = getSpecificCombinedBlockInGroup(
+                  combinedBlockToTheLeftPosition, combinedGroup)
+              .block;
+
+          if (combinedBlockToTheLeft.numberOfRows > 1) {
+            int combinedBlockWidth = combinedBlockToTheLeft.numberOfRows;
+            return (combinedBlockRow + 1) + (combinedBlockWidth - 1);
+          } else {
+            return combinedBlockRow + 1;
+          }
+        }
+      } else if (combinedGroupSection == 3) {
+        return blockRow;
+      }
+    } else {
+      if (combinedGroupSection == 1) {
+        return blockRow;
+      } else if (combinedGroupSection == 2) {
+        if (combinedBlockInGroupSection == 1) {
+          return blockRow;
+        } else {
+          int combinedBlockToTheLeftPosition = combinedBlockInGroupSection - 1;
+
+          int combinedBlockRow =
+              getBlockStartRow(combinedBlockToTheLeftPosition, gridSection) +
+                  blockRow;
+          Block combinedBlockToTheLeft = getSpecificCombinedBlockInGroup(
+                  combinedBlockToTheLeftPosition, combinedGroup)
+              .block;
+
+          if (combinedBlockToTheLeft.numberOfRows > 1) {
+            int combinedBlockWidth = combinedBlockToTheLeft.numberOfRows;
+            return (combinedBlockRow + 1) + (combinedBlockWidth - 1);
+          } else {
+            return combinedBlockRow + 1;
+          }
+        }
+      } else if (combinedGroupSection == 3) {
+        return blockRow;
+      }
+    }
+  }
 }

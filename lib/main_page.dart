@@ -49,25 +49,23 @@ class _GridPageState extends State<GridPage> {
       child: Scaffold(
         backgroundColor: Colors.black,
         body: SingleChildScrollView(
-          child: Stack(
+          child: Column(
             children: [
               grid.combinedGroups == null
                   ? CircularProgressIndicator()
                   : gridView,
               Container(
+                margin: EdgeInsets.only(left: 20, right: 20),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     FlatButton(
                       color: Colors.white,
                       child: Text(
-                        "Change",
+                        "Default",
                       ),
                       onPressed: () {
-                        print(
-                            "combined block start column ${grid.getBlockStartColumn(1, 2)}");
-                        print(
-                            "combined block start row ${grid.getBlockStartRow(1, 2)}");
-                        getGridFromServer('http://192.168.44.1:5000')
+                        getGridFromServer('http://192.168.1.129:5000/default')
                             .then((value) {
                           grid
                               .loadJSON("", fromNetwork: true, grid: value)
@@ -79,13 +77,94 @@ class _GridPageState extends State<GridPage> {
                             });
                           });
 
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                          setState(() {
+                            gridView.changeCols(grid.gridColumns);
+                            gridView.changeRows(grid.gridRows);
+                            gridView.changeGrid(grid.combinedGroups);
+                          });
+                        });
+                      },
+                    ),
+                    FlatButton(
+                      color: Colors.white,
+                      child: Text(
+                        "Preset 1",
+                      ),
+                      onPressed: () {
+                        getGridFromServer('http://192.168.1.129:5000/preset1')
+                            .then((value) {
+                          grid
+                              .loadJSON("", fromNetwork: true, grid: value)
+                              .then((value) {
                             setState(() {
-                              gridView.changeCols(grid.gridColumns);
-                              gridView.changeRows(grid.gridRows);
-                              gridView.changeGrid(grid.combinedGroups);
+                              grid.gridColumns = value.gridColumns;
+                              grid.gridRows = value.gridRows;
+                              grid.combinedGroups = value.combinedGroups;
                             });
                           });
+
+                          setState(() {
+                            gridView.changeCols(grid.gridColumns);
+                            gridView.changeRows(grid.gridRows);
+                            gridView.changeGrid(grid.combinedGroups);
+                          });
+                        });
+                      },
+                    ),
+                    FlatButton(
+                      color: Colors.white,
+                      child: Text(
+                        "Preset 2",
+                      ),
+                      onPressed: () {
+                        print(
+                            "combined block start column ${grid.getBlockStartColumn(1, 2)}");
+                        print(
+                            "combined block start row ${grid.getBlockStartRow(1, 2)}");
+                        getGridFromServer('http://192.168.1.129:5000/preset2')
+                            .then((value) {
+                          grid
+                              .loadJSON("", fromNetwork: true, grid: value)
+                              .then((value) {
+                            setState(() {
+                              grid.gridColumns = value.gridColumns;
+                              grid.gridRows = value.gridRows;
+                              grid.combinedGroups = value.combinedGroups;
+                            });
+                          });
+
+                          setState(() {
+                            gridView.changeCols(grid.gridColumns);
+                            gridView.changeRows(grid.gridRows);
+                            gridView.changeGrid(grid.combinedGroups);
+                          });
+                        });
+                      },
+                    ),
+                    FlatButton(
+                      color: Colors.white,
+                      child: Text(
+                        "Preset 3",
+                      ),
+                      onPressed: () {
+                        getGridFromServer('http://192.168.1.129:5000/preset3')
+                            .then((value) {
+                          grid
+                              .loadJSON("", fromNetwork: true, grid: value)
+                              .then((value) {
+                            setState(() {
+                              grid.gridColumns = value.gridColumns;
+                              grid.gridRows = value.gridRows;
+                              grid.combinedGroups = value.combinedGroups;
+                            });
+                          });
+
+                          setState(() {
+                            gridView.changeCols(grid.gridColumns);
+                            gridView.changeRows(grid.gridRows);
+                            gridView.changeGrid(grid.combinedGroups);
+                          });
+                          ;
                         });
                       },
                     )
