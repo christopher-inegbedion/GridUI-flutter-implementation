@@ -3,6 +3,8 @@ import 'block.dart';
 class CombBlockDragInformation {
   Block block;
   int blockQuadrantDraggingFrom;
+  int blockQuadrantColumn;
+  int blockQuadrantRow;
   int combinedBlockStartColumn;
   int combinedBlockStartRow;
   int combinedBlockWidth;
@@ -11,6 +13,8 @@ class CombBlockDragInformation {
   CombBlockDragInformation(
       {this.block,
       this.blockQuadrantDraggingFrom,
+      this.blockQuadrantColumn,
+      this.blockQuadrantRow,
       this.combinedBlockStartColumn,
       this.combinedBlockStartRow,
       this.combinedBlockWidth,

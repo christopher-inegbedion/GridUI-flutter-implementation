@@ -79,15 +79,23 @@ class _GridUIViewState extends State<GridUIView> {
     return grid;
   }
 
-  void moveCombinedBlock(int startColumn, int startRow, int height, int width,
-      int targetColumn, int targetRow) {
+  void moveCombinedBlock(
+      int startColumn,
+      int startRow,
+      int height,
+      int width,
+      int targetColumn,
+      int targetRow,
+      int blockQuadrant,
+      int blockQuadrantCol,
+      int blockQuadrantRow) {
     Map<String, String> data = {
       'start_column': startColumn.toString(),
       'start_row': startRow.toString(),
       'height': height.toString(),
       'width': width.toString(),
-      'target_column': targetColumn.toString(),
-      'target_row': targetRow.toString()
+      'target_column': (targetColumn - blockQuadrantCol).toString(),
+      'target_row': (targetRow - blockQuadrantRow).toString()
     };
     postGridToServer("http://192.168.1.129:5000/move", data).then((val) {
       Grid.getInstance()
@@ -168,7 +176,10 @@ class _GridUIViewState extends State<GridUIView> {
             dragInformation.combinedBlockHeight,
             dragInformation.combinedBlockWidth,
             columnOnGrid - 1,
-            rowOnGrid - 1);
+            rowOnGrid - 1,
+            dragInformation.blockQuadrantDraggingFrom,
+            dragInformation.blockQuadrantColumn,
+            dragInformation.blockQuadrantRow);
       },
     );
   }
@@ -209,6 +220,7 @@ class _GridUIViewState extends State<GridUIView> {
                               int combinedBlockStartRow = Grid.getInstance()
                                   .getBlockStartRow(
                                       combinedBlockSection, gridSection);
+                              print(rowIndex);
                               int combinedBlockWidth = numberOfRows.toInt();
                               int combinedBlockHeight = numberOfColumns.toInt();
                               if (numberOfRows > 1) {
@@ -222,6 +234,8 @@ class _GridUIViewState extends State<GridUIView> {
                               dragInformation.block = block;
                               dragInformation.blockQuadrantDraggingFrom =
                                   blockQuadrant;
+                              dragInformation.blockQuadrantColumn = colIndex;
+                              dragInformation.blockQuadrantRow = rowIndex;
                               dragInformation.combinedBlockHeight =
                                   combinedBlockHeight;
                               dragInformation.combinedBlockWidth =
