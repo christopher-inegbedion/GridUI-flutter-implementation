@@ -36,12 +36,19 @@ class GridUIView extends StatefulWidget {
   void changeGrid(List<CombinedGroup> data) {
     state.data = data;
   }
+
+  void changeEditMode(bool val) {
+    state.setState(() {
+      state.editMode = val;
+    });
+  }
 }
 
 class _GridUIViewState extends State<GridUIView> {
   int columns;
   int rows;
   List<CombinedGroup> data;
+  bool editMode = false;
 
   int currentIndex = 0;
 
@@ -136,51 +143,54 @@ class _GridUIViewState extends State<GridUIView> {
       int blockColumn,
       int blockRow}) {
     bool dropped = false;
-    return DragTarget(
-      builder: (context, List<CombBlockDragInformation> candidateData,
-          rejectedData) {
-        return GestureDetector(
-          onTap: () {
-            int columnOnGrid = Grid.getInstance().getBlockColumn(
-                gridPosition, combinedGroupSection, blockColumn);
-            int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
-                combinedGroupSection, combinedBlockInGroupPosition, blockRow);
-            print(
-                "empty block tapped is at grid section: $gridPosition, combined group section: $combinedGroupSection, combined block in group section: $combinedBlockInGroupPosition, column: $blockColumn, row: $blockRow");
-            print("col: $columnOnGrid, row: $rowOnGrid");
-          },
-          child: Container(
-            width: blockSize,
-            child: Center(
-              child: Icon(Icons.add, color: Colors.white),
+    return Visibility(
+      visible: editMode,
+      child: DragTarget(
+        builder: (context, List<CombBlockDragInformation> candidateData,
+            rejectedData) {
+          return GestureDetector(
+            onTap: () {
+              int columnOnGrid = Grid.getInstance().getBlockColumn(
+                  gridPosition, combinedGroupSection, blockColumn);
+              int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
+                  combinedGroupSection, combinedBlockInGroupPosition, blockRow);
+              print(
+                  "empty block tapped is at grid section: $gridPosition, combined group section: $combinedGroupSection, combined block in group section: $combinedBlockInGroupPosition, column: $blockColumn, row: $blockRow");
+              print("col: $columnOnGrid, row: $rowOnGrid");
+            },
+            child: Container(
+              width: blockSize,
+              child: Center(
+                child: Icon(Icons.add, color: Colors.white),
+              ),
+              decoration: BoxDecoration(
+                  color: Colors.black,
+                  border: Border.all(color: Colors.white, width: 2)),
             ),
-            decoration: BoxDecoration(
-                color: Colors.black,
-                border: Border.all(color: Colors.white, width: 2)),
-          ),
-        );
-      },
-      onWillAccept: (CombBlockDragInformation data) {
-        return true;
-      },
-      onAccept: (data) {
-        CombBlockDragInformation dragInformation = data;
-        int columnOnGrid = Grid.getInstance()
-            .getBlockColumn(gridPosition, combinedGroupSection, blockColumn);
-        int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
-            combinedGroupSection, combinedBlockInGroupPosition, blockRow);
+          );
+        },
+        onWillAccept: (CombBlockDragInformation data) {
+          return true;
+        },
+        onAccept: (data) {
+          CombBlockDragInformation dragInformation = data;
+          int columnOnGrid = Grid.getInstance()
+              .getBlockColumn(gridPosition, combinedGroupSection, blockColumn);
+          int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
+              combinedGroupSection, combinedBlockInGroupPosition, blockRow);
 
-        moveCombinedBlock(
-            dragInformation.combinedBlockStartColumn,
-            dragInformation.combinedBlockStartRow,
-            dragInformation.combinedBlockHeight,
-            dragInformation.combinedBlockWidth,
-            columnOnGrid - 1,
-            rowOnGrid - 1,
-            dragInformation.blockQuadrantDraggingFrom,
-            dragInformation.blockQuadrantColumn,
-            dragInformation.blockQuadrantRow);
-      },
+          moveCombinedBlock(
+              dragInformation.combinedBlockStartColumn,
+              dragInformation.combinedBlockStartRow,
+              dragInformation.combinedBlockHeight,
+              dragInformation.combinedBlockWidth,
+              columnOnGrid - 1,
+              rowOnGrid - 1,
+              dragInformation.blockQuadrantDraggingFrom,
+              dragInformation.blockQuadrantColumn,
+              dragInformation.blockQuadrantRow);
+        },
+      ),
     );
   }
 
@@ -199,71 +209,81 @@ class _GridUIViewState extends State<GridUIView> {
       child: Container(
           width: width,
           decoration: BoxDecoration(
+              color: Colors.white,
+              border:
+                  editMode ? Border.all(color: Colors.white, width: 2) : null),
+          child: Stack(
+            children: [
+              Center(child: Text("Combined block")),
+              ListView.builder(
+                  itemCount: numberOfColumns.toInt(),
+                  physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, colIndex) {
+                    return Container(
+                        height: getBlockSize(rows),
+                        child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: numberOfRows.toInt(),
+                            itemBuilder: (context, rowIndex) {
+                              return GestureDetector(
+                                onTapDown: (details) {
+                                  int combinedBlockStartColumn =
+                                      Grid.getInstance().getBlockStartColumn(
+                                          combinedBlockSection, gridSection);
+                                  int combinedBlockStartRow = Grid.getInstance()
+                                      .getBlockStartRow(
+                                          combinedBlockSection, gridSection);
+                                  print(rowIndex);
+                                  int combinedBlockWidth = numberOfRows.toInt();
+                                  int combinedBlockHeight =
+                                      numberOfColumns.toInt();
+                                  if (numberOfRows > 1) {
+                                    //if the user is not holding a quadrant from the first column
+                                    blockQuadrant =
+                                        colIndex + colIndex + rowIndex + 1;
+                                  } else {
+                                    blockQuadrant = colIndex + 1;
+                                  }
+
+                                  dragInformation.block = block;
+                                  dragInformation.blockQuadrantDraggingFrom =
+                                      blockQuadrant;
+                                  dragInformation.blockQuadrantColumn =
+                                      colIndex;
+                                  dragInformation.blockQuadrantRow = rowIndex;
+                                  dragInformation.combinedBlockHeight =
+                                      combinedBlockHeight;
+                                  dragInformation.combinedBlockWidth =
+                                      combinedBlockWidth;
+                                  dragInformation.combinedBlockStartColumn =
+                                      combinedBlockStartColumn;
+                                  dragInformation.combinedBlockStartRow =
+                                      combinedBlockStartRow;
+                                },
+                                child: Container(
+                                  width: getBlockSize(rows),
+                                  height: getBlockSize(rows),
+                                  decoration: BoxDecoration(color: null),
+                                ),
+                              );
+                            }));
+                  }),
+            ],
+          )),
+      feedback: Material(
+        child: Container(
+          height: height,
+          width: width,
+          decoration: BoxDecoration(
               color: Colors.orange,
               border: Border.all(color: Colors.white, width: 2)),
-          child: ListView.builder(
-              itemCount: numberOfColumns.toInt(),
-              physics: NeverScrollableScrollPhysics(),
-              itemBuilder: (context, colIndex) {
-                return Container(
-                    height: getBlockSize(rows),
-                    child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: numberOfRows.toInt(),
-                        itemBuilder: (context, rowIndex) {
-                          return GestureDetector(
-                            onTapDown: (details) {
-                              int combinedBlockStartColumn = Grid.getInstance()
-                                  .getBlockStartColumn(
-                                      combinedBlockSection, gridSection);
-                              int combinedBlockStartRow = Grid.getInstance()
-                                  .getBlockStartRow(
-                                      combinedBlockSection, gridSection);
-                              print(rowIndex);
-                              int combinedBlockWidth = numberOfRows.toInt();
-                              int combinedBlockHeight = numberOfColumns.toInt();
-                              if (numberOfRows > 1) {
-                                //if the user is not holding a quadrant from the first column
-                                blockQuadrant =
-                                    colIndex + colIndex + rowIndex + 1;
-                              } else {
-                                blockQuadrant = colIndex + 1;
-                              }
-
-                              dragInformation.block = block;
-                              dragInformation.blockQuadrantDraggingFrom =
-                                  blockQuadrant;
-                              dragInformation.blockQuadrantColumn = colIndex;
-                              dragInformation.blockQuadrantRow = rowIndex;
-                              dragInformation.combinedBlockHeight =
-                                  combinedBlockHeight;
-                              dragInformation.combinedBlockWidth =
-                                  combinedBlockWidth;
-                              dragInformation.combinedBlockStartColumn =
-                                  combinedBlockStartColumn;
-                              dragInformation.combinedBlockStartRow =
-                                  combinedBlockStartRow;
-                            },
-                            child: Container(
-                              width: getBlockSize(rows),
-                              height: getBlockSize(rows),
-                              decoration: BoxDecoration(color: null),
-                            ),
-                          );
-                        }));
-              })),
-      feedback: Container(
-        height: height,
-        width: width,
-        decoration: BoxDecoration(
-            color: Colors.orange,
-            border: Border.all(color: Colors.white, width: 2)),
-        child: Center(
-            child: Text(
-          "Editing",
-          style: TextStyle(fontSize: 20, color: Colors.white),
-        )),
+          child: Center(
+              child: Text(
+            "Editing",
+            style: TextStyle(fontSize: 20, color: Colors.white),
+          )),
+        ),
       ),
       childWhenDragging: Container(
         width: width,

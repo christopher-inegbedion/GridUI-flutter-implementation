@@ -12,6 +12,7 @@ class _GridPageState extends State<GridPage> {
   Grid grid;
   GridUIView gridView;
   String path;
+  bool editMode = false;
 
   @override
   void initState() {
@@ -55,9 +56,8 @@ class _GridPageState extends State<GridPage> {
                   ? CircularProgressIndicator()
                   : gridView,
               Container(
-                margin: EdgeInsets.only(left: 20, right: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceEvenly,
                   children: [
                     FlatButton(
                       color: Colors.white,
@@ -167,7 +167,19 @@ class _GridPageState extends State<GridPage> {
                           ;
                         });
                       },
-                    )
+                    ),
+                    FlatButton(
+                      color: Colors.white,
+                      child: Text(
+                        editMode ? "Edit mode: on" : "Edit mode: off",
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          editMode = !editMode;
+                          gridView.changeEditMode(editMode);
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
