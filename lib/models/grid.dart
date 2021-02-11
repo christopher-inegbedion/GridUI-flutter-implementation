@@ -338,6 +338,7 @@ class Grid {
     int numberOfCombinedGroups = combinedGroups.length;
     CombinedGroup combinedGroup = getSpecificCombinedGroup(gridSection);
     int numberOfColumnsAboveCombinedGroup = combinedGroup.columnsAbove;
+    int numberOfColumnsBelowCombinedGroup = combinedGroup.columnsBelow;
     int combinedGroupHeight = combinedGroup.numberOfColumns;
     int totalColumnsAbove = 0;
 
@@ -347,8 +348,9 @@ class Grid {
       } else if (combinedGroupSection == 2) {
         return numberOfColumnsAboveCombinedGroup + blockColumn;
       } else if (combinedGroupSection == 3) {
-        //do nothing
-        return -1;
+        return combinedGroupHeight +
+            numberOfColumnsAboveCombinedGroup +
+            blockColumn;
       }
     } else {
       if (combinedGroupSection == 1) {

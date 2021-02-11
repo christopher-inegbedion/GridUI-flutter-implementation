@@ -179,6 +179,10 @@ class _GridUIViewState extends State<GridUIView> {
           int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
               combinedGroupSection, combinedBlockInGroupPosition, blockRow);
 
+          print('combinedGroupSection $combinedGroupSection');
+          print('gridPosition $gridPosition');
+          print('column $columnOnGrid');
+
           moveCombinedBlock(
               dragInformation.combinedBlockStartColumn,
               dragInformation.combinedBlockStartRow,
