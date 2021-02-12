@@ -11,37 +11,38 @@ class GridPage extends StatefulWidget {
 class _GridPageState extends State<GridPage> {
   Grid grid;
   GridUIView gridView;
-  String path;
-  bool editMode = false;
 
   @override
   void initState() {
     super.initState();
-    print("new");
     grid = Grid.getInstance();
-    grid.loadJSON("assets/json/test_grid.json").then((value) {
+    grid.initGridView("assets/json/test_grid.json").then((value) {
       setState(() {
-        grid.gridColumns = value.gridColumns;
-        grid.gridRows = value.gridRows;
-        grid.combinedGroups = value.combinedGroups;
-
-        gridView =
-            GridUIView(grid.gridColumns, grid.gridRows, grid.combinedGroups);
+        gridView = value;
       });
     });
   }
 
+  ///Retrieve a Grid layout from the url specified
   Future<String> getGridFromServer(String url) async {
-    http.Response response = await http.get(url);
-    String grid;
-
-    if (response.statusCode == 200) {
-      grid = response.body;
+    if (url != "" && url.isEmpty) {
+      throw Exception("URL value required");
     } else {
-      grid = '';
-    }
+      http.Response response = await http.get(url);
+      String grid;
 
-    return grid;
+      if (response.statusCode == 200) {
+        grid = response.body;
+      } else {
+        grid = '';
+      }
+
+      return grid;
+    }
+  }
+
+  Widget loadGridView(GridUIView gridView) {
+    return grid.combinedGroups == null ? CircularProgressIndicator() : gridView;
   }
 
   @override
@@ -52,9 +53,14 @@ class _GridPageState extends State<GridPage> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              grid.combinedGroups == null
-                  ? CircularProgressIndicator()
-                  : gridView,
+              /* ====
+               * Grid
+               =====*/
+              loadGridView(gridView),
+
+              /* ==============
+               * Bottom buttons
+               ===============*/
               Container(
                 child: Wrap(
                   alignment: WrapAlignment.spaceEvenly,
@@ -164,19 +170,22 @@ class _GridPageState extends State<GridPage> {
                             gridView.changeRows(grid.gridRows);
                             gridView.changeGrid(grid.combinedGroups);
                           });
-                          ;
                         });
                       },
                     ),
                     FlatButton(
                       color: Colors.white,
                       child: Text(
-                        editMode ? "Edit mode: on" : "Edit mode: off",
+                        gridView.state == null
+                            ? "Edit mode: off"
+                            : gridView.state.editMode
+                                ? "Edit mode: on"
+                                : "Edit mode: off",
                       ),
                       onPressed: () {
                         setState(() {
-                          editMode = !editMode;
-                          gridView.changeEditMode(editMode);
+                          gridView.state.editMode = !gridView.state.editMode;
+                          gridView.changeEditMode(gridView.state.editMode);
                         });
                       },
                     ),

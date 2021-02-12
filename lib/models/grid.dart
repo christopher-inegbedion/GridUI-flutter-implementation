@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
@@ -11,7 +12,8 @@ class Grid {
 
   int gridColumns;
   int gridRows;
-  List<CombinedGroup> combinedGroups; //each combined group in the grid
+  List<CombinedGroup> combinedGroups;
+  bool editMode = false;
 
   Grid._();
 
@@ -80,6 +82,15 @@ class Grid {
     }
 
     return getInstance();
+  }
+
+  Future<GridUIView> initGridView(path) async {
+    Grid grid = await loadJSON(path);
+    this.gridColumns = grid.gridColumns;
+    this.gridRows = grid.gridRows;
+    this.combinedGroups = grid.combinedGroups;
+
+    return GridUIView(grid.gridColumns, grid.gridRows, grid.combinedGroups);
   }
 
   CombinedGroupType convertFromStringToCombinedGroupType(String type) {
