@@ -11,6 +11,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'GridUI implementation',
+      theme: ThemeData(fontFamily: 'DMMono-Regular'),
       home: GridPage(),
     );
   }
