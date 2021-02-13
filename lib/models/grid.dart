@@ -407,10 +407,10 @@ class Grid {
 
     if (gridSection == 1) {
       if (combinedGroupSection == 1) {
-        return blockRow;
+        return blockRow + 1;
       } else if (combinedGroupSection == 2) {
         if (combinedBlockInGroupSection == 1) {
-          return blockRow;
+          return blockRow + 1;
         } else {
           int combinedBlockToTheLeftPosition = combinedBlockInGroupSection - 1;
 
@@ -429,14 +429,16 @@ class Grid {
           }
         }
       } else if (combinedGroupSection == 3) {
-        return blockRow;
+        return blockRow + 1;
       }
     } else {
       if (combinedGroupSection == 1) {
-        return blockRow;
+        return blockRow + 1;
       } else if (combinedGroupSection == 2) {
         if (combinedBlockInGroupSection == 1) {
-          return blockRow;
+          print('here: ${blockRow + 1}');
+
+          return blockRow + 1;
         } else {
           int combinedBlockToTheLeftPosition = combinedBlockInGroupSection - 1;
 
@@ -455,7 +457,7 @@ class Grid {
           }
         }
       } else if (combinedGroupSection == 3) {
-        return blockRow;
+        return blockRow + 1;
       }
     }
   }
