@@ -172,11 +172,15 @@ class _GridUIViewState extends State<GridUIView> {
   ///Create a singular empty block in a grid. These blocks do not have any content but instead serve as visual guides for where content can be
   ///added and also as a drop target when moving combined blocks to another location.
   ///
-  ///The [combinedGroupSection] is either 1 or 3, because empty blocks are only created for the sections above the main combined group section.
-  Widget createSingleEmptyBlock(int combinedGroupSection,
-      {int gridPosition,
-      int combinedBlockInGroupPosition = 1,
+  ///The [combinedGroupSection] is either 1 or 3, because empty blocks are only created for the sections above/below the main combined group section.
+  Widget createSingleEmptyBlock(
+      int combinedGroupSection,
+      int columnsAboveCombinedGroup,
+      int combinedBlockColumnSection,
       int blockColumn,
+      Block parentBlock,
+      int offset,
+      {int gridPosition,
       int blockRow}) {
     return Visibility(
       visible: editMode,
@@ -185,13 +189,19 @@ class _GridUIViewState extends State<GridUIView> {
             rejectedData) {
           return GestureDetector(
             onTap: () {
+              int targetColumn = Grid.getInstance().getTargetColumn(
+                  columnsAboveCombinedGroup,
+                  combinedBlockColumnSection,
+                  blockColumn,
+                  parentBlock,
+                  offset);
               int columnOnGrid = Grid.getInstance().getBlockColumn(
                   gridPosition, combinedGroupSection, blockColumn);
-              int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
-                  combinedGroupSection, combinedBlockInGroupPosition, blockRow);
-              print(
-                  "empty block tapped is at grid section: $gridPosition, combined group section: $combinedGroupSection, combined block in group section: $combinedBlockInGroupPosition, column: $blockColumn, row: $blockRow");
-              print("col: $columnOnGrid, row: $rowOnGrid");
+              // int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
+              //     combinedGroupSection, combinedBlockInGroupPosition, blockRow);
+              // print(
+              //     "empty block tapped is at grid section: $gridPosition, combined group section: $combinedGroupSection, combined block in group section: $combinedBlockInGroupPosition, column: $blockColumn, row: $blockRow");
+              // print("col: $columnOnGrid, row: $blockRow");
             },
             child: Container(
               width: blockSize,
@@ -211,22 +221,22 @@ class _GridUIViewState extends State<GridUIView> {
           CombBlockDragInformation dragInformation = data;
           int columnOnGrid = Grid.getInstance()
               .getBlockColumn(gridPosition, combinedGroupSection, blockColumn);
-          int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
-              combinedGroupSection, combinedBlockInGroupPosition, blockRow);
+          // int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
+          //     combinedGroupSection, combinedBlockInGroupPosition, blockRow);
 
-          print("target column: ${columnOnGrid - 1}");
-          print("target row: ${rowOnGrid - 1}");
+          // print("target column: ${columnOnGrid - 1}");
+          // print("target row: ${rowOnGrid - 1}");
 
-          moveCombinedBlock(
-              dragInformation.combinedBlockStartColumn,
-              dragInformation.combinedBlockStartRow,
-              dragInformation.combinedBlockHeight,
-              dragInformation.combinedBlockWidth,
-              columnOnGrid - 1,
-              rowOnGrid - 1,
-              dragInformation.blockQuadrantDraggingFrom,
-              dragInformation.blockQuadrantColumn,
-              dragInformation.blockQuadrantRow);
+          // moveCombinedBlock(
+          //     dragInformation.combinedBlockStartColumn,
+          //     dragInformation.combinedBlockStartRow,
+          //     dragInformation.combinedBlockHeight,
+          //     dragInformation.combinedBlockWidth,
+          //     columnOnGrid - 1,
+          //     rowOnGrid - 1,
+          //     dragInformation.blockQuadrantDraggingFrom,
+          //     dragInformation.blockQuadrantColumn,
+          // dragInformation.blockQuadrantRow);
         },
       ),
     );
@@ -234,11 +244,11 @@ class _GridUIViewState extends State<GridUIView> {
 
   ///Create a combined block
   ///
-  ///Creates a combined block in a combined group on a grid. The [gridSection] is the index of the combined group in the CombinedGroup list, and the
-  ///[combinedBlockSection] is the section of the combined group the combined block resides is. The first combined block in a combined group will have
-  ///a [combinedBlockSection] value of 1, the second will have a value of 2 and so on.
-  Widget createCombinedBlock(
-      int gridSection, int combinedBlockSection, Block block,
+  ///Creates a combined block in a combined group on a grid. The [combinedGroupIndexInCombinedGroupList] is the index of the combined group in the CombinedGroup list, and the
+  ///[combinedBlockIndexInCombinedGroup] is the section of the combined group the combined block resides is. The first combined block in a combined group will have
+  ///a [combinedBlockIndexInCombinedGroup] value of 1, the second will have a value of 2 and so on.
+  Widget createCombinedBlock(int combinedGroupIndexInCombinedGroupList,
+      int combinedBlockIndexInCombinedGroup, Block block,
       {double height = 0.0, double width}) {
     double numberOfColumns = height / blockSize;
     double numberOfRows = width / blockSize;
@@ -258,7 +268,7 @@ class _GridUIViewState extends State<GridUIView> {
             children: [
               Center(
                   child: Text(
-                      "Combined block\n\ngrid section: ${gridSection}, combined block section ${combinedBlockSection}")),
+                      "Combined block\n\ngrid section: ${combinedGroupIndexInCombinedGroupList}, combined block section ${combinedBlockIndexInCombinedGroup}")),
 
               ///Block quadrants
               ListView.builder(
@@ -276,10 +286,12 @@ class _GridUIViewState extends State<GridUIView> {
                                 onTapDown: (details) {
                                   int combinedBlockStartColumn =
                                       Grid.getInstance().getBlockStartColumn(
-                                          combinedBlockSection, gridSection);
+                                          combinedBlockIndexInCombinedGroup,
+                                          combinedGroupIndexInCombinedGroupList);
                                   int combinedBlockStartRow = Grid.getInstance()
                                       .getBlockStartRow(
-                                          combinedBlockSection, gridSection);
+                                          combinedBlockIndexInCombinedGroup,
+                                          combinedGroupIndexInCombinedGroupList);
                                   int combinedBlockWidth = numberOfRows.toInt();
                                   int combinedBlockHeight =
                                       numberOfColumns.toInt();
@@ -344,147 +356,140 @@ class _GridUIViewState extends State<GridUIView> {
 
   ///Creates empty blocks above/below combined group
   ///
-  ///Creates a group of empty blocks in the grid. The [gridSection] argument defines the index of the empty block's combined group in the combined
-  ///group list. The [combinedBlockInGroupSection] defines where the empty block group is in the combined group. A value of 1 means the empty block group is
-  ///the top section and a value of 3 means the empty block group is the bottom section.
+  ///Creates a group of empty blocks in the grid. The [combinedGroupIndexInCombinedGroupList] argument defines the index of the empty block's combined group in the combined
+  ///group list.
   Widget createEmptyBlocks(
-      int gridSection, int combinedBlockInGroupSection, int columns, int rows) {
-    return ListView.builder(
-      padding: EdgeInsets.all(0),
-      physics: NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: columns,
-      itemBuilder: (context, columnIndex) {
-        // print(gridSection);
-
-        // print("here");
-        return Container(
-          height: blockSize,
-          child: ListView.builder(
-            shrinkWrap: true,
-            scrollDirection: Axis.horizontal,
-            itemCount: rows,
-            itemBuilder: (context, rowIndex) {
-              return createSingleEmptyBlock(combinedBlockInGroupSection,
-                  gridPosition: gridSection,
-                  blockColumn: columnIndex + 1,
-                  blockRow: rowIndex + 1);
-            },
-          ),
-        );
-      },
+      int combinedGroupIndexInCombinedGroupList,
+      int combinedBlockParentIndexInCombinedGroup,
+      int combinedBlockColumnSection,
+      int combinedBlockRowSection,
+      Block parentBlock,
+      int columnsAbove,
+      int columnOffset,
+      int columns,
+      int rows) {
+    return Container(
+      width: blockSize * rows,
+      child: ListView.builder(
+        padding: EdgeInsets.all(0),
+        physics: NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: columns,
+        itemBuilder: (context, columnIndex) {
+          return Container(
+            height: blockSize,
+            child: ListView.builder(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              itemCount: rows,
+              itemBuilder: (context, rowIndex) {
+                return createSingleEmptyBlock(
+                    combinedBlockParentIndexInCombinedGroup,
+                    columnsAbove,
+                    combinedBlockColumnSection,
+                    columnIndex + 1,
+                    parentBlock,
+                    columnOffset);
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 
   ///Creates a combined group with 1 combined block
   ///
-  ///The [gridSection] argument defines the index of the empty block's combined group in the combined
+  ///The [combinedGridListIndex] argument defines the index of the empty block's combined group in the combined
   ///group list. The number of empty blocks before(to the left) a combined block is set with
   ///the [emptyRowsBefore] param, the number of blocks after(to the right) a combined
   ///block is set with the [emptyRowsAfter] param, the width of the combined block is
   ///set with the [combinedBlockWidth] and the combined group height is set with the
-  ///[combinedGroupHeight] param
+  ///[combinedGroupHeight] param.
+  ///
+  ///[combined]
   ///
   Widget createCombinedGroupWith1CombinedBlock(
-      int gridSection,
-      int combinedBlockSection,
-      int combinedGroupSection,
-      int totalRows,
+      int combinedGridListIndex,
+      int totalColumnsAbove,
+      Block block,
       int emptyRowsBefore,
       int emptyRowsAfter,
       int combinedBlockWidth,
       int combinedGroupHeight) {
-    bool hasEmptyBlocksBeforeBeingBuilt = false;
-    bool hasCombinedBlockBeingBuilt = false;
-    // int totalRows = emptyRowsBefore + combinedBlockWidth + emptyRowsAfter;
+    bool hasEmptyBlocksBeforeBeenBuilt = false;
+    bool hasCombinedBlockBeenBuilt = false;
+    bool hasEmptyBlocksAfterBeenBuilt = false;
+
+    ///The default value of [combinedGroupSection] for the main section is 2
+    int combinedGroupSection = 2;
+
+    ///This is the index of a combined block in a combined group. This value is 1 by default, for combined groups with 1 combined block
+    int combinedBlockIndexInCombinedGroup = 1;
+    print("combinedGroupHeight $combinedGroupHeight");
 
     return Container(
         height: blockSize * combinedGroupHeight,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount:
-              3, //each combined group section(blocks before|comb. block|blocks after)
+              3, //each combined group section(blocks before|combined block|blocks after)
           itemBuilder: (context, rowIndex) {
-            /*====================
-             * Build the empty blocks before, the combined block and the empty blocks after
-             =====================*/
-
             /* ======================================
              * EMPTY BLOCKS BEFORE THE COMBINED BLOCK
              ========================================*/
-            if (!hasEmptyBlocksBeforeBeingBuilt) {
-              hasEmptyBlocksBeforeBeingBuilt = true;
-              return Container(
-                width: blockSize * emptyRowsBefore,
-                child: ListView.builder(
-                    physics: NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.all(0),
-                    itemCount:
-                        combinedGroupHeight, //Each column before the combined block
-                    itemBuilder: (context, columnIndex) {
-                      return Container(
-                        height: blockSize,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          physics: NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.zero,
-                          itemCount: emptyRowsBefore,
-                          itemBuilder: (context, rowIndex) {
-                            return createSingleEmptyBlock(combinedGroupSection,
-                                gridPosition: gridSection,
-                                combinedBlockInGroupPosition:
-                                    combinedBlockSection,
-                                blockColumn: columnIndex + 1,
-                                blockRow: rowIndex + 1);
-                          },
-                        ),
-                      );
-                    }),
-              );
+            if (!hasEmptyBlocksBeforeBeenBuilt) {
+              hasEmptyBlocksBeforeBeenBuilt = true;
+              int combinedBlockParentIndexInCombinedGroup = 1;
+              int combinedBlockColumnSection = combinedGroupSection;
+              int combinedBlockRowSection = 1;
+              int columnOffset = 0;
+              int numberOfEmptyBlockColumns = combinedGroupHeight;
+              int numberOfEmptyBlockRows = emptyRowsBefore;
+
+              return createEmptyBlocks(
+                  combinedGridListIndex,
+                  combinedBlockParentIndexInCombinedGroup,
+                  combinedBlockColumnSection,
+                  combinedBlockRowSection,
+                  block,
+                  totalColumnsAbove,
+                  columnOffset,
+                  numberOfEmptyBlockColumns,
+                  numberOfEmptyBlockRows);
             } else {
-              /*===============
-               * COMBINED BLOCK
-               ================*/
-              if (!hasCombinedBlockBeingBuilt) {
-                hasCombinedBlockBeingBuilt = true;
-                Block block = Block(BlockType.combined, null,
-                    combinedGroupHeight, combinedBlockWidth);
-                return createCombinedBlock(
-                    gridSection, combinedBlockSection, block,
+              if (!hasCombinedBlockBeenBuilt) {
+                hasCombinedBlockBeenBuilt = true;
+                return createCombinedBlock(combinedGridListIndex,
+                    combinedBlockIndexInCombinedGroup, block,
                     height: blockSize * combinedGroupHeight,
                     width: blockSize * combinedBlockWidth);
               } else {
-                /* ======================================
+                if (!hasEmptyBlocksAfterBeenBuilt) {
+                  /* ======================================
                  * EMPTY BLOCKS AFTER THE COMBINED BLOCK
                  ========================================*/
-                return Container(
-                  width: blockSize * emptyRowsAfter,
-                  child: ListView.builder(
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.all(0),
-                      itemCount:
-                          combinedGroupHeight, //Each column before the combined block
-                      itemBuilder: (context, columnIndex) {
-                        return Container(
-                          height: blockSize,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            physics: NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            itemCount: emptyRowsAfter,
-                            itemBuilder: (context, rowIndex) {
-                              return createSingleEmptyBlock(
-                                  combinedGroupSection,
-                                  gridPosition: gridSection,
-                                  combinedBlockInGroupPosition:
-                                      combinedBlockSection + 1,
-                                  blockColumn: columnIndex + 1,
-                                  blockRow: rowIndex + 1);
-                            },
-                          ),
-                        );
-                      }),
-                );
+                  hasEmptyBlocksAfterBeenBuilt = true;
+                  int combinedBlockParentIndexInCombinedGroup = 1;
+                  int combinedBlockColumnSection = combinedGroupSection;
+                  int combinedBlockRowSection = 1;
+                  int columnOffset = 0;
+                  int numberOfEmptyBlockColumns = combinedGroupHeight;
+                  int numberOfEmptyBlockRows = emptyRowsAfter;
+
+                  return createEmptyBlocks(
+                      combinedGridListIndex,
+                      combinedBlockParentIndexInCombinedGroup,
+                      combinedBlockColumnSection,
+                      combinedBlockRowSection,
+                      block,
+                      totalColumnsAbove,
+                      columnOffset,
+                      numberOfEmptyBlockColumns,
+                      numberOfEmptyBlockRows);
+                } else {
+                  return Container();
+                }
               }
             }
           },
@@ -494,16 +499,14 @@ class _GridUIViewState extends State<GridUIView> {
   ///Create a combined group with 2 or more combined blocks
   ///
   ///Height of the combined group is set with the [combinedGroupHeight] param, and
-  ///the combined blocks are set with the [combinedBlocks] param
+  ///the combined blocks are set with the [combinedBlocksConfig] param
   ///
   ///
   Widget createCombinedGroupWithMultipleCombinedBlocks(
-      int gridSection,
+      int combinedGroupIndexInCombinedGroupList,
       int totalNumberOfIndividualRows,
       int combinedGroupHeight,
-      int combinedBlockSectionInGroup,
-      List<List> combinedBlocks) {
-    int combinedBlockSection = 0;
+      List<List> combinedBlocksConfig) {
     return Container(
       height: blockSize * combinedGroupHeight,
       child: ListView.builder(
@@ -511,26 +514,27 @@ class _GridUIViewState extends State<GridUIView> {
           padding: EdgeInsets.all(0),
           scrollDirection: Axis.horizontal,
           shrinkWrap: true,
-          itemCount: combinedBlocks.length,
+          itemCount: combinedBlocksConfig.length,
           itemBuilder: (context, combinedBlockBlockIndex) {
-            combinedBlockSection++;
+            Block block = combinedBlocksConfig[combinedBlockBlockIndex][3];
 
-            int numberOfRowsBefore = combinedBlocks[combinedBlockBlockIndex][1];
+            int numberOfRowsBefore =
+                combinedBlocksConfig[combinedBlockBlockIndex][1];
             int numberOfRowsAfter =
-                (combinedBlockBlockIndex + 1 != combinedBlocks.length)
+                (combinedBlockBlockIndex + 1 != combinedBlocksConfig.length)
                     ? 0
-                    : combinedBlocks[combinedBlockBlockIndex][2];
-            int combinedBlockWidth = combinedBlocks[combinedBlockBlockIndex][0];
+                    : combinedBlocksConfig[combinedBlockBlockIndex][2];
+            int combinedBlockWidth =
+                combinedBlocksConfig[combinedBlockBlockIndex][0];
 
             int totalNumberOfRowsForCombinedBlock =
                 numberOfRowsBefore + combinedBlockWidth + numberOfRowsAfter;
             return Container(
               width: blockSize * totalNumberOfRowsForCombinedBlock,
               child: createCombinedGroupWith1CombinedBlock(
-                  gridSection,
-                  combinedBlockSection,
-                  combinedBlockSectionInGroup,
+                  combinedGroupIndexInCombinedGroupList,
                   totalNumberOfIndividualRows,
+                  block,
                   numberOfRowsBefore,
                   numberOfRowsAfter,
                   combinedBlockWidth,
@@ -548,289 +552,217 @@ class _GridUIViewState extends State<GridUIView> {
   ///Example: Combined block with height of 2, width of 2, 3 blocks before, 2 blocks after, 1 block above, 2 blocks below  = [2, 2, 3, 2, 1, 2]
   ///
   Widget createCombinedGroupWithMultipleCombinedBlocksOfDiffHeight(
-      int gridSection,
+      int combinedGroupIndexInCombinedGroupList,
+      int totalColumnsAbove,
       int numberOfRows,
       int combinedBlockInGroupSection,
       int combinedGroupHeight,
       List<List> combinedBlocks) {
-    int combinedBlockSection = 0;
+    int combinedBlockIndexInCombinedGroup = 0;
 
-    return ListView.builder(
-        physics: NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.all(0),
-        shrinkWrap: true,
-        itemCount: 1,
-        itemBuilder: (context, columnIndex) {
-          return Container(
-              height: blockSize * combinedGroupHeight,
-              child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
+    return Container(
+        height: blockSize * combinedGroupHeight,
+        child: ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.all(0),
+            scrollDirection: Axis.horizontal,
+            itemCount: combinedBlocks.length,
+            itemBuilder: (context, rowIndex) {
+              combinedBlockIndexInCombinedGroup++;
+              bool hasBlocksBeforeBeenBuilt = false;
+              bool hasCombinedBlockBeenBuilt = false;
+              bool hasBlocksAfterBeenBuilt = false;
+
+              Block block = combinedBlocks[rowIndex][6];
+
+              int numberOfBlocksBefore = combinedBlocks[rowIndex][2];
+              int numberOfBlocksAfter =
+                  (combinedBlockIndexInCombinedGroup == combinedBlocks.length)
+                      ? combinedBlocks[rowIndex][3]
+                      : 0;
+              int numberOfBlocksAboveCombinedBlock =
+                  combinedBlocks[rowIndex][4];
+              int numberOfBlocksBelowCombinedBlock =
+                  combinedBlocks[rowIndex][5];
+              int combinedBlockHeight = combinedGroupHeight -
+                  (numberOfBlocksAboveCombinedBlock +
+                      numberOfBlocksBelowCombinedBlock);
+              int combinedBlockWidth = combinedBlocks[rowIndex][1];
+              int totalNumberOfRowsForCombinedBlock = numberOfBlocksBefore +
+                  combinedBlockWidth +
+                  numberOfBlocksAfter;
+
+              return Container(
+                width: blockSize * totalNumberOfRowsForCombinedBlock,
+                child: ListView.builder(
                   padding: EdgeInsets.all(0),
+                  shrinkWrap: true,
                   scrollDirection: Axis.horizontal,
-                  itemCount: combinedBlocks.length,
-                  itemBuilder: (context, rowIndex) {
-                    combinedBlockSection++;
-                    int blocksBeforeChecked = 0;
-                    int blocksAfterChecked = 0;
-                    bool hasCombinedBlockBeingBuilt = false;
+                  itemCount: 3,
+                  itemBuilder: (context, combinedBlockRowIndex) {
+                    //Blocks before the combined blcok
+                    if (!hasBlocksBeforeBeenBuilt) {
+                      hasBlocksBeforeBeenBuilt = true;
 
-                    int numberOfBlocksBefore = combinedBlocks[rowIndex][2];
-                    int numberOfBlocksAfter = combinedBlocks[rowIndex][3];
-                    int numberOfBlocksAboveCombinedBlock =
-                        combinedBlocks[rowIndex][4];
-                    int numberOfBlocksBelowCombinedBlock =
-                        combinedBlocks[rowIndex][5];
-                    int combinedBlockHeight = combinedGroupHeight -
-                        (numberOfBlocksAboveCombinedBlock +
-                            numberOfBlocksBelowCombinedBlock);
-                    int combinedBlockWidth = combinedBlocks[rowIndex][1];
-                    int totalNumberOfRowsForCombinedBlock =
-                        numberOfBlocksBefore +
-                            combinedBlockWidth +
-                            numberOfBlocksAfter;
+                      int combinedBlockParentIndexInCombinedGroup = 1;
+                      int combinedBlockColumnSection = 2;
+                      int combinedBlockRowSection = 1;
+                      int columnOffset = 0;
+                      int numberOfEmptyBlockColumns = combinedGroupHeight;
+                      int numberOfEmptyBlockRows = numberOfBlocksBefore;
 
-                    return ListView.builder(
-                      padding: EdgeInsets.all(0),
-                      shrinkWrap: true,
-                      scrollDirection: Axis.horizontal,
-                      itemCount: totalNumberOfRowsForCombinedBlock,
-                      itemBuilder: (context, combinedBlockRowIndex) {
-                        //Blocks before the combined blcok
-                        if (blocksBeforeChecked < numberOfBlocksBefore) {
-                          blocksBeforeChecked++;
+                      return createEmptyBlocks(
+                          combinedGroupIndexInCombinedGroupList,
+                          combinedBlockParentIndexInCombinedGroup,
+                          combinedBlockColumnSection,
+                          combinedBlockRowSection,
+                          block,
+                          totalColumnsAbove,
+                          columnOffset,
+                          numberOfEmptyBlockColumns,
+                          numberOfEmptyBlockRows);
+                    } else {
+                      if (!hasCombinedBlockBeenBuilt) {
+                        hasCombinedBlockBeenBuilt = true;
 
-                          return Container(
-                              width: blockSize,
-                              child: ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: NeverScrollableScrollPhysics(),
-                                  padding: EdgeInsets.all(0),
-                                  itemCount: combinedGroupHeight,
-                                  itemBuilder: (context, columnIndex) {
-                                    return Container(
-                                        height: blockSize,
-                                        child: ListView.builder(
-                                            shrinkWrap: true,
-                                            padding: EdgeInsets.all(0),
-                                            scrollDirection: Axis.horizontal,
-                                            itemCount: 1,
-                                            itemBuilder: (context, rowIndex) {
-                                              return createSingleEmptyBlock(
-                                                  combinedBlockInGroupSection,
-                                                  gridPosition: gridSection,
-                                                  blockColumn: columnIndex,
-                                                  blockRow: rowIndex);
-                                            }));
-                                  }));
+                        bool hasBlockAboveBeenBuilt = false;
+                        bool hasInnerCombinedBlockBeenBuilt = false;
+                        bool hasBlocksBelowBeenBuilt = false;
+
+                        return Container(
+                          width: blockSize * combinedBlockWidth,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.all(0),
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: 3,
+                            itemBuilder:
+                                (context, combinedBlockAboveColumnIndex) {
+                              //Above the combined block
+                              if (!hasBlockAboveBeenBuilt) {
+                                hasBlockAboveBeenBuilt = true;
+
+                                int combinedBlockParentIndexInCombinedGroup = 1;
+                                int combinedBlockColumnSection = 2;
+                                int combinedBlockRowSection = 2;
+                                int columnOffset = 0;
+                                int numberOfEmptyBlockColumns =
+                                    numberOfBlocksAboveCombinedBlock;
+                                int numberOfEmptyBlockRows = combinedBlockWidth;
+
+                                return createEmptyBlocks(
+                                    combinedGroupIndexInCombinedGroupList,
+                                    combinedBlockParentIndexInCombinedGroup,
+                                    combinedBlockColumnSection,
+                                    combinedBlockRowSection,
+                                    block,
+                                    totalColumnsAbove,
+                                    columnOffset,
+                                    numberOfEmptyBlockColumns,
+                                    numberOfEmptyBlockRows);
+                              } else {
+                                if (!hasInnerCombinedBlockBeenBuilt) {
+                                  hasInnerCombinedBlockBeenBuilt = true;
+
+                                  return Container(
+                                    height: blockSize * combinedBlockHeight,
+                                    child: createCombinedBlock(
+                                        combinedGroupIndexInCombinedGroupList,
+                                        combinedBlockIndexInCombinedGroup,
+                                        block,
+                                        height: blockSize * combinedBlockHeight,
+                                        width: blockSize * combinedBlockWidth),
+                                  );
+                                } else {
+                                  if (!hasBlocksBelowBeenBuilt) {
+                                    hasBlocksBelowBeenBuilt = true;
+
+                                    int combinedBlockParentIndexInCombinedGroup =
+                                        1;
+                                    int combinedBlockColumnSection = 2;
+                                    int combinedBlockRowSection = 2;
+                                    int columnOffset = 0;
+                                    int numberOfEmptyBlockColumns =
+                                        numberOfBlocksBelowCombinedBlock;
+                                    int numberOfEmptyBlockRows =
+                                        combinedBlockWidth;
+
+                                    return createEmptyBlocks(
+                                        combinedGroupIndexInCombinedGroupList,
+                                        combinedBlockParentIndexInCombinedGroup,
+                                        combinedBlockColumnSection,
+                                        combinedBlockRowSection,
+                                        block,
+                                        totalColumnsAbove,
+                                        columnOffset,
+                                        numberOfEmptyBlockColumns,
+                                        numberOfEmptyBlockRows);
+                                  } else {
+                                    return Container();
+                                  }
+                                }
+                              }
+                            },
+                          ),
+                        );
+                      } else {
+                        if (!hasBlocksAfterBeenBuilt) {
+                          hasBlocksAfterBeenBuilt = true;
+
+                          int combinedBlockParentIndexInCombinedGroup =
+                              combinedBlockIndexInCombinedGroup;
+                          int combinedBlockColumnSection = 0;
+                          int combinedBlockRowSection = 3;
+                          int columnOffset = 0;
+                          int numberOfEmptyBlockColumns = combinedGroupHeight;
+                          int numberOfEmptyBlockRows = numberOfBlocksAfter;
+
+                          return createEmptyBlocks(
+                              combinedGroupIndexInCombinedGroupList,
+                              combinedBlockParentIndexInCombinedGroup,
+                              combinedBlockColumnSection,
+                              combinedBlockRowSection,
+                              block,
+                              totalColumnsAbove,
+                              columnOffset,
+                              numberOfEmptyBlockColumns,
+                              numberOfEmptyBlockRows);
                         } else {
-                          if (!hasCombinedBlockBeingBuilt) {
-                            hasCombinedBlockBeingBuilt = true;
-                            int blocksAboveChecked = 0;
-                            int blocksBelowChecked = 0;
-                            bool hasInnerCombinedBlockBeenBuilt = false;
-
-                            return Container(
-                                width: blockSize * combinedBlockWidth,
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  padding: EdgeInsets.all(0),
-                                  physics: NeverScrollableScrollPhysics(),
-                                  itemCount: 3,
-                                  itemBuilder:
-                                      (context, combinedBlockAboveColumnIndex) {
-                                    //Above the combined block
-                                    if (blocksAboveChecked <
-                                        numberOfBlocksAboveCombinedBlock) {
-                                      blocksAboveChecked++;
-
-                                      return ListView.builder(
-                                        padding: EdgeInsets.all(0),
-                                        physics: NeverScrollableScrollPhysics(),
-                                        shrinkWrap: true,
-                                        itemCount:
-                                            numberOfBlocksAboveCombinedBlock,
-                                        itemBuilder: (context,
-                                            combinedBlocksAboveIndex) {
-                                          return Container(
-                                              height: blockSize,
-                                              child: ListView.builder(
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  shrinkWrap: true,
-                                                  physics:
-                                                      NeverScrollableScrollPhysics(),
-                                                  padding: EdgeInsets.all(0),
-                                                  itemCount: combinedBlockWidth,
-                                                  itemBuilder: (context,
-                                                      blocksAboveCombinedBlockRowIndex) {
-                                                    return createSingleEmptyBlock(
-                                                        combinedBlockInGroupSection,
-                                                        gridPosition:
-                                                            gridSection,
-                                                        blockColumn:
-                                                            columnIndex,
-                                                        blockRow: rowIndex);
-                                                  }));
-                                        },
-                                      );
-                                    } else {
-                                      //Combined block
-                                      if (!hasInnerCombinedBlockBeenBuilt) {
-                                        hasInnerCombinedBlockBeenBuilt = true;
-
-                                        return ListView.builder(
-                                          padding: EdgeInsets.all(0),
-                                          shrinkWrap: true,
-                                          physics:
-                                              NeverScrollableScrollPhysics(),
-                                          itemCount: 1,
-                                          itemBuilder: (context,
-                                              innerCombinedBlockColumn) {
-                                            return Container(
-                                              height: blockSize *
-                                                  combinedBlockHeight,
-                                              padding: EdgeInsets.all(0),
-                                              child: ListView.builder(
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                shrinkWrap: true,
-                                                physics:
-                                                    NeverScrollableScrollPhysics(),
-                                                itemCount: combinedBlockWidth,
-                                                itemBuilder: (context,
-                                                    innerCombinedBlockRow) {
-                                                  Block block = Block(
-                                                      BlockType.combined,
-                                                      null,
-                                                      combinedGroupHeight,
-                                                      combinedBlockWidth);
-                                                  return createCombinedBlock(
-                                                      gridSection,
-                                                      combinedBlockSection,
-                                                      block,
-                                                      height: blockSize *
-                                                          combinedBlockHeight,
-                                                      width: blockSize *
-                                                          combinedBlockWidth);
-                                                },
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      } else {
-                                        //Below the combined block
-                                        if (blocksBelowChecked <
-                                            numberOfBlocksBelowCombinedBlock) {
-                                          blocksBelowChecked++;
-
-                                          return ListView.builder(
-                                              shrinkWrap: true,
-                                              physics:
-                                                  NeverScrollableScrollPhysics(),
-                                              padding: EdgeInsets.all(0),
-                                              itemCount:
-                                                  numberOfBlocksBelowCombinedBlock,
-                                              itemBuilder:
-                                                  (context, columnIndex) {
-                                                return Container(
-                                                    padding: EdgeInsets.all(0),
-                                                    height: blockSize,
-                                                    child: ListView.builder(
-                                                        padding:
-                                                            EdgeInsets.all(0),
-                                                        shrinkWrap: true,
-                                                        scrollDirection:
-                                                            Axis.horizontal,
-                                                        itemCount:
-                                                            combinedBlockWidth,
-                                                        itemBuilder: (context,
-                                                            rowIndex) {
-                                                          return createSingleEmptyBlock(
-                                                              combinedBlockInGroupSection,
-                                                              gridPosition:
-                                                                  gridSection,
-                                                              blockColumn:
-                                                                  columnIndex,
-                                                              blockRow:
-                                                                  rowIndex);
-                                                        }));
-                                              });
-                                        } else {
-                                          return Container();
-                                        }
-                                      }
-                                    }
-                                  },
-                                ));
-                          } else {
-                            //Blocks after the combined block
-                            if (blocksAfterChecked < numberOfBlocksAfter &&
-                                rowIndex == (combinedBlocks.length - 1)) {
-                              blocksAfterChecked++;
-
-                              return Container(
-                                  width: blockSize,
-                                  child: ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      padding: EdgeInsets.all(0),
-                                      itemCount: combinedGroupHeight,
-                                      itemBuilder: (context, columnIndex) {
-                                        return Container(
-                                            height: blockSize,
-                                            child: ListView.builder(
-                                                shrinkWrap: true,
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                itemCount: 1,
-                                                itemBuilder:
-                                                    (context, rowIndex) {
-                                                  return createSingleEmptyBlock(
-                                                      combinedBlockInGroupSection,
-                                                      gridPosition: gridSection,
-                                                      blockColumn: columnIndex,
-                                                      blockRow: rowIndex);
-                                                }));
-                                      }));
-                            } else {
-                              return Container();
-                            }
-                          }
+                          return Container();
                         }
-                      },
-                    );
-                  }));
-        });
+                      }
+                    }
+                  },
+                ),
+              );
+            }));
   }
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    blockSize = getBlockSize(this.rows);
-
+  ///Create a grid layout from the grid data provided
+  ///
+  ///The method loads the data provided ([data]) and creates the grid.
+  Widget initUI(List data, double blockSize) {
     if (this.data != null && this.data.length > 0) {
-      ///This is the index of the combined group in the CombinedGroup list ([data] list)
-      int gridSectionPosition = 0;
+      int numberOfCombinedGroups = data.length;
 
+      ///This listview creates each combined group. A combined group is a collection of 1 or more combined blocks.
       return ListView.builder(
           physics: NeverScrollableScrollPhysics(),
           shrinkWrap: true,
-          itemCount: data.length, //all combined groups
+          itemCount: numberOfCombinedGroups,
           itemBuilder: (context, combGroupIndex) {
-            ///A combined group has 3 sections
+            ///A combined group has 3 sections. Top section, Main Section(where the combined blocks are) and the Bottom section
             int numberOfCombinedGroupSections = 3;
 
-            ///Top part [hasAboveBeenBuilt], Main combined blocks [hasCombinedGroupBeenBuilt] and Bottom part [hasBelowBeenBuilt]
-            bool hasAboveBeenBuilt = false;
-            bool hasCombinedGroupBeenBuilt = false;
-            bool hasBelowBeenBuilt = false;
+            int totalColumnsAbove = 0;
 
-            gridSectionPosition++;
+            ///Top section [hasAboveBeenBuilt], Main combined blocks [hasCombinedGroupBeenBuilt] and Bottom section [hasBelowBeenBuilt]
+            bool hasTopSectionBeenBuilt = false;
+            bool hasMainSectionBeenBuilt = false;
+            bool hasBottomSectionBeenBuilt = false;
+
+            ///This listview creates each combined group section
             return ListView.builder(
                 physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
@@ -840,13 +772,13 @@ class _GridUIViewState extends State<GridUIView> {
                   int columnsAboveMainSection = combinedGroup.columnsAbove;
                   int columnsBelowMainSection = combinedGroup.columnsBelow;
                   int combinedGroupRows = combinedGroup.numberOfRows;
-                  //==================
-                  //Empty Blocks above
-                  //==================
-                  if (!hasAboveBeenBuilt) {
-                    hasAboveBeenBuilt = true;
+                  //===========
+                  //Top section
+                  //===========
+                  if (!hasTopSectionBeenBuilt) {
+                    hasTopSectionBeenBuilt = true;
 
-                    /*The combined group section [combinedGroupSection] for the bottom blocks is 1
+                    /*The combined group section [combinedGroupSection] for the top blocks is 1
                     
                      |-|-|-| - The combined group section for the top block(s) section is 1
                      -------
@@ -856,15 +788,30 @@ class _GridUIViewState extends State<GridUIView> {
                      |-|-|-| - The combined group section for the bottom blocks section is 3
                     */
                     int combinedGroupSection = 1;
+                    int tempTotalColumnsAbove = totalColumnsAbove;
+                    int columnOffset = 0;
+                    int combinedBlockColumnSection = combinedGroupSection;
+                    int combinedBlockRowSection = 0;
+                    int combinedBlockParentIndexInCombinedGroup = 0;
+                    Block parentBlock = null;
 
-                    return createEmptyBlocks(gridSectionPosition,
-                        combinedGroupSection, columnsAboveMainSection, rows);
+                    totalColumnsAbove += columnsAboveMainSection;
+                    return createEmptyBlocks(
+                        combinedGroupSection,
+                        combinedBlockParentIndexInCombinedGroup,
+                        combinedBlockColumnSection,
+                        combinedBlockRowSection,
+                        parentBlock,
+                        tempTotalColumnsAbove,
+                        columnOffset,
+                        columnsAboveMainSection,
+                        rows);
                   } else {
                     //====================
                     //Main combined blocks
                     //====================
-                    if (!hasCombinedGroupBeenBuilt) {
-                      hasCombinedGroupBeenBuilt = true;
+                    if (!hasMainSectionBeenBuilt) {
+                      hasMainSectionBeenBuilt = true;
                       int combinedGroupSection = 2;
 
                       ///Combined group has only 1 combined block
@@ -878,18 +825,19 @@ class _GridUIViewState extends State<GridUIView> {
                             combinedBlockInGroup.numberOfRowsLeft;
                         int emptyRowsAfter =
                             combinedBlockInGroup.numberOfRowsRight;
-                        int combinedBlockWidth = block.numberOfRows;
                         int combinedGroupHeight = block.numberOfColumns;
+                        int tempTotalColumnsAbove = totalColumnsAbove;
+                        totalColumnsAbove += columnsAboveMainSection;
+
+                        print("combinedGroupHeight $combinedGroupHeight");
+
                         return createCombinedGroupWith1CombinedBlock(
-                            gridSectionPosition,
-                            1,
-                            combinedGroupSection,
-                            (emptyRowsBefore +
-                                combinedBlockWidth +
-                                emptyRowsAfter),
+                            combGroupIndex + 1,
+                            tempTotalColumnsAbove,
+                            block,
                             emptyRowsBefore,
                             emptyRowsAfter,
-                            combinedBlockWidth,
+                            block.numberOfRows,
                             combinedGroupHeight);
 
                         ///Combined group has multiple combined blocks all with the same height
@@ -897,7 +845,7 @@ class _GridUIViewState extends State<GridUIView> {
                           CombinedGroupType
                               .MULITPLE_COMBINED_GROUP_SAME_HEIGHT) {
                         int combinedGroupHeight = combinedGroup.numberOfColumns;
-                        List<List> combinedBlocksList = [];
+                        List<List> combinedBlocksConfigList = [];
 
                         for (CombinedBlockInGroup combinedBlockInGroup
                             in combinedGroup.combinedBlocks) {
@@ -909,19 +857,19 @@ class _GridUIViewState extends State<GridUIView> {
                           int rowsAfterBlock =
                               combinedBlockInGroup.numberOfRowsRight;
 
-                          combinedBlocksList.add([
+                          combinedBlocksConfigList.add([
                             combinedBlockWidth,
                             rowsBeforeBlock,
                             rowsAfterBlock,
+                            block
                           ]);
                         }
 
                         return createCombinedGroupWithMultipleCombinedBlocks(
-                            gridSectionPosition,
-                            combinedGroupRows,
+                            combGroupIndex + 1,
+                            rows,
                             combinedGroupHeight,
-                            combinedGroupSection,
-                            combinedBlocksList);
+                            combinedBlocksConfigList);
 
                         ///Combined group has multiple combined blocks with different heights
                       } else if (combinedGroup.combinedGroupType ==
@@ -950,12 +898,14 @@ class _GridUIViewState extends State<GridUIView> {
                             rowsBeforeBlock,
                             rowsAfterBlock,
                             columnsAboveBlock,
-                            columnsBelowBlock
+                            columnsBelowBlock,
+                            block
                           ]);
                         }
 
                         return createCombinedGroupWithMultipleCombinedBlocksOfDiffHeight(
-                            gridSectionPosition,
+                            combGroupIndex + 1,
+                            totalColumnsAbove,
                             combinedGroupRows,
                             combinedGroupSection,
                             combinedGroupHeight,
@@ -968,8 +918,8 @@ class _GridUIViewState extends State<GridUIView> {
                       //Empty blocks below
                       //==================
                       ///This section only gets built for the last combined group in the combined group list ([data]).
-                      if (!hasBelowBeenBuilt) {
-                        hasBelowBeenBuilt = true;
+                      if (!hasBottomSectionBeenBuilt) {
+                        hasBottomSectionBeenBuilt = true;
 
                         ///The combined group section [combinedGroupSection] for the bottom blocks is 3
                         ///
@@ -978,9 +928,24 @@ class _GridUIViewState extends State<GridUIView> {
                         /// |x|x|x| /
                         /// |-|-|-| - The combined group section for the bottom blocks section is 3
                         int combinedGroupSection = 3;
+
+                        int tempTotalColumnsAbove = totalColumnsAbove;
+                        int columnOffset = 0;
+                        int combinedBlockColumnSection = combinedGroupSection;
+                        int combinedBlockRowSection = 0;
+                        int combinedBlockParentIndexInCombinedGroup = 0;
+                        Block parentBlock = null;
+
+                        totalColumnsAbove += columnsAboveMainSection;
+
                         return createEmptyBlocks(
-                            gridSectionPosition,
                             combinedGroupSection,
+                            combinedBlockParentIndexInCombinedGroup,
+                            combinedBlockColumnSection,
+                            combinedBlockRowSection,
+                            parentBlock,
+                            tempTotalColumnsAbove,
+                            columnOffset,
                             columnsBelowMainSection,
                             rows);
                       } else {
@@ -998,5 +963,17 @@ class _GridUIViewState extends State<GridUIView> {
             child: Text("No data"),
           ));
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    blockSize = getBlockSize(this.rows);
+
+    return initUI(data, blockSize);
   }
 }

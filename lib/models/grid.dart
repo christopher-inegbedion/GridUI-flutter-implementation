@@ -397,6 +397,13 @@ class Grid {
     }
   }
 
+  int getTargetColumn(
+      int columnsAboveCombinedGroup,
+      int combinedBlockColumnSection,
+      int emptyBlockColumn,
+      Block block,
+      int offset) {}
+
   int getBlockRow(int gridSection, int combinedGroupSection,
       int combinedBlockInGroupSection, int blockRow) {
     int numberOfCombinedGroups = combinedGroups.length;
@@ -406,10 +413,13 @@ class Grid {
     int totalColumnsAbove = 0;
 
     if (gridSection == 1) {
+      //top part of main section
       if (combinedGroupSection == 1) {
-        return blockRow + 1;
+        return blockRow;
       } else if (combinedGroupSection == 2) {
+        //This is the first combined block in the combined group.
         if (combinedBlockInGroupSection == 1) {
+          print("here");
           return blockRow + 1;
         } else {
           int combinedBlockToTheLeftPosition = combinedBlockInGroupSection - 1;

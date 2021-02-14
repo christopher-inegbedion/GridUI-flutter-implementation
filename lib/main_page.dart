@@ -175,13 +175,7 @@ class _GridPageState extends State<GridPage> {
                     ),
                     FlatButton(
                       color: Colors.white,
-                      child: Text(
-                        gridView.state == null
-                            ? "Edit mode: off"
-                            : gridView.state.editMode
-                                ? "Edit mode: on"
-                                : "Edit mode: off",
-                      ),
+                      child: Text(""),
                       onPressed: () {
                         setState(() {
                           gridView.state.editMode = !gridView.state.editMode;
