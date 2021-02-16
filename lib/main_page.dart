@@ -71,12 +71,13 @@ class _GridPageState extends State<GridPage> {
                         "Default",
                       ),
                       onPressed: () {
-                        getGridFromServer('http://192.168.1.129:5000/default')
-                            .then((value) {
+                        getGridFromServer('http://192.168.1.171:5000/default')
+                            .then((value1) {
                           grid
-                              .loadJSON("", fromNetwork: true, grid: value)
+                              .loadJSON("", fromNetwork: true, grid: value1)
                               .then((value) {
                             setState(() {
+                              grid.grid_json = value1;
                               grid.gridColumns = value.gridColumns;
                               grid.gridRows = value.gridRows;
                               grid.combinedGroups = value.combinedGroups;
@@ -87,6 +88,7 @@ class _GridPageState extends State<GridPage> {
                             gridView.changeCols(grid.gridColumns);
                             gridView.changeRows(grid.gridRows);
                             gridView.changeGrid(grid.combinedGroups);
+                            gridView.changeGridJSON(grid.grid_json);
                           });
                         });
                       },
@@ -97,12 +99,13 @@ class _GridPageState extends State<GridPage> {
                         "Preset 1",
                       ),
                       onPressed: () {
-                        getGridFromServer('http://192.168.1.129:5000/preset1')
-                            .then((value) {
+                        getGridFromServer('http://192.168.1.171:5000/preset1')
+                            .then((value1) {
                           grid
-                              .loadJSON("", fromNetwork: true, grid: value)
+                              .loadJSON("", fromNetwork: true, grid: value1)
                               .then((value) {
                             setState(() {
+                              grid.grid_json = value1;
                               grid.gridColumns = value.gridColumns;
                               grid.gridRows = value.gridRows;
                               grid.combinedGroups = value.combinedGroups;
@@ -113,6 +116,7 @@ class _GridPageState extends State<GridPage> {
                             gridView.changeCols(grid.gridColumns);
                             gridView.changeRows(grid.gridRows);
                             gridView.changeGrid(grid.combinedGroups);
+                            gridView.changeGridJSON(grid.grid_json);
                           });
                         });
                       },
@@ -123,16 +127,13 @@ class _GridPageState extends State<GridPage> {
                         "Preset 2",
                       ),
                       onPressed: () {
-                        print(
-                            "combined block start column ${grid.getBlockStartColumn(1, 2)}");
-                        print(
-                            "combined block start row ${grid.getBlockStartRow(1, 2)}");
-                        getGridFromServer('http://192.168.1.129:5000/preset2')
-                            .then((value) {
+                        getGridFromServer('http://192.168.1.171:5000/preset2')
+                            .then((value1) {
                           grid
-                              .loadJSON("", fromNetwork: true, grid: value)
+                              .loadJSON("", fromNetwork: true, grid: value1)
                               .then((value) {
                             setState(() {
+                              grid.grid_json = value1;
                               grid.gridColumns = value.gridColumns;
                               grid.gridRows = value.gridRows;
                               grid.combinedGroups = value.combinedGroups;
@@ -143,6 +144,7 @@ class _GridPageState extends State<GridPage> {
                             gridView.changeCols(grid.gridColumns);
                             gridView.changeRows(grid.gridRows);
                             gridView.changeGrid(grid.combinedGroups);
+                            gridView.changeGridJSON(grid.grid_json);
                           });
                         });
                       },
@@ -153,12 +155,13 @@ class _GridPageState extends State<GridPage> {
                         "Preset 3",
                       ),
                       onPressed: () {
-                        getGridFromServer('http://192.168.1.129:5000/preset3')
-                            .then((value) {
+                        getGridFromServer('http://192.168.1.171:5000/preset3')
+                            .then((value1) {
                           grid
-                              .loadJSON("", fromNetwork: true, grid: value)
+                              .loadJSON("", fromNetwork: true, grid: value1)
                               .then((value) {
                             setState(() {
+                              grid.grid_json = value1;
                               grid.gridColumns = value.gridColumns;
                               grid.gridRows = value.gridRows;
                               grid.combinedGroups = value.combinedGroups;
@@ -169,6 +172,7 @@ class _GridPageState extends State<GridPage> {
                             gridView.changeCols(grid.gridColumns);
                             gridView.changeRows(grid.gridRows);
                             gridView.changeGrid(grid.combinedGroups);
+                            gridView.changeGridJSON(grid.grid_json);
                           });
                         });
                       },

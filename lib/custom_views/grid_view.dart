@@ -12,9 +12,10 @@ class GridUIView extends StatefulWidget {
   int rows;
   int columns;
   List<CombinedGroup> data;
+  String grid_json;
   _GridUIViewState state;
 
-  GridUIView(this.columns, this.rows, this.data);
+  GridUIView(this.grid_json, this.columns, this.rows, this.data);
 
   @override
   _GridUIViewState createState() {
@@ -38,12 +39,17 @@ class GridUIView extends StatefulWidget {
   void changeEditMode(bool val) {
     state.changeEditState(val);
   }
+
+  void changeGridJSON(String value) {
+    state.grid_json = value;
+  }
 }
 
 class _GridUIViewState extends State<GridUIView> {
   int columns;
   int rows;
   List<CombinedGroup> data;
+  String grid_json;
   double blockSize;
   bool editMode = false;
 
@@ -115,6 +121,7 @@ class _GridUIViewState extends State<GridUIView> {
   /// | 3 | 3 |
   /// ```
   void moveCombinedBlock(
+      String gridJSON,
       int startColumn,
       int startRow,
       int height,
@@ -125,6 +132,7 @@ class _GridUIViewState extends State<GridUIView> {
       int blockQuadrantCol,
       int blockQuadrantRow) {
     Map<String, String> data = {
+      'grid_json': gridJSON,
       'start_column': startColumn.toString(),
       'start_row': startRow.toString(),
       'height': height.toString(),
@@ -133,11 +141,13 @@ class _GridUIViewState extends State<GridUIView> {
       'target_row': (targetRow - blockQuadrantRow).toString()
     };
 
-    postGridToServer("http://192.168.1.129:5000/move", data).then((val) {
+    postGridToServer("http://192.168.1.171:5000/move", data).then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
+        print(val);
         setState(() {
+          grid_json = value.grid_json;
           columns = value.gridColumns;
           rows = value.gridRows;
           changeData(value.combinedGroups);
@@ -176,12 +186,17 @@ class _GridUIViewState extends State<GridUIView> {
   Widget createSingleEmptyBlock(
       int combinedGroupSection,
       int columnsAboveCombinedGroup,
+      int rowsRightOfBlock,
       int combinedBlockColumnSection,
       int blockColumn,
+      int blockRow,
+      int combinedGroupHeight,
+      int combinedGroupWidth,
       Block parentBlock,
-      int offset,
-      {int gridPosition,
-      int blockRow}) {
+      int colOffset,
+      int rowOffset,
+      {int difference,
+      int gridPosition}) {
     return Visibility(
       visible: editMode,
       child: DragTarget(
@@ -190,18 +205,20 @@ class _GridUIViewState extends State<GridUIView> {
           return GestureDetector(
             onTap: () {
               int targetColumn = Grid.getInstance().getTargetColumn(
+                  combinedGroupSection,
                   columnsAboveCombinedGroup,
-                  combinedBlockColumnSection,
                   blockColumn,
+                  combinedGroupHeight,
                   parentBlock,
-                  offset);
-              int columnOnGrid = Grid.getInstance().getBlockColumn(
-                  gridPosition, combinedGroupSection, blockColumn);
-              // int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
-              //     combinedGroupSection, combinedBlockInGroupPosition, blockRow);
-              // print(
-              //     "empty block tapped is at grid section: $gridPosition, combined group section: $combinedGroupSection, combined block in group section: $combinedBlockInGroupPosition, column: $blockColumn, row: $blockRow");
-              // print("col: $columnOnGrid, row: $blockRow");
+                  colOffset);
+              int targetRow = Grid.getInstance().getTargetRow(
+                  rowsRightOfBlock, blockRow, rowOffset, combinedGroupWidth,
+                  difference: difference);
+              // int columnOnGrid = Grid.getInstance().getBlockColumn(
+              //     gridPosition, combinedGroupSection, blockColumn);
+              print(
+                  "empty block config: combined group section: $combinedGroupSection, columns above combined group: $columnsAboveCombinedGroup, block column in combined group: $blockColumn");
+              print("col: $targetColumn, row: $targetRow");
             },
             child: Container(
               width: blockSize,
@@ -219,24 +236,30 @@ class _GridUIViewState extends State<GridUIView> {
         },
         onAccept: (data) {
           CombBlockDragInformation dragInformation = data;
-          int columnOnGrid = Grid.getInstance()
-              .getBlockColumn(gridPosition, combinedGroupSection, blockColumn);
-          // int rowOnGrid = Grid.getInstance().getBlockRow(gridPosition,
-          //     combinedGroupSection, combinedBlockInGroupPosition, blockRow);
+          int targetColumn = Grid.getInstance().getTargetColumn(
+              combinedGroupSection,
+              columnsAboveCombinedGroup,
+              blockColumn,
+              combinedGroupHeight,
+              parentBlock,
+              colOffset);
+          int targetRow = Grid.getInstance().getTargetRow(
+              rowsRightOfBlock, blockRow, rowOffset, combinedGroupWidth,
+              difference: difference);
 
-          // print("target column: ${columnOnGrid - 1}");
-          // print("target row: ${rowOnGrid - 1}");
-
-          // moveCombinedBlock(
-          //     dragInformation.combinedBlockStartColumn,
-          //     dragInformation.combinedBlockStartRow,
-          //     dragInformation.combinedBlockHeight,
-          //     dragInformation.combinedBlockWidth,
-          //     columnOnGrid - 1,
-          //     rowOnGrid - 1,
-          //     dragInformation.blockQuadrantDraggingFrom,
-          //     dragInformation.blockQuadrantColumn,
-          // dragInformation.blockQuadrantRow);
+          print("start column ${dragInformation.combinedBlockStartColumn}");
+          print("start row ${dragInformation.combinedBlockStartRow}");
+          moveCombinedBlock(
+              grid_json,
+              dragInformation.combinedBlockStartColumn,
+              dragInformation.combinedBlockStartRow,
+              dragInformation.combinedBlockHeight,
+              dragInformation.combinedBlockWidth,
+              targetColumn,
+              targetRow,
+              dragInformation.blockQuadrantDraggingFrom,
+              dragInformation.blockQuadrantColumn,
+              dragInformation.blockQuadrantRow);
         },
       ),
     );
@@ -288,6 +311,8 @@ class _GridUIViewState extends State<GridUIView> {
                                       Grid.getInstance().getBlockStartColumn(
                                           combinedBlockIndexInCombinedGroup,
                                           combinedGroupIndexInCombinedGroupList);
+                                  print(
+                                      "start column $combinedBlockStartColumn");
                                   int combinedBlockStartRow = Grid.getInstance()
                                       .getBlockStartRow(
                                           combinedBlockIndexInCombinedGroup,
@@ -359,15 +384,20 @@ class _GridUIViewState extends State<GridUIView> {
   ///Creates a group of empty blocks in the grid. The [combinedGroupIndexInCombinedGroupList] argument defines the index of the empty block's combined group in the combined
   ///group list.
   Widget createEmptyBlocks(
-      int combinedGroupIndexInCombinedGroupList,
+      int combinedGroupSection,
       int combinedBlockParentIndexInCombinedGroup,
       int combinedBlockColumnSection,
       int combinedBlockRowSection,
+      int combinedGroupHeight,
+      int combinedGroupWidth,
       Block parentBlock,
       int columnsAbove,
+      int rowsToTheLeft,
       int columnOffset,
+      int rowOffset,
       int columns,
-      int rows) {
+      int rows,
+      {int difference = 0}) {
     return Container(
       width: blockSize * rows,
       child: ListView.builder(
@@ -384,12 +414,18 @@ class _GridUIViewState extends State<GridUIView> {
               itemCount: rows,
               itemBuilder: (context, rowIndex) {
                 return createSingleEmptyBlock(
-                    combinedBlockParentIndexInCombinedGroup,
+                    combinedGroupSection,
                     columnsAbove,
+                    rowsToTheLeft,
                     combinedBlockColumnSection,
                     columnIndex + 1,
+                    rowIndex + 1,
+                    combinedGroupHeight,
+                    combinedGroupWidth,
                     parentBlock,
-                    columnOffset);
+                    columnOffset,
+                    rowOffset,
+                    difference: difference);
               },
             ),
           );
@@ -412,11 +448,13 @@ class _GridUIViewState extends State<GridUIView> {
   Widget createCombinedGroupWith1CombinedBlock(
       int combinedGridListIndex,
       int totalColumnsAbove,
+      int widthOfPrev,
       Block block,
       int emptyRowsBefore,
       int emptyRowsAfter,
       int combinedBlockWidth,
-      int combinedGroupHeight) {
+      int combinedGroupHeight,
+      int combinedBlockIndexInCombinedGroup) {
     bool hasEmptyBlocksBeforeBeenBuilt = false;
     bool hasCombinedBlockBeenBuilt = false;
     bool hasEmptyBlocksAfterBeenBuilt = false;
@@ -425,8 +463,9 @@ class _GridUIViewState extends State<GridUIView> {
     int combinedGroupSection = 2;
 
     ///This is the index of a combined block in a combined group. This value is 1 by default, for combined groups with 1 combined block
-    int combinedBlockIndexInCombinedGroup = 1;
-    print("combinedGroupHeight $combinedGroupHeight");
+
+    int combinedGroupWidth =
+        emptyRowsBefore + combinedBlockWidth + emptyRowsAfter;
 
     return Container(
         height: blockSize * combinedGroupHeight,
@@ -444,22 +483,28 @@ class _GridUIViewState extends State<GridUIView> {
               int combinedBlockColumnSection = combinedGroupSection;
               int combinedBlockRowSection = 1;
               int columnOffset = 0;
+              int rowOffset = 0;
               int numberOfEmptyBlockColumns = combinedGroupHeight;
               int numberOfEmptyBlockRows = emptyRowsBefore;
 
               return createEmptyBlocks(
-                  combinedGridListIndex,
+                  combinedGroupSection,
                   combinedBlockParentIndexInCombinedGroup,
                   combinedBlockColumnSection,
                   combinedBlockRowSection,
+                  combinedGroupHeight,
+                  rows,
                   block,
                   totalColumnsAbove,
+                  emptyRowsBefore,
                   columnOffset,
+                  widthOfPrev,
                   numberOfEmptyBlockColumns,
                   numberOfEmptyBlockRows);
             } else {
               if (!hasCombinedBlockBeenBuilt) {
                 hasCombinedBlockBeenBuilt = true;
+
                 return createCombinedBlock(combinedGridListIndex,
                     combinedBlockIndexInCombinedGroup, block,
                     height: blockSize * combinedGroupHeight,
@@ -474,17 +519,22 @@ class _GridUIViewState extends State<GridUIView> {
                   int combinedBlockColumnSection = combinedGroupSection;
                   int combinedBlockRowSection = 1;
                   int columnOffset = 0;
+                  int rowOffset = emptyRowsBefore + combinedBlockWidth;
                   int numberOfEmptyBlockColumns = combinedGroupHeight;
                   int numberOfEmptyBlockRows = emptyRowsAfter;
 
                   return createEmptyBlocks(
-                      combinedGridListIndex,
+                      combinedGroupSection,
                       combinedBlockParentIndexInCombinedGroup,
                       combinedBlockColumnSection,
                       combinedBlockRowSection,
+                      combinedGroupHeight,
+                      rows,
                       block,
                       totalColumnsAbove,
+                      emptyRowsBefore + combinedBlockWidth + emptyRowsAfter,
                       columnOffset,
+                      widthOfPrev + emptyRowsBefore + combinedBlockWidth,
                       numberOfEmptyBlockColumns,
                       numberOfEmptyBlockRows);
                 } else {
@@ -504,9 +554,13 @@ class _GridUIViewState extends State<GridUIView> {
   ///
   Widget createCombinedGroupWithMultipleCombinedBlocks(
       int combinedGroupIndexInCombinedGroupList,
+      int columnsAbove,
       int totalNumberOfIndividualRows,
       int combinedGroupHeight,
       List<List> combinedBlocksConfig) {
+    int rowsToTheLeft = 0;
+    int totalNumberOfRowsForCombinedBlock = 0;
+
     return Container(
       height: blockSize * combinedGroupHeight,
       child: ListView.builder(
@@ -526,19 +580,23 @@ class _GridUIViewState extends State<GridUIView> {
                     : combinedBlocksConfig[combinedBlockBlockIndex][2];
             int combinedBlockWidth =
                 combinedBlocksConfig[combinedBlockBlockIndex][0];
+            rowsToTheLeft += totalNumberOfRowsForCombinedBlock;
 
-            int totalNumberOfRowsForCombinedBlock =
+            totalNumberOfRowsForCombinedBlock =
                 numberOfRowsBefore + combinedBlockWidth + numberOfRowsAfter;
+            print(rowsToTheLeft);
             return Container(
               width: blockSize * totalNumberOfRowsForCombinedBlock,
               child: createCombinedGroupWith1CombinedBlock(
                   combinedGroupIndexInCombinedGroupList,
-                  totalNumberOfIndividualRows,
+                  columnsAbove,
+                  rowsToTheLeft,
                   block,
                   numberOfRowsBefore,
                   numberOfRowsAfter,
                   combinedBlockWidth,
-                  combinedGroupHeight),
+                  combinedGroupHeight,
+                  combinedBlockBlockIndex + 1),
             );
           }),
     );
@@ -555,10 +613,13 @@ class _GridUIViewState extends State<GridUIView> {
       int combinedGroupIndexInCombinedGroupList,
       int totalColumnsAbove,
       int numberOfRows,
-      int combinedBlockInGroupSection,
       int combinedGroupHeight,
       List<List> combinedBlocks) {
     int combinedBlockIndexInCombinedGroup = 0;
+    int totalRowsBeforeEmptyBlocks = 0;
+    int rowsToTheLeft = 0;
+    int rowsToTheLeftInSameGroup = 0;
+    int totalNumberOfRowsForCombinedBlock = 0;
 
     return Container(
         height: blockSize * combinedGroupHeight,
@@ -589,9 +650,12 @@ class _GridUIViewState extends State<GridUIView> {
                   (numberOfBlocksAboveCombinedBlock +
                       numberOfBlocksBelowCombinedBlock);
               int combinedBlockWidth = combinedBlocks[rowIndex][1];
-              int totalNumberOfRowsForCombinedBlock = numberOfBlocksBefore +
+
+              rowsToTheLeft += totalNumberOfRowsForCombinedBlock;
+              totalNumberOfRowsForCombinedBlock = numberOfBlocksBefore +
                   combinedBlockWidth +
                   numberOfBlocksAfter;
+              int combinedGroupSection = 2;
 
               return Container(
                 width: blockSize * totalNumberOfRowsForCombinedBlock,
@@ -609,17 +673,26 @@ class _GridUIViewState extends State<GridUIView> {
                       int combinedBlockColumnSection = 2;
                       int combinedBlockRowSection = 1;
                       int columnOffset = 0;
+                      int rowOffset = 0;
+
                       int numberOfEmptyBlockColumns = combinedGroupHeight;
                       int numberOfEmptyBlockRows = numberOfBlocksBefore;
 
+                      totalRowsBeforeEmptyBlocks += numberOfEmptyBlockRows;
+                      rowsToTheLeftInSameGroup += numberOfEmptyBlockRows;
+
                       return createEmptyBlocks(
-                          combinedGroupIndexInCombinedGroupList,
+                          combinedGroupSection,
                           combinedBlockParentIndexInCombinedGroup,
                           combinedBlockColumnSection,
                           combinedBlockRowSection,
+                          combinedGroupHeight,
+                          rows,
                           block,
                           totalColumnsAbove,
+                          totalRowsBeforeEmptyBlocks,
                           columnOffset,
+                          rowsToTheLeft,
                           numberOfEmptyBlockColumns,
                           numberOfEmptyBlockRows);
                     } else {
@@ -629,6 +702,8 @@ class _GridUIViewState extends State<GridUIView> {
                         bool hasBlockAboveBeenBuilt = false;
                         bool hasInnerCombinedBlockBeenBuilt = false;
                         bool hasBlocksBelowBeenBuilt = false;
+                        totalRowsBeforeEmptyBlocks += combinedBlockWidth;
+                        rowsToTheLeftInSameGroup += combinedBlockWidth;
 
                         return Container(
                           width: blockSize * combinedBlockWidth,
@@ -647,29 +722,34 @@ class _GridUIViewState extends State<GridUIView> {
                                 int combinedBlockColumnSection = 2;
                                 int combinedBlockRowSection = 2;
                                 int columnOffset = 0;
+                                int rowOffset = 0;
                                 int numberOfEmptyBlockColumns =
                                     numberOfBlocksAboveCombinedBlock;
                                 int numberOfEmptyBlockRows = combinedBlockWidth;
 
                                 return createEmptyBlocks(
-                                    combinedGroupIndexInCombinedGroupList,
+                                    combinedGroupSection,
                                     combinedBlockParentIndexInCombinedGroup,
                                     combinedBlockColumnSection,
                                     combinedBlockRowSection,
+                                    combinedGroupHeight,
+                                    rows,
                                     block,
                                     totalColumnsAbove,
+                                    totalRowsBeforeEmptyBlocks,
                                     columnOffset,
+                                    rowsToTheLeftInSameGroup,
                                     numberOfEmptyBlockColumns,
-                                    numberOfEmptyBlockRows);
+                                    numberOfEmptyBlockRows,
+                                    difference: combinedBlockWidth);
                               } else {
                                 if (!hasInnerCombinedBlockBeenBuilt) {
                                   hasInnerCombinedBlockBeenBuilt = true;
-
                                   return Container(
                                     height: blockSize * combinedBlockHeight,
                                     child: createCombinedBlock(
                                         combinedGroupIndexInCombinedGroupList,
-                                        combinedBlockIndexInCombinedGroup,
+                                        rowIndex + 1,
                                         block,
                                         height: blockSize * combinedBlockHeight,
                                         width: blockSize * combinedBlockWidth),
@@ -682,22 +762,28 @@ class _GridUIViewState extends State<GridUIView> {
                                         1;
                                     int combinedBlockColumnSection = 2;
                                     int combinedBlockRowSection = 2;
-                                    int columnOffset = 0;
+                                    int columnOffset = combinedBlockHeight;
+                                    int rowOffset = 0;
                                     int numberOfEmptyBlockColumns =
                                         numberOfBlocksBelowCombinedBlock;
                                     int numberOfEmptyBlockRows =
                                         combinedBlockWidth;
 
                                     return createEmptyBlocks(
-                                        combinedGroupIndexInCombinedGroupList,
+                                        combinedGroupSection,
                                         combinedBlockParentIndexInCombinedGroup,
                                         combinedBlockColumnSection,
                                         combinedBlockRowSection,
+                                        combinedGroupHeight,
+                                        rows,
                                         block,
                                         totalColumnsAbove,
+                                        totalRowsBeforeEmptyBlocks,
                                         columnOffset,
+                                        rowsToTheLeftInSameGroup,
                                         numberOfEmptyBlockColumns,
-                                        numberOfEmptyBlockRows);
+                                        numberOfEmptyBlockRows,
+                                        difference: combinedBlockWidth);
                                   } else {
                                     return Container();
                                   }
@@ -715,17 +801,24 @@ class _GridUIViewState extends State<GridUIView> {
                           int combinedBlockColumnSection = 0;
                           int combinedBlockRowSection = 3;
                           int columnOffset = 0;
+                          int rowOffset = combinedBlockWidth;
                           int numberOfEmptyBlockColumns = combinedGroupHeight;
                           int numberOfEmptyBlockRows = numberOfBlocksAfter;
+                          totalRowsBeforeEmptyBlocks += numberOfEmptyBlockRows;
+                          rowsToTheLeftInSameGroup += numberOfEmptyBlockRows;
 
                           return createEmptyBlocks(
-                              combinedGroupIndexInCombinedGroupList,
+                              combinedGroupSection,
                               combinedBlockParentIndexInCombinedGroup,
                               combinedBlockColumnSection,
                               combinedBlockRowSection,
+                              combinedGroupHeight,
+                              rows,
                               block,
                               totalColumnsAbove,
+                              totalRowsBeforeEmptyBlocks,
                               columnOffset,
+                              rowsToTheLeft,
                               numberOfEmptyBlockColumns,
                               numberOfEmptyBlockRows);
                         } else {
@@ -745,6 +838,8 @@ class _GridUIViewState extends State<GridUIView> {
   Widget initUI(List data, double blockSize) {
     if (this.data != null && this.data.length > 0) {
       int numberOfCombinedGroups = data.length;
+      int totalColumnsAbove = 0;
+      int totalRowsLeftOfEmptyBlocks = rows;
 
       ///This listview creates each combined group. A combined group is a collection of 1 or more combined blocks.
       return ListView.builder(
@@ -754,8 +849,7 @@ class _GridUIViewState extends State<GridUIView> {
           itemBuilder: (context, combGroupIndex) {
             ///A combined group has 3 sections. Top section, Main Section(where the combined blocks are) and the Bottom section
             int numberOfCombinedGroupSections = 3;
-
-            int totalColumnsAbove = 0;
+            CombinedGroup combinedGroup = data[combGroupIndex];
 
             ///Top section [hasAboveBeenBuilt], Main combined blocks [hasCombinedGroupBeenBuilt] and Bottom section [hasBelowBeenBuilt]
             bool hasTopSectionBeenBuilt = false;
@@ -768,7 +862,6 @@ class _GridUIViewState extends State<GridUIView> {
                 shrinkWrap: true,
                 itemCount: numberOfCombinedGroupSections,
                 itemBuilder: (context, index) {
-                  CombinedGroup combinedGroup = data[combGroupIndex];
                   int columnsAboveMainSection = combinedGroup.columnsAbove;
                   int columnsBelowMainSection = combinedGroup.columnsBelow;
                   int combinedGroupRows = combinedGroup.numberOfRows;
@@ -788,22 +881,27 @@ class _GridUIViewState extends State<GridUIView> {
                      |-|-|-| - The combined group section for the bottom blocks section is 3
                     */
                     int combinedGroupSection = 1;
-                    int tempTotalColumnsAbove = totalColumnsAbove;
                     int columnOffset = 0;
+                    int rowOffset = 0;
                     int combinedBlockColumnSection = combinedGroupSection;
                     int combinedBlockRowSection = 0;
                     int combinedBlockParentIndexInCombinedGroup = 0;
                     Block parentBlock = null;
 
                     totalColumnsAbove += columnsAboveMainSection;
+
                     return createEmptyBlocks(
                         combinedGroupSection,
                         combinedBlockParentIndexInCombinedGroup,
                         combinedBlockColumnSection,
                         combinedBlockRowSection,
+                        combinedGroup.columnsAbove,
+                        rows,
                         parentBlock,
-                        tempTotalColumnsAbove,
+                        totalColumnsAbove,
+                        totalRowsLeftOfEmptyBlocks,
                         columnOffset,
+                        rowOffset,
                         columnsAboveMainSection,
                         rows);
                   } else {
@@ -812,33 +910,33 @@ class _GridUIViewState extends State<GridUIView> {
                     //====================
                     if (!hasMainSectionBeenBuilt) {
                       hasMainSectionBeenBuilt = true;
-                      int combinedGroupSection = 2;
+                      CombinedBlockInGroup combinedBlockInGroup =
+                          combinedGroup.combinedBlocks[0];
+                      Block block = combinedBlockInGroup.block;
+
+                      totalColumnsAbove += combinedGroup.numberOfColumns;
 
                       ///Combined group has only 1 combined block
                       if (combinedGroup.combinedGroupType ==
                           CombinedGroupType.SINGLE_COMBINED_GROUP) {
-                        CombinedBlockInGroup combinedBlockInGroup =
-                            combinedGroup.combinedBlocks[0];
-                        Block block = combinedBlockInGroup.block;
-
                         int emptyRowsBefore =
                             combinedBlockInGroup.numberOfRowsLeft;
                         int emptyRowsAfter =
                             combinedBlockInGroup.numberOfRowsRight;
                         int combinedGroupHeight = block.numberOfColumns;
-                        int tempTotalColumnsAbove = totalColumnsAbove;
-                        totalColumnsAbove += columnsAboveMainSection;
 
                         print("combinedGroupHeight $combinedGroupHeight");
 
                         return createCombinedGroupWith1CombinedBlock(
                             combGroupIndex + 1,
-                            tempTotalColumnsAbove,
+                            totalColumnsAbove,
+                            0,
                             block,
                             emptyRowsBefore,
                             emptyRowsAfter,
                             block.numberOfRows,
-                            combinedGroupHeight);
+                            combinedGroupHeight,
+                            1);
 
                         ///Combined group has multiple combined blocks all with the same height
                       } else if (combinedGroup.combinedGroupType ==
@@ -867,6 +965,7 @@ class _GridUIViewState extends State<GridUIView> {
 
                         return createCombinedGroupWithMultipleCombinedBlocks(
                             combGroupIndex + 1,
+                            totalColumnsAbove,
                             rows,
                             combinedGroupHeight,
                             combinedBlocksConfigList);
@@ -907,7 +1006,6 @@ class _GridUIViewState extends State<GridUIView> {
                             combGroupIndex + 1,
                             totalColumnsAbove,
                             combinedGroupRows,
-                            combinedGroupSection,
                             combinedGroupHeight,
                             combinedBlocksList);
                       } else {
@@ -929,23 +1027,27 @@ class _GridUIViewState extends State<GridUIView> {
                         /// |-|-|-| - The combined group section for the bottom blocks section is 3
                         int combinedGroupSection = 3;
 
-                        int tempTotalColumnsAbove = totalColumnsAbove;
                         int columnOffset = 0;
+                        int rowOffset = 0;
                         int combinedBlockColumnSection = combinedGroupSection;
                         int combinedBlockRowSection = 0;
                         int combinedBlockParentIndexInCombinedGroup = 0;
                         Block parentBlock = null;
 
-                        totalColumnsAbove += columnsAboveMainSection;
+                        totalColumnsAbove += columnsBelowMainSection;
 
                         return createEmptyBlocks(
                             combinedGroupSection,
                             combinedBlockParentIndexInCombinedGroup,
                             combinedBlockColumnSection,
                             combinedBlockRowSection,
+                            combinedGroup.columnsBelow,
+                            rows,
                             parentBlock,
-                            tempTotalColumnsAbove,
+                            totalColumnsAbove,
+                            totalRowsLeftOfEmptyBlocks,
                             columnOffset,
+                            rowOffset,
                             columnsBelowMainSection,
                             rows);
                       } else {
