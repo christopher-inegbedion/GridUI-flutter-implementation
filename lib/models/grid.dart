@@ -230,7 +230,6 @@ class Grid {
       possibleRows.add(i);
     }
 
-    // int targetRow = possibleRows[()]
     int targetRow = possibleRows[((blockRow + offset) - difference) - 1];
     return targetRow;
   }

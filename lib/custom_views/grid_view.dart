@@ -145,7 +145,6 @@ class _GridUIViewState extends State<GridUIView> {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        print(val);
         setState(() {
           grid_json = value.grid_json;
           columns = value.gridColumns;
@@ -203,23 +202,7 @@ class _GridUIViewState extends State<GridUIView> {
         builder: (context, List<CombBlockDragInformation> candidateData,
             rejectedData) {
           return GestureDetector(
-            onTap: () {
-              int targetColumn = Grid.getInstance().getTargetColumn(
-                  combinedGroupSection,
-                  columnsAboveCombinedGroup,
-                  blockColumn,
-                  combinedGroupHeight,
-                  parentBlock,
-                  colOffset);
-              int targetRow = Grid.getInstance().getTargetRow(
-                  rowsRightOfBlock, blockRow, rowOffset, combinedGroupWidth,
-                  difference: difference);
-              // int columnOnGrid = Grid.getInstance().getBlockColumn(
-              //     gridPosition, combinedGroupSection, blockColumn);
-              print(
-                  "empty block config: combined group section: $combinedGroupSection, columns above combined group: $columnsAboveCombinedGroup, block column in combined group: $blockColumn");
-              print("col: $targetColumn, row: $targetRow");
-            },
+            onTap: () {},
             child: Container(
               width: blockSize,
               child: Center(
@@ -247,8 +230,9 @@ class _GridUIViewState extends State<GridUIView> {
               rowsRightOfBlock, blockRow, rowOffset, combinedGroupWidth,
               difference: difference);
 
-          print("start column ${dragInformation.combinedBlockStartColumn}");
-          print("start row ${dragInformation.combinedBlockStartRow}");
+          // print("start column ${dragInformation.combinedBlockStartColumn}");
+          // print("start row ${dragInformation.combinedBlockStartRow}");
+
           moveCombinedBlock(
               grid_json,
               dragInformation.combinedBlockStartColumn,
@@ -655,6 +639,7 @@ class _GridUIViewState extends State<GridUIView> {
               totalNumberOfRowsForCombinedBlock = numberOfBlocksBefore +
                   combinedBlockWidth +
                   numberOfBlocksAfter;
+
               int combinedGroupSection = 2;
 
               return Container(
@@ -818,7 +803,7 @@ class _GridUIViewState extends State<GridUIView> {
                               totalColumnsAbove,
                               totalRowsBeforeEmptyBlocks,
                               columnOffset,
-                              rowsToTheLeft,
+                              rowsToTheLeftInSameGroup - 1,
                               numberOfEmptyBlockColumns,
                               numberOfEmptyBlockRows);
                         } else {
