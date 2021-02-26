@@ -1064,7 +1064,7 @@ class _GridUIViewState extends State<GridUIView> {
   ///
   ///The method loads the data provided ([data]) and creates the grid.
   Widget initUI(List data, double blockSize) {
-    if (this.data != null && this.data.length > 0) {
+    if (data.length > 0) {
       int numberOfCombinedGroups = data.length;
       int totalColumnsAbove = 0;
       int totalRowsLeftOfEmptyBlocks = rows;
@@ -1285,12 +1285,21 @@ class _GridUIViewState extends State<GridUIView> {
                   }
                 });
           });
-    } else {
+    } else if (data.length == 0) {
+      setState(() {
+        editMode = true;
+      });
+
+      return createEmptyBlocks(
+          0, 0, 0, 0, 0, 0, null, 0, 0, 0, 0, columns, rows);
+    } else if (data == null) {
       return Container(
           width: double.maxFinite,
-          height: double.maxFinite,
           child: Center(
-            child: Text("No data"),
+            child: Text(
+              "No data",
+              style: TextStyle(color: Colors.white, fontSize: 30),
+            ),
           ));
     }
   }
