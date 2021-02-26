@@ -7,6 +7,7 @@ import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
 import 'package:http/http.dart' as http;
+import 'package:grid_ui_implementation/config.dart';
 
 class GridUIView extends StatefulWidget {
   int rows;
@@ -42,6 +43,168 @@ class GridUIView extends StatefulWidget {
 
   void changeGridJSON(String value) {
     state.grid_json = value;
+  }
+
+  final _createCombinedBlockKey = GlobalKey<FormState>();
+  final blockHeightController = TextEditingController();
+  final blockWidthController = TextEditingController();
+  final blockStartColumnController = TextEditingController();
+  final blockStartRowController = TextEditingController();
+
+  ///Combined block creation dialog
+  Future<void> createCombinedBlockialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Create a combined block'),
+          content: SingleChildScrollView(
+              child: Form(
+                  key: _createCombinedBlockKey,
+                  child: Column(children: <Widget>[
+                    TextFormField(
+                      controller: blockHeightController,
+                      decoration:
+                          InputDecoration(labelText: 'Combined block height'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Height required';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: blockWidthController,
+                      decoration:
+                          InputDecoration(labelText: 'Combined block width'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Width required';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: blockStartColumnController,
+                      decoration:
+                          InputDecoration(labelText: 'Grid start column'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Column required';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: blockStartRowController,
+                      decoration: InputDecoration(labelText: 'Grid start row'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Row required';
+                        }
+                        return null;
+                      },
+                    ),
+                  ]))),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Approve'),
+              onPressed: () {
+                // Validate returns true if the form is valid, otherwise false.
+                if (_createCombinedBlockKey.currentState.validate()) {
+                  state.addCombinedBlock(
+                      state.grid_json,
+                      blockHeightController.text,
+                      blockWidthController.text,
+                      blockStartColumnController.text,
+                      blockStartRowController.text);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  ///Combined block creation dialog
+  Future<void> deleteCombinedBlockialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete a combined block'),
+          content: SingleChildScrollView(
+              child: Form(
+                  key: _createCombinedBlockKey,
+                  child: Column(children: <Widget>[
+                    TextFormField(
+                      controller: blockHeightController,
+                      decoration:
+                          InputDecoration(labelText: 'Combined block height'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Height required';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: blockWidthController,
+                      decoration:
+                          InputDecoration(labelText: 'Combined block width'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Width required';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: blockStartColumnController,
+                      decoration:
+                          InputDecoration(labelText: 'Grid start column'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Column required';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: blockStartRowController,
+                      decoration: InputDecoration(labelText: 'Grid start row'),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Row required';
+                        }
+                        return null;
+                      },
+                    ),
+                  ]))),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Approve'),
+              onPressed: () {
+                // Validate returns true if the form is valid, otherwise false.
+                if (_createCombinedBlockKey.currentState.validate()) {
+                  state.deleteCombinedBlock(
+                      state.grid_json,
+                      blockHeightController.text,
+                      blockWidthController.text,
+                      blockStartColumnController.text,
+                      blockStartRowController.text);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -141,7 +304,67 @@ class _GridUIViewState extends State<GridUIView> {
       'target_row': (targetRow - blockQuadrantRow).toString()
     };
 
-    postGridToServer("http://192.168.1.171:5000/move", data).then((val) {
+    postGridToServer(
+            "http://${Config.serverAddr}:${Config.serverPort}/move", data)
+        .then((val) {
+      Grid.getInstance()
+          .loadJSON("", fromNetwork: true, grid: val)
+          .then((value) {
+        print(val);
+        setState(() {
+          grid_json = value.grid_json;
+          columns = value.gridColumns;
+          rows = value.gridRows;
+          changeData(value.combinedGroups);
+        });
+      });
+    });
+  }
+
+  ///Create a combined block
+  void addCombinedBlock(String gridJSON, String height, String width,
+      String startColumn, String startRow) {
+    Map<String, String> data = {
+      'grid_json': gridJSON,
+      'height': height,
+      'width': width,
+      'start_row': width,
+      'target_column': startColumn,
+      'target_row': startRow.toString()
+    };
+
+    postGridToServer(
+            "http://${Config.serverAddr}:${Config.serverPort}/create", data)
+        .then((val) {
+      Grid.getInstance()
+          .loadJSON("", fromNetwork: true, grid: val)
+          .then((value) {
+        print(val);
+        setState(() {
+          grid_json = value.grid_json;
+          columns = value.gridColumns;
+          rows = value.gridRows;
+          changeData(value.combinedGroups);
+        });
+      });
+    });
+  }
+
+  ///Delete a combined block
+  void deleteCombinedBlock(String gridJSON, String height, String width,
+      String startColumn, String startRow) {
+    Map<String, String> data = {
+      'grid_json': gridJSON,
+      'height': height,
+      'width': width,
+      'start_row': width,
+      'target_column': startColumn,
+      'target_row': startRow.toString()
+    };
+
+    postGridToServer(
+            "http://${Config.serverAddr}:${Config.serverPort}/delete", data)
+        .then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
@@ -295,8 +518,6 @@ class _GridUIViewState extends State<GridUIView> {
                                       Grid.getInstance().getBlockStartColumn(
                                           combinedBlockIndexInCombinedGroup,
                                           combinedGroupIndexInCombinedGroupList);
-                                  print(
-                                      "start column $combinedBlockStartColumn");
                                   int combinedBlockStartRow = Grid.getInstance()
                                       .getBlockStartRow(
                                           combinedBlockIndexInCombinedGroup,
@@ -326,6 +547,28 @@ class _GridUIViewState extends State<GridUIView> {
                                       combinedBlockStartColumn;
                                   dragInformation.combinedBlockStartRow =
                                       combinedBlockStartRow;
+                                },
+                                onDoubleTap: () {
+                                  int combinedBlockStartColumn =
+                                      Grid.getInstance().getBlockStartColumn(
+                                          combinedBlockIndexInCombinedGroup,
+                                          combinedGroupIndexInCombinedGroupList);
+                                  int combinedBlockStartRow = Grid.getInstance()
+                                      .getBlockStartRow(
+                                          combinedBlockIndexInCombinedGroup,
+                                          combinedGroupIndexInCombinedGroupList);
+
+                                  int startColumn = combinedBlockStartColumn;
+                                  int startRow = combinedBlockStartRow;
+                                  int height = numberOfColumns.toInt();
+                                  int width = numberOfRows.toInt();
+
+                                  deleteCombinedBlock(
+                                      grid_json,
+                                      height.toString(),
+                                      width.toString(),
+                                      startColumn.toString(),
+                                      startRow.toString());
                                 },
                                 child: Container(
                                   width: blockSize,

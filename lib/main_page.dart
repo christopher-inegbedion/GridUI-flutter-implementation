@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
 import 'package:http/http.dart' as http;
+import 'config.dart';
 
 class GridPage extends StatefulWidget {
   @override
@@ -71,7 +72,8 @@ class _GridPageState extends State<GridPage> {
                         "Default",
                       ),
                       onPressed: () {
-                        getGridFromServer('http://192.168.1.171:5000/default')
+                        getGridFromServer(
+                                'http://${Config.serverAddr}:${Config.serverPort}/default')
                             .then((value1) {
                           grid
                               .loadJSON("", fromNetwork: true, grid: value1)
@@ -99,7 +101,8 @@ class _GridPageState extends State<GridPage> {
                         "Preset 1",
                       ),
                       onPressed: () {
-                        getGridFromServer('http://192.168.1.171:5000/preset1')
+                        getGridFromServer(
+                                'http://${Config.serverAddr}:${Config.serverPort}/preset1')
                             .then((value1) {
                           grid
                               .loadJSON("", fromNetwork: true, grid: value1)
@@ -127,7 +130,8 @@ class _GridPageState extends State<GridPage> {
                         "Preset 2",
                       ),
                       onPressed: () {
-                        getGridFromServer('http://192.168.1.171:5000/preset2')
+                        getGridFromServer(
+                                'http://${Config.serverAddr}:${Config.serverPort}/preset2')
                             .then((value1) {
                           grid
                               .loadJSON("", fromNetwork: true, grid: value1)
@@ -155,7 +159,8 @@ class _GridPageState extends State<GridPage> {
                         "Preset 3",
                       ),
                       onPressed: () {
-                        getGridFromServer('http://192.168.1.171:5000/preset3')
+                        getGridFromServer(
+                                'http://${Config.serverAddr}:${Config.serverPort}/preset3')
                             .then((value1) {
                           grid
                               .loadJSON("", fromNetwork: true, grid: value1)
@@ -179,12 +184,26 @@ class _GridPageState extends State<GridPage> {
                     ),
                     FlatButton(
                       color: Colors.white,
-                      child: Text(""),
+                      child: Text("Toggle edit mode"),
                       onPressed: () {
                         setState(() {
                           gridView.state.editMode = !gridView.state.editMode;
                           gridView.changeEditMode(gridView.state.editMode);
                         });
+                      },
+                    ),
+                    FlatButton(
+                      color: Colors.white,
+                      child: Text("Create combined block"),
+                      onPressed: () {
+                        gridView.createCombinedBlockialog(context);
+                      },
+                    ),
+                    FlatButton(
+                      color: Colors.white,
+                      child: Text("Delete combined block"),
+                      onPressed: () {
+                        gridView.deleteCombinedBlockialog(context);
                       },
                     ),
                   ],
