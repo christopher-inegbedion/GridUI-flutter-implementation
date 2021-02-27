@@ -429,11 +429,14 @@ class _GridUIViewState extends State<GridUIView> {
             child: Container(
               width: blockSize,
               child: Center(
-                child: Icon(Icons.add, color: Colors.white),
+                child: Text(
+                  '.',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               decoration: BoxDecoration(
                   color: Colors.black,
-                  border: Border.all(color: Colors.white, width: 2)),
+                  border: Border.all(color: Colors.grey[900], width: 1)),
             ),
           );
         },
