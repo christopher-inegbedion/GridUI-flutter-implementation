@@ -97,7 +97,10 @@ Grid object = {
 
     "combined_groups": This is an array that contains the data for each combined block. [
 
-        ==="This array is contained of multiple combined groups"===
+        ~~~This array contains multiple combined groups~~~
+        What is a combined group?: Each combined block is grouped with other combined blocks
+        that are adjacent to it horizontally. A combined group is therefore a collection of
+        horizontally adjacent combined blocks.
 
         {
       "combined_group_type": This describes the type of combined group
@@ -117,7 +120,7 @@ Grid object = {
       
       "combined_blocks": This property describes each individual combined block in the combined group [
 
-          ==="This array contains each combined block in the combined group"===
+          ~~~This array contains each combined block in the combined group~~~
 
         {
 
