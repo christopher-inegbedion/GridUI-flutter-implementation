@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
 import 'package:http/http.dart' as http;
-import 'config.dart';
+import 'network_config.dart';
 
 class GridPage extends StatefulWidget {
   @override

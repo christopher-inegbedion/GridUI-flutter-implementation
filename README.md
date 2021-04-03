@@ -136,6 +136,8 @@ Grid object = {
            The first combined block from the left is 1, second 2, etc.
           
           "block": This describes the properties of a combined block in detail {
+
+            "uuid": This identifies the block in the grid. Used to assign the blocks content
               
             "type": This is the type of combined block
 
@@ -159,7 +161,7 @@ Grid object = {
 END
 ```
 
-### Content types
+### Block content
 Each block has a type of content that describes what it displays. These include:
 - Text
 - Color
@@ -171,7 +173,9 @@ Each of the content types have their own unique data structure.
 
 #### Text
 ```
-{
+TextContent content {
+    "block_id": This is the UUID for the content's combined block
+
     "value": This will be the text to be displayed in the block. (String)
 
     "position": This is the position of the text in the combined block. The possible range of values are from 1-9, with each
@@ -190,3 +194,11 @@ Each of the content types have their own unique data structure.
 
     "font": This is the type of font used to display the text (String)
 }
+
+END
+```
+
+...more to come
+
+### How do the blocks in the matrix know which content is theirs?
+Each block is given a UUID to identify it and that UUID is stored in the block content object

@@ -4,8 +4,10 @@ import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
+import 'package:grid_ui_implementation/models/combined_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
+import 'package:grid_ui_implementation/models/text_combined_block_content.dart';
 
 class Grid {
   static Grid instance;
@@ -31,12 +33,14 @@ class Grid {
     Map<String, dynamic> gridJSON;
     if (fromNetwork) {
       gridJSON = jsonDecode(grid);
+      // print(gridJSON);
     } else {
       gridJSON = await parseJsonFromAssets(path);
+      // print(gridJSON);
     }
 
     ///Grid in json format
-    this.grid_json = grid;
+    this.grid_json = json.encode(gridJSON);
 
     ///Number of columns in the grid
     this.gridColumns = gridJSON["grid_columns"];
@@ -51,14 +55,30 @@ class Grid {
     ///Create each combined group object and asign each to [combinedGroups]
     for (Map<String, dynamic> combinedGroupFromJSON
         in gridJSON["combined_groups"]) {
-      List<CombinedBlockInGroup> allCombinedGroups = [];
+      List<CombinedBlockInGroup> allCombinedBlocks = [];
 
       ///Create each combined group's combined block
       for (Map<String, dynamic> combinedBlocks
           in combinedGroupFromJSON["combined_blocks"]) {
+        String blockContentType =
+            combinedBlocks["block"]["content"]["content_type"];
+
+        dynamic content;
+        //TODO: Only text content is supported. Need to add more.
+        if (blockContentType == "text") {
+          content = TextContent(
+            combinedBlocks["block"]["content"]["value"]["value"],
+            combinedBlocks["block"]["content"]["value"]["position"],
+            combinedBlocks["block"]["content"]["value"]["font_size"],
+            combinedBlocks["block"]["content"]["value"]["color"],
+            combinedBlocks["block"]["content"]["value"]["font_family"],
+          );
+        }
+
+        BlockContent blockContent = new BlockContent(blockContentType, content);
         Block block = new Block(
           BlockType.combined,
-          combinedBlocks["block"]["content"],
+          blockContent,
           combinedBlocks["block"]["number_of_rows"],
           combinedBlocks["block"]["number_of_columns"],
         );
@@ -71,7 +91,7 @@ class Grid {
             combinedBlocks["position_in_combined_group"],
             block);
 
-        allCombinedGroups.add(combinedBlockInGroup);
+        allCombinedBlocks.add(combinedBlockInGroup);
       }
 
       CombinedGroup combinedGroup = new CombinedGroup(
@@ -81,7 +101,7 @@ class Grid {
           combinedGroupFromJSON["columns_below"],
           combinedGroupFromJSON["number_of_columns"],
           combinedGroupFromJSON["number_of_rows"],
-          allCombinedGroups);
+          allCombinedBlocks);
 
       combinedGroups.add(combinedGroup);
     }
@@ -92,6 +112,7 @@ class Grid {
   Future<GridUIView> initGridView(path) async {
     Grid grid = await loadJSON(path);
     this.grid_json = grid.grid_json;
+    print(this.grid_json);
     this.gridColumns = grid.gridColumns;
     this.gridRows = grid.gridRows;
     this.combinedGroups = grid.combinedGroups;

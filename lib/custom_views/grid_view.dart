@@ -3,11 +3,13 @@ import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
 import 'package:grid_ui_implementation/models/comb_block_drag_info.dart';
+import 'package:grid_ui_implementation/models/combined_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
+import 'package:grid_ui_implementation/models/text_combined_block_content.dart';
 import 'package:http/http.dart' as http;
-import 'package:grid_ui_implementation/config.dart';
+import 'package:grid_ui_implementation/network_config.dart';
 
 class GridUIView extends StatefulWidget {
   int rows;
@@ -20,7 +22,7 @@ class GridUIView extends StatefulWidget {
 
   @override
   _GridUIViewState createState() {
-    state = _GridUIViewState(columns, rows, data);
+    state = _GridUIViewState(columns, rows, data, grid_json: grid_json);
 
     return state;
   }
@@ -42,6 +44,7 @@ class GridUIView extends StatefulWidget {
   }
 
   void changeGridJSON(String value) {
+    print(value);
     state.grid_json = value;
   }
 
@@ -216,7 +219,9 @@ class _GridUIViewState extends State<GridUIView> {
   double blockSize;
   bool editMode = false;
 
-  _GridUIViewState(this.columns, this.rows, this.data);
+  _GridUIViewState(this.columns, this.rows, this.data, {String grid_json}) {
+    this.grid_json = grid_json;
+  }
 
   bool getEditState() {
     return editMode;
@@ -310,7 +315,6 @@ class _GridUIViewState extends State<GridUIView> {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        print(val);
         setState(() {
           grid_json = value.grid_json;
           columns = value.gridColumns;
@@ -339,7 +343,6 @@ class _GridUIViewState extends State<GridUIView> {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        print(val);
         setState(() {
           grid_json = value.grid_json;
           columns = value.gridColumns;
@@ -458,7 +461,7 @@ class _GridUIViewState extends State<GridUIView> {
 
           // print("start column ${dragInformation.combinedBlockStartColumn}");
           // print("start row ${dragInformation.combinedBlockStartRow}");
-
+          //
           moveCombinedBlock(
               grid_json,
               dragInformation.combinedBlockStartColumn,
@@ -499,9 +502,7 @@ class _GridUIViewState extends State<GridUIView> {
                   editMode ? Border.all(color: Colors.white, width: 2) : null),
           child: Stack(
             children: [
-              Center(
-                  child: Text(
-                      "Combined block\n\ngrid section: ${combinedGroupIndexInCombinedGroupList}, combined block section ${combinedBlockIndexInCombinedGroup}")),
+              createCombinedBlockContent(block.content),
 
               ///Block quadrants
               ListView.builder(
@@ -607,6 +608,54 @@ class _GridUIViewState extends State<GridUIView> {
         ),
       ),
     );
+  }
+
+  Widget createCombinedBlockContent(BlockContent blockContent) {
+    if (blockContent.content_type == "text") {
+      TextContent content = blockContent.content;
+      String text = content.value;
+      String color = content.color.replaceAll('#', '0xff');
+      int position = content.position;
+      double fontSize = content.font_size;
+      Alignment textPosition = getTextAlignemtPosition(position);
+
+      return Align(
+        alignment: textPosition,
+        child: Text(
+          text,
+          style: TextStyle(color: Color(int.parse(color)), fontSize: fontSize),
+        ),
+      );
+    } else {
+      return Text("nothing");
+    }
+  }
+
+  ///Return the alignment for the block content text type position property
+  Alignment getTextAlignemtPosition(int position) {
+    Alignment textPosition;
+
+    if (position == 1) {
+      textPosition = Alignment.topLeft;
+    } else if (position == 2) {
+      textPosition = Alignment.topCenter;
+    } else if (position == 3) {
+      textPosition = Alignment.topRight;
+    } else if (position == 4) {
+      textPosition = Alignment.centerLeft;
+    } else if (position == 5) {
+      textPosition = Alignment.center;
+    } else if (position == 6) {
+      textPosition = Alignment.centerRight;
+    } else if (position == 7) {
+      textPosition = Alignment.bottomLeft;
+    } else if (position == 8) {
+      textPosition = Alignment.bottomCenter;
+    } else if (position == 9) {
+      textPosition = Alignment.bottomRight;
+    }
+
+    return textPosition;
   }
 
   ///Creates empty blocks above/below combined group
@@ -814,7 +863,6 @@ class _GridUIViewState extends State<GridUIView> {
 
             totalNumberOfRowsForCombinedBlock =
                 numberOfRowsBefore + combinedBlockWidth + numberOfRowsAfter;
-            print(rowsToTheLeft);
             return Container(
               width: blockSize * totalNumberOfRowsForCombinedBlock,
               child: createCombinedGroupWith1CombinedBlock(

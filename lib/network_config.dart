@@ -1,6 +1,6 @@
 class Config {
   Config._();
 
-  static String serverAddr = "192.168.1.129";
+  static String serverAddr = "82.129.116.179";
   static String serverPort = "5000";
 }

@@ -1,5 +1,74 @@
 {
-    "grid_columns": 15,
+    "grid_columns": 7,
     "grid_rows": 6,
-    "combined_groups": []
+    "combined_groups": [
+        {
+            "combined_group_type": "SINGLE_COMBINED_GROUP",
+            "columns_above": 1,
+            "columns_below": 0,
+            "number_of_columns": 2,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 1,
+                    "number_of_rows_right": 3,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "uuid": "8ee9d5d6-de3c-43a3-bc4b-0f8089deb933",
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "text",
+                            "value": {
+                                "value": "test",
+                                "position": 5,
+                                "font_size": 50.0,
+                                "color": "#000000",
+                                "font_family": ""
+                            }
+                        },
+                        "number_of_rows": 2,
+                        "number_of_columns": 2,
+                        "combined_group_position": 1,
+                        "block_position": 1
+                    }
+                }
+            ]
+        },
+        {
+            "combined_group_type": "SINGLE_COMBINED_GROUP",
+            "columns_above": 1,
+            "columns_below": 2,
+            "number_of_columns": 1,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 1,
+                    "number_of_rows_right": 3,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "uuid": "adf227b0-6fde-45c4-a36b-da20a7b1ec99",
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "text",
+                            "value": {
+                                "value": "test",
+                                "position": 5,
+                                "font_size": 10.0,
+                                "color": "#ffffff",
+                                "font_family": ""
+                            }
+                        },
+                        "number_of_rows": 2,
+                        "number_of_columns": 1,
+                        "combined_group_position": 2,
+                        "block_position": 1
+                    }
+                }
+            ]
+        }
+    ]
 }
