@@ -2,7 +2,7 @@
 
 An implementation of the grid layout system with Flutter.
 #### Disclaimer: The column is horizontal, row is vertical. 
-### What is GridUI
+## What is GridUI?
 GridUI is a design system that allows blocks containing content to be created/deleted/moved around as required to form a cohesive layout.
 
 GridUI works by converting data in a matrix stored on the layout server into a standard JSON string object and then using that data to create the UI layout. The matrix determines the size and position of each combined block. An empty space in the 2D matrix is labelled with a '0' and a combined block will instead be marked with a 1, 2, 3...etc. 
@@ -53,7 +53,7 @@ END
 
 END
 ```
-### How the GridUI client receives the layout data?
+## How the GridUI client receives the layout data?
 The layout for a GridUI client is determined by the JSON string object received from the GridUI layout server. The data in the matrix is converted into a JSON string object which describes its size, position in the Grid, its content, etc. This JSON data is then sent to a GridUI client that is able to understand the JSON and convert it into a layout
 ```
 -----------------       JSON          -----------------
@@ -63,7 +63,7 @@ The layout for a GridUI client is determined by the JSON string object received 
 END
 ```
 
-### How is the layout updated?
+## How is the layout updated?
 When an update to the Grid is made, the potential change to be made is sent to the layout server with the change details and then the new changes are re-calculated server-side and sent back to the GridUI client as a full JSON string object which is then re-updated with a new layout.
 
 ```
@@ -87,7 +87,7 @@ When an update to the Grid is made, the potential change to be made is sent to t
 END
 ```
 
-### What is the layout of the JSON received from the server?
+## What is the layout of the JSON received from the server?
 The structure of the GridUI JSON and each property definition is as follows:
 ```
 Grid object = {
@@ -161,7 +161,7 @@ Grid object = {
 END
 ```
 
-### Block content
+## Block content
 Each block has a type of content that describes what it displays. These include:
 - Text
 - Color
@@ -202,3 +202,16 @@ END
 
 ### How do the blocks in the matrix know which content is theirs?
 Each block is given a UUID to identify it and that UUID is stored in the block content object
+
+## Data transfer diagram
+How is the data transfered from the server to the client, vice-versa.
+```
+  +---------------------------------------------------------------------------+         +------------------------------------------------------------------------------------+
+  |                         Server side                                       |         |                                  Client side                                       |
+  |  +----------+     +---------------+     +------------------------------+  |  JSON   |  +--------------+     +---------------+     +-------------------+     +----------+ |
+  |  |  Matrix  | <-> |  Grid object  | <-> |  JSON string representation  |  | <-----> |  | JSON string  | <-> |  Grid object  | <-> |  GridView object  | <-> |  Layout  | |
+  |  +----------+     +---------------+     +------------------------------+  |         |  +--------------+     +---------------+     +-------------------+     +----------+ |
+  +---------------------------------------------------------------------------+         +------------------------------------------------------------------------------------+
+
+END
+```
