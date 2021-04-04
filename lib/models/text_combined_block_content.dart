@@ -1,15 +1,17 @@
 class TextContent {
   String value;
   int position;
-  double font_size;
+  double fontSize;
+  String blockColor;
   String color;
   String font;
 
-  TextContent(String value, int position, double font_size,
+  TextContent(String value, int position, double fontSize, String blockColor,
       String color, String font) {
     this.value = value;
     this.position = position;
-    this.font_size = font_size;
+    this.fontSize = fontSize;
+    this.blockColor = blockColor;
     this.color = color;
     this.font = font;
   }
@@ -18,7 +20,8 @@ class TextContent {
     return {
       "value": value,
       "position": position,
-      "font_size": font_size,
+      "font_size": fontSize,
+      "block_color": blockColor,
       "color": color,
       "font": font
     };

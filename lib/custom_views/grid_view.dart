@@ -497,7 +497,6 @@ class _GridUIViewState extends State<GridUIView> {
       child: Container(
           width: width,
           decoration: BoxDecoration(
-              color: Colors.white,
               border:
                   editMode ? Border.all(color: Colors.white, width: 2) : null),
           child: Stack(
@@ -614,16 +613,21 @@ class _GridUIViewState extends State<GridUIView> {
     if (blockContent.content_type == "text") {
       TextContent content = blockContent.content;
       String text = content.value;
+      String blockColor = content.blockColor.replaceAll("#", "0xff");
       String color = content.color.replaceAll('#', '0xff');
       int position = content.position;
-      double fontSize = content.font_size;
+      double fontSize = content.fontSize;
       Alignment textPosition = getTextAlignemtPosition(position);
 
-      return Align(
-        alignment: textPosition,
-        child: Text(
-          text,
-          style: TextStyle(color: Color(int.parse(color)), fontSize: fontSize),
+      return Container(
+        color: Color(int.parse(blockColor)),
+        child: Align(
+          alignment: textPosition,
+          child: Text(
+            text,
+            style:
+                TextStyle(color: Color(int.parse(color)), fontSize: fontSize),
+          ),
         ),
       );
     } else {

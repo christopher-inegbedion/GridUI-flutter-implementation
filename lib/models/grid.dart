@@ -70,6 +70,7 @@ class Grid {
             combinedBlocks["block"]["content"]["value"]["value"],
             combinedBlocks["block"]["content"]["value"]["position"],
             combinedBlocks["block"]["content"]["value"]["font_size"],
+            combinedBlocks["block"]["content"]["value"]["block_color"],
             combinedBlocks["block"]["content"]["value"]["color"],
             combinedBlocks["block"]["content"]["value"]["font_family"],
           );

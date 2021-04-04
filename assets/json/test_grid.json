@@ -1,10 +1,45 @@
 {
-    "grid_columns": 7,
+    "grid_columns": 15,
     "grid_rows": 6,
     "combined_groups": [
         {
             "combined_group_type": "SINGLE_COMBINED_GROUP",
-            "columns_above": 1,
+            "columns_above": 0,
+            "columns_below": 0,
+            "number_of_columns": 3,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 1,
+                    "number_of_rows_right": 1,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "uuid": "7a433b80-6a15-40c4-9f63-7f5f004a9bcb",
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "text",
+                            "value": {
+                                "value": "THIS IS DEMO TEXT",
+                                "position": 5,
+                                "font_size": 10.0,
+                                "block_color": "#ffffff",
+                                "color": "#000000",
+                                "font_family": ""
+                            }
+                        },
+                        "number_of_rows": 4,
+                        "number_of_columns": 3,
+                        "combined_group_position": 1,
+                        "block_position": 1
+                    }
+                }
+            ]
+        },
+        {
+            "combined_group_type": "SINGLE_COMBINED_GROUP",
+            "columns_above": 2,
             "columns_below": 0,
             "number_of_columns": 2,
             "number_of_rows": 6,
@@ -16,41 +51,7 @@
                     "number_of_columns_below": 0,
                     "position_in_combined_group": 1,
                     "block": {
-                        "uuid": "8ee9d5d6-de3c-43a3-bc4b-0f8089deb933",
-                        "type": "COMBINED",
-                        "content": {
-                            "content_type": "text",
-                            "value": {
-                                "value": "test",
-                                "position": 5,
-                                "font_size": 50.0,
-                                "color": "#000000",
-                                "font_family": ""
-                            }
-                        },
-                        "number_of_rows": 2,
-                        "number_of_columns": 2,
-                        "combined_group_position": 1,
-                        "block_position": 1
-                    }
-                }
-            ]
-        },
-        {
-            "combined_group_type": "SINGLE_COMBINED_GROUP",
-            "columns_above": 1,
-            "columns_below": 2,
-            "number_of_columns": 1,
-            "number_of_rows": 6,
-            "combined_blocks": [
-                {
-                    "number_of_rows_left": 1,
-                    "number_of_rows_right": 3,
-                    "number_of_columns_above": 0,
-                    "number_of_columns_below": 0,
-                    "position_in_combined_group": 1,
-                    "block": {
-                        "uuid": "adf227b0-6fde-45c4-a36b-da20a7b1ec99",
+                        "uuid": "3c9a5c25-d4cb-4451-8805-c0e74481ec7a",
                         "type": "COMBINED",
                         "content": {
                             "content_type": "text",
@@ -58,14 +59,76 @@
                                 "value": "test",
                                 "position": 5,
                                 "font_size": 10.0,
+                                "block_color": "#000000",
                                 "color": "#ffffff",
                                 "font_family": ""
                             }
                         },
                         "number_of_rows": 2,
-                        "number_of_columns": 1,
+                        "number_of_columns": 2,
                         "combined_group_position": 2,
                         "block_position": 1
+                    }
+                }
+            ]
+        },
+        {
+            "combined_group_type": "MULTIPLE_COMBINED_GROUP_SAME_HEIGHT",
+            "columns_above": 2,
+            "columns_below": 3,
+            "number_of_columns": 3,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 1,
+                    "number_of_rows_right": 0,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "uuid": "2982c9aa-7f20-4dc4-8938-91b4e6f0afbd",
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "text",
+                            "value": {
+                                "value": "test",
+                                "position": 5,
+                                "font_size": 10.0,
+                                "block_color": "#000000",
+                                "color": "#ffffff",
+                                "font_family": ""
+                            }
+                        },
+                        "number_of_rows": 2,
+                        "number_of_columns": 3,
+                        "combined_group_position": 3,
+                        "block_position": 1
+                    }
+                },
+                {
+                    "number_of_rows_left": 1,
+                    "number_of_rows_right": 0,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 2,
+                    "block": {
+                        "uuid": "71b013ec-57a4-4a58-8235-29b615ea7795",
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "text",
+                            "value": {
+                                "value": "test",
+                                "position": 5,
+                                "font_size": 10.0,
+                                "block_color": "#000000",
+                                "color": "#ffffff",
+                                "font_family": ""
+                            }
+                        },
+                        "number_of_rows": 2,
+                        "number_of_columns": 3,
+                        "combined_group_position": 3,
+                        "block_position": 2
                     }
                 }
             ]
