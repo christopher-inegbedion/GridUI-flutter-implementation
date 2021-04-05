@@ -1,11 +1,10 @@
 import 'package:grid_ui_implementation/enum/block_type.dart';
-import 'package:uuid/uuid.dart';
 
 import 'combined_block_content.dart';
 
 ///This object represents a block with its height (represented as the number of columns) and its width (represented as the number of rows) in a combined group
 class Block {
-  String uuid;
+  int index;
 
   ///Block's content
   BlockContent content;
@@ -21,7 +20,7 @@ class Block {
 
   Block(BlockType blockType, dynamic content, int numberOfRows,
       int numberOfColumns) {
-    this.uuid = Uuid().v4();
+    this.index = index;
     this.content = content;
     this.numberOfColumns = numberOfColumns;
     this.numberOfRows = numberOfRows;
@@ -30,7 +29,7 @@ class Block {
 
   Map<String, dynamic> toJSON(Block block) {
     return {
-      "uuid": uuid,
+      "index": index,
       "blockType": blockType,
       "content": content,
       "numberOfRows": numberOfRows,

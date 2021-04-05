@@ -137,7 +137,7 @@ Grid object = {
           
           "block": This describes the properties of a combined block in detail {
 
-            "uuid": This identifies the block in the grid. Used to assign the blocks content
+            "index": This identifies the block in the grid. Used to assign the blocks content
               
             "type": This is the type of combined block
 
@@ -212,6 +212,12 @@ How is the data transfered from the server to the client, vice-versa.
   |  |  Matrix  | <-> |  Grid object  | <-> |  JSON string representation  |  | <-----> |  | JSON string  | <-> |  Grid object  | <-> |  GridView object  | <-> |  Layout  | |
   |  +----------+     +---------------+     +------------------------------+  |         |  +--------------+     +---------------+     +-------------------+     +----------+ |
   +---------------------------------------------------------------------------+         +------------------------------------------------------------------------------------+
+
+The position and size of the combined blocks are stored in a matrix on the server, the components are stored in a seperate 
+variable, both of these are then used to build the Grid object with describes the entire Grid, after that this object is 
+converted to a JSON string representation to be sent to the client. Once the data reaches the client the JSON is converted
+into a Grid object which will have all the specifications for the Grid and then a custom stateful widget class GridView is 
+created that can transform the data in the Grid object into layout.
 
 END
 ```

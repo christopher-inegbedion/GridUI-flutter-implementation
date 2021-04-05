@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
+import 'package:grid_ui_implementation/models/block_content/color_combined_block_content.dart';
+import 'package:grid_ui_implementation/models/block_content/image_combined_block_content.dart';
 import 'package:grid_ui_implementation/models/comb_block_drag_info.dart';
 import 'package:grid_ui_implementation/models/combined_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
-import 'package:grid_ui_implementation/models/text_combined_block_content.dart';
+import 'package:grid_ui_implementation/models/block_content/text_combined_block_content.dart';
 import 'package:http/http.dart' as http;
 import 'package:grid_ui_implementation/network_config.dart';
 
@@ -44,7 +46,7 @@ class GridUIView extends StatefulWidget {
   }
 
   void changeGridJSON(String value) {
-    print(value);
+    // print(value);
     state.grid_json = value;
   }
 
@@ -53,6 +55,42 @@ class GridUIView extends StatefulWidget {
   final blockWidthController = TextEditingController();
   final blockStartColumnController = TextEditingController();
   final blockStartRowController = TextEditingController();
+
+  final _editCombinedBlockKey = GlobalKey<FormState>();
+  final combinedBlockContentController = TextEditingController();
+
+  ///Edit a combined block
+  Future<void> editCombinedBlockDialog(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text("Edit a combined block"),
+              content: DropdownButton<String>(
+                value: "dropdownValue",
+                icon: const Icon(Icons.arrow_downward),
+                iconSize: 24,
+                elevation: 16,
+                style: const TextStyle(color: Colors.deepPurple),
+                underline: Container(
+                  height: 2,
+                  color: Colors.deepPurpleAccent,
+                ),
+                onChanged: (String newValue) {
+                  // setState(() {
+                  //   dropdownValue = newValue!;
+                  // });
+                },
+                items: <String>['One', 'Two', 'Free', 'Four']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ));
+        });
+  }
 
   ///Combined block creation dialog
   Future<void> createCombinedBlockialog(BuildContext context) async {
@@ -310,7 +348,8 @@ class _GridUIViewState extends State<GridUIView> {
     };
 
     postGridToServer(
-            "http://${Config.serverAddr}:${Config.serverPort}/move", data)
+            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/move",
+            data)
         .then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
@@ -338,7 +377,8 @@ class _GridUIViewState extends State<GridUIView> {
     };
 
     postGridToServer(
-            "http://${Config.serverAddr}:${Config.serverPort}/create", data)
+            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/create",
+            data)
         .then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
@@ -366,7 +406,8 @@ class _GridUIViewState extends State<GridUIView> {
     };
 
     postGridToServer(
-            "http://${Config.serverAddr}:${Config.serverPort}/delete", data)
+            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/delete",
+            data)
         .then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
@@ -494,95 +535,93 @@ class _GridUIViewState extends State<GridUIView> {
 
     return LongPressDraggable(
       data: dragInformation,
-      child: Container(
-          width: width,
-          decoration: BoxDecoration(
-              border:
-                  editMode ? Border.all(color: Colors.white, width: 2) : null),
-          child: Stack(
-            children: [
-              createCombinedBlockContent(block.content),
+      child: GestureDetector(
+        onDoubleTap: () {
+          int combinedBlockStartColumn = Grid.getInstance().getBlockStartColumn(
+              combinedBlockIndexInCombinedGroup,
+              combinedGroupIndexInCombinedGroupList);
+          int combinedBlockStartRow = Grid.getInstance().getBlockStartRow(
+              combinedBlockIndexInCombinedGroup,
+              combinedGroupIndexInCombinedGroupList);
 
-              ///Block quadrants
-              ListView.builder(
-                  itemCount: numberOfColumns.toInt(),
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, colIndex) {
-                    return Container(
-                        height: blockSize,
-                        child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: numberOfRows.toInt(),
-                            itemBuilder: (context, rowIndex) {
-                              return GestureDetector(
-                                onTapDown: (details) {
-                                  int combinedBlockStartColumn =
-                                      Grid.getInstance().getBlockStartColumn(
-                                          combinedBlockIndexInCombinedGroup,
-                                          combinedGroupIndexInCombinedGroupList);
-                                  int combinedBlockStartRow = Grid.getInstance()
-                                      .getBlockStartRow(
-                                          combinedBlockIndexInCombinedGroup,
-                                          combinedGroupIndexInCombinedGroupList);
-                                  int combinedBlockWidth = numberOfRows.toInt();
-                                  int combinedBlockHeight =
-                                      numberOfColumns.toInt();
+          int startColumn = combinedBlockStartColumn;
+          int startRow = combinedBlockStartRow;
+          int height = numberOfColumns.toInt();
+          int width = numberOfRows.toInt();
 
-                                  if (numberOfRows > 1) {
-                                    blockQuadrant =
-                                        colIndex + colIndex + rowIndex + 1;
-                                  } else {
-                                    blockQuadrant = colIndex + 1;
-                                  }
+          deleteCombinedBlock(grid_json, height.toString(), width.toString(),
+              startColumn.toString(), startRow.toString());
+        },
+        child: Container(
+            width: width,
+            decoration: BoxDecoration(
+                border: editMode
+                    ? Border.all(color: Colors.white, width: 2)
+                    : null),
+            child: Stack(
+              children: [
+                createCombinedBlockContent(block.content),
 
-                                  dragInformation.block = block;
-                                  dragInformation.blockQuadrantDraggingFrom =
-                                      blockQuadrant;
-                                  dragInformation.blockQuadrantColumn =
-                                      colIndex;
-                                  dragInformation.blockQuadrantRow = rowIndex;
-                                  dragInformation.combinedBlockHeight =
-                                      combinedBlockHeight;
-                                  dragInformation.combinedBlockWidth =
-                                      combinedBlockWidth;
-                                  dragInformation.combinedBlockStartColumn =
-                                      combinedBlockStartColumn;
-                                  dragInformation.combinedBlockStartRow =
-                                      combinedBlockStartRow;
-                                },
-                                onDoubleTap: () {
-                                  int combinedBlockStartColumn =
-                                      Grid.getInstance().getBlockStartColumn(
-                                          combinedBlockIndexInCombinedGroup,
-                                          combinedGroupIndexInCombinedGroupList);
-                                  int combinedBlockStartRow = Grid.getInstance()
-                                      .getBlockStartRow(
-                                          combinedBlockIndexInCombinedGroup,
-                                          combinedGroupIndexInCombinedGroupList);
+                ///Block quadrants
+                ListView.builder(
+                    itemCount: numberOfColumns.toInt(),
+                    physics: NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, colIndex) {
+                      return Container(
+                          height: blockSize,
+                          child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: numberOfRows.toInt(),
+                              itemBuilder: (context, rowIndex) {
+                                return GestureDetector(
+                                  onTapDown: (details) {
+                                    int combinedBlockStartColumn =
+                                        Grid.getInstance().getBlockStartColumn(
+                                            combinedBlockIndexInCombinedGroup,
+                                            combinedGroupIndexInCombinedGroupList);
+                                    int combinedBlockStartRow =
+                                        Grid.getInstance().getBlockStartRow(
+                                            combinedBlockIndexInCombinedGroup,
+                                            combinedGroupIndexInCombinedGroupList);
+                                    int combinedBlockWidth =
+                                        numberOfRows.toInt();
+                                    int combinedBlockHeight =
+                                        numberOfColumns.toInt();
 
-                                  int startColumn = combinedBlockStartColumn;
-                                  int startRow = combinedBlockStartRow;
-                                  int height = numberOfColumns.toInt();
-                                  int width = numberOfRows.toInt();
+                                    if (numberOfRows > 1) {
+                                      blockQuadrant =
+                                          colIndex + colIndex + rowIndex + 1;
+                                    } else {
+                                      blockQuadrant = colIndex + 1;
+                                    }
 
-                                  deleteCombinedBlock(
-                                      grid_json,
-                                      height.toString(),
-                                      width.toString(),
-                                      startColumn.toString(),
-                                      startRow.toString());
-                                },
-                                child: Container(
-                                  width: blockSize,
-                                  height: blockSize,
-                                  decoration: BoxDecoration(color: null),
-                                ),
-                              );
-                            }));
-                  }),
-            ],
-          )),
+                                    dragInformation.block = block;
+                                    dragInformation.blockQuadrantDraggingFrom =
+                                        blockQuadrant;
+                                    dragInformation.blockQuadrantColumn =
+                                        colIndex;
+                                    dragInformation.blockQuadrantRow = rowIndex;
+                                    dragInformation.combinedBlockHeight =
+                                        combinedBlockHeight;
+                                    dragInformation.combinedBlockWidth =
+                                        combinedBlockWidth;
+                                    dragInformation.combinedBlockStartColumn =
+                                        combinedBlockStartColumn;
+                                    dragInformation.combinedBlockStartRow =
+                                        combinedBlockStartRow;
+                                  },
+                                  child: Container(
+                                    width: blockSize,
+                                    height: blockSize,
+                                    decoration: BoxDecoration(color: null),
+                                  ),
+                                );
+                              }));
+                    }),
+              ],
+            )),
+      ),
       feedback: Material(
         child: Container(
           height: height,
@@ -629,6 +668,20 @@ class _GridUIViewState extends State<GridUIView> {
                 TextStyle(color: Color(int.parse(color)), fontSize: fontSize),
           ),
         ),
+      );
+    } else if (blockContent.content_type == "color") {
+      ColorContent content = blockContent.content;
+      String color = content.colorVal.replaceAll("#", "0xff");
+
+      return Container(
+        color: Color(int.parse(color)),
+      );
+    } else if (blockContent.content_type == "image") {
+      ImageContent content = blockContent.content;
+      String link = content.link;
+
+      return Image(
+        image: NetworkImage(link),
       );
     } else {
       return Text("nothing");

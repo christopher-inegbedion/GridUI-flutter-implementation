@@ -7,7 +7,10 @@ import 'package:grid_ui_implementation/models/block.dart';
 import 'package:grid_ui_implementation/models/combined_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
-import 'package:grid_ui_implementation/models/text_combined_block_content.dart';
+import 'package:grid_ui_implementation/models/block_content/text_combined_block_content.dart';
+import 'package:grid_ui_implementation/models/block_content/color_combined_block_content.dart';
+
+import 'block_content/image_combined_block_content.dart';
 
 class Grid {
   static Grid instance;
@@ -74,6 +77,12 @@ class Grid {
             combinedBlocks["block"]["content"]["value"]["color"],
             combinedBlocks["block"]["content"]["value"]["font_family"],
           );
+        } else if (blockContentType == "color") {
+          content = ColorContent(
+              combinedBlocks["block"]["content"]["value"]["color_val"]);
+        } else if (blockContentType == "image") {
+          content =
+              ImageContent(combinedBlocks["block"]["content"]["value"]["link"]);
         }
 
         BlockContent blockContent = new BlockContent(blockContentType, content);

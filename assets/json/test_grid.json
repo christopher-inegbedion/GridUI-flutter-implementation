@@ -3,36 +3,52 @@
     "grid_rows": 6,
     "combined_groups": [
         {
-            "combined_group_type": "SINGLE_COMBINED_GROUP",
+            "combined_group_type": "MULTIPLE_COMBINED_GROUP_SAME_HEIGHT",
             "columns_above": 0,
             "columns_below": 0,
-            "number_of_columns": 3,
+            "number_of_columns": 2,
             "number_of_rows": 6,
             "combined_blocks": [
                 {
                     "number_of_rows_left": 1,
-                    "number_of_rows_right": 1,
+                    "number_of_rows_right": 0,
                     "number_of_columns_above": 0,
                     "number_of_columns_below": 0,
                     "position_in_combined_group": 1,
                     "block": {
-                        "uuid": "7a433b80-6a15-40c4-9f63-7f5f004a9bcb",
+                        "index": 1,
                         "type": "COMBINED",
                         "content": {
-                            "content_type": "text",
+                            "content_type": "image",
                             "value": {
-                                "value": "THIS IS DEMO TEXT",
-                                "position": 5,
-                                "font_size": 10.0,
-                                "block_color": "#ffffff",
-                                "color": "#000000",
-                                "font_family": ""
+                                "link": "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/22b22287602523.5dbd29081561d.gif"
                             }
                         },
-                        "number_of_rows": 4,
-                        "number_of_columns": 3,
+                        "number_of_rows": 2,
+                        "number_of_columns": 2,
                         "combined_group_position": 1,
                         "block_position": 1
+                    }
+                },
+                {
+                    "number_of_rows_left": 1,
+                    "number_of_rows_right": 0,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 2,
+                    "block": {
+                        "index": 2,
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "image",
+                            "value": {
+                                "link": "https://media.giphy.com/media/yfC37YuEhv1rk6M4vp/giphy.gif"
+                            }
+                        },
+                        "number_of_rows": 2,
+                        "number_of_columns": 2,
+                        "combined_group_position": 1,
+                        "block_position": 2
                     }
                 }
             ]
@@ -45,23 +61,18 @@
             "number_of_rows": 6,
             "combined_blocks": [
                 {
-                    "number_of_rows_left": 1,
-                    "number_of_rows_right": 3,
+                    "number_of_rows_left": 2,
+                    "number_of_rows_right": 2,
                     "number_of_columns_above": 0,
                     "number_of_columns_below": 0,
                     "position_in_combined_group": 1,
                     "block": {
-                        "uuid": "3c9a5c25-d4cb-4451-8805-c0e74481ec7a",
+                        "index": 3,
                         "type": "COMBINED",
                         "content": {
-                            "content_type": "text",
+                            "content_type": "image",
                             "value": {
-                                "value": "test",
-                                "position": 5,
-                                "font_size": 10.0,
-                                "block_color": "#000000",
-                                "color": "#ffffff",
-                                "font_family": ""
+                                "link": "https://media.giphy.com/media/cJNJZgLL4AdIFhkazG/giphy.gif"
                             }
                         },
                         "number_of_rows": 2,
@@ -74,9 +85,9 @@
         },
         {
             "combined_group_type": "MULTIPLE_COMBINED_GROUP_SAME_HEIGHT",
-            "columns_above": 2,
-            "columns_below": 3,
-            "number_of_columns": 3,
+            "columns_above": 3,
+            "columns_below": 4,
+            "number_of_columns": 2,
             "number_of_rows": 6,
             "combined_blocks": [
                 {
@@ -86,21 +97,16 @@
                     "number_of_columns_below": 0,
                     "position_in_combined_group": 1,
                     "block": {
-                        "uuid": "2982c9aa-7f20-4dc4-8938-91b4e6f0afbd",
+                        "index": 4,
                         "type": "COMBINED",
                         "content": {
-                            "content_type": "text",
+                            "content_type": "image",
                             "value": {
-                                "value": "test",
-                                "position": 5,
-                                "font_size": 10.0,
-                                "block_color": "#000000",
-                                "color": "#ffffff",
-                                "font_family": ""
+                                "link": "https://media.giphy.com/media/KBPjuGTKlxs0TCbGQL/giphy.gif"
                             }
                         },
                         "number_of_rows": 2,
-                        "number_of_columns": 3,
+                        "number_of_columns": 2,
                         "combined_group_position": 3,
                         "block_position": 1
                     }
@@ -112,21 +118,16 @@
                     "number_of_columns_below": 0,
                     "position_in_combined_group": 2,
                     "block": {
-                        "uuid": "71b013ec-57a4-4a58-8235-29b615ea7795",
+                        "index": 5,
                         "type": "COMBINED",
                         "content": {
-                            "content_type": "text",
+                            "content_type": "image",
                             "value": {
-                                "value": "test",
-                                "position": 5,
-                                "font_size": 10.0,
-                                "block_color": "#000000",
-                                "color": "#ffffff",
-                                "font_family": ""
+                                "link": "https://images.generated.photos/V_jNOeZmhNjlgrTw8sisRiXQwfwukmvw4VmPWeMkOXE/rs:fit:512:512/wm:0.95:sowe:18:18:0.33/Z3M6Ly9nZW5lcmF0/ZWQtcGhvdG9zL3Yz/XzAxMzc5MTguanBn.jpg"
                             }
                         },
                         "number_of_rows": 2,
-                        "number_of_columns": 3,
+                        "number_of_columns": 2,
                         "combined_group_position": 3,
                         "block_position": 2
                     }
