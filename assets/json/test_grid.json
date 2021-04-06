@@ -29,7 +29,7 @@
                                 "value": "This is custom text",
                                 "position": 5,
                                 "font_size": 10.0,
-                                "block_color": "#000000",
+                                "block_color": "transperent",
                                 "color": "#ffffff",
                                 "font_family": ""
                             }
@@ -55,7 +55,7 @@
                                 "value": "This is also custom text",
                                 "position": 5,
                                 "font_size": 10.0,
-                                "block_color": "#000000",
+                                "block_color": "transperent",
                                 "color": "#ffffff",
                                 "font_family": ""
                             }

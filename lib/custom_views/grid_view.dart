@@ -659,24 +659,31 @@ class _GridUIViewState extends State<GridUIView> {
     );
   }
 
+  ///Create the content in the combined block.
   Widget createCombinedBlockContent(BlockContent blockContent) {
     if (blockContent.content_type == "text") {
       TextContent content = blockContent.content;
       String text = content.value;
-      String blockColor = content.blockColor.replaceAll("#", "0xff");
+      print(content.blockColor);
+      String blockColor = content.blockColor == "transperent"
+          ? "transperent"
+          : content.blockColor.replaceAll("#", "0xff");
       String color = content.color.replaceAll('#', '0xff');
       int position = content.position;
       double fontSize = content.fontSize;
       Alignment textPosition = getTextAlignemtPosition(position);
 
       return Container(
-        color: Color(int.parse(blockColor)),
+        color: blockColor == "transperent"
+                    ? Colors.transparent
+                    : Color(int.parse(blockColor)),
         child: Align(
           alignment: textPosition,
           child: Text(
             text,
-            style:
-                TextStyle(color: Color(int.parse(color)), fontSize: fontSize),
+            style: TextStyle(
+                color: Color(int.parse(color)),
+                fontSize: fontSize),
           ),
         ),
       );
