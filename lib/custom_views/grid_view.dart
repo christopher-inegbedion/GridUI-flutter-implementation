@@ -10,6 +10,7 @@ import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
 import 'package:grid_ui_implementation/models/block_content/text_combined_block_content.dart';
+import 'package:grid_ui_implementation/models/grid_custom_background.dart';
 import 'package:http/http.dart' as http;
 import 'package:grid_ui_implementation/network_config.dart';
 
@@ -18,13 +19,16 @@ class GridUIView extends StatefulWidget {
   int columns;
   List<CombinedGroup> data;
   String grid_json;
+  CustomGridBackground gridBackgroundData;
   _GridUIViewState state;
 
-  GridUIView(this.grid_json, this.columns, this.rows, this.data);
+  GridUIView(this.grid_json, this.columns, this.rows, this.gridBackgroundData,
+      this.data);
 
   @override
   _GridUIViewState createState() {
-    state = _GridUIViewState(columns, rows, data, grid_json: grid_json);
+    state = _GridUIViewState(columns, rows, data,
+        grid_json: grid_json, gridCustomBackgroudData: gridBackgroundData);
 
     return state;
   }
@@ -48,6 +52,10 @@ class GridUIView extends StatefulWidget {
   void changeGridJSON(String value) {
     // print(value);
     state.grid_json = value;
+  }
+
+  void changeCustomBackground(CustomGridBackground customGridBackground) {
+    state.gridCustomBackgroudData = customGridBackground;
   }
 
   final _createCombinedBlockKey = GlobalKey<FormState>();
@@ -253,12 +261,15 @@ class _GridUIViewState extends State<GridUIView> {
   int columns;
   int rows;
   List<CombinedGroup> data;
+  CustomGridBackground gridCustomBackgroudData;
   String grid_json;
   double blockSize;
   bool editMode = false;
 
-  _GridUIViewState(this.columns, this.rows, this.data, {String grid_json}) {
+  _GridUIViewState(this.columns, this.rows, this.data,
+      {String grid_json, CustomGridBackground gridCustomBackgroudData}) {
     this.grid_json = grid_json;
+    this.gridCustomBackgroudData = gridCustomBackgroudData;
   }
 
   bool getEditState() {
@@ -1412,6 +1423,22 @@ class _GridUIViewState extends State<GridUIView> {
     }
   }
 
+  Widget _buildGridBackground(CustomGridBackground gridBackgroundData) {
+    if (gridBackgroundData.is_color) {
+      String color = gridBackgroundData.link_or_color.replaceAll("#", "0xff");
+      return Container(
+        height: columns * getBlockSize(rows),
+        color: Color(int.parse(color)),
+      );
+    } else if (gridBackgroundData.is_link) {
+      String link = gridBackgroundData.link_or_color;
+      return Container(
+        height: columns * getBlockSize(rows),
+        child: Image.network(link, fit: BoxFit.cover),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1421,6 +1448,11 @@ class _GridUIViewState extends State<GridUIView> {
   Widget build(BuildContext context) {
     blockSize = getBlockSize(this.rows);
 
-    return initUI(data, blockSize);
+    return Stack(
+      children: [
+        _buildGridBackground(gridCustomBackgroudData),
+        initUI(data, blockSize)
+      ],
+    );
   }
 }

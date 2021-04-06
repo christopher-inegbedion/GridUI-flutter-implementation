@@ -101,6 +101,8 @@ class _GridPageState extends State<GridPage> {
                                     gridView.changeRows(grid.gridRows);
                                     gridView.changeGrid(grid.combinedGroups);
                                     gridView.changeGridJSON(grid.grid_json);
+                                    gridView.changeCustomBackground(
+                                        value.gridCustomBackground);
                                   });
                                 });
                               },
@@ -129,6 +131,8 @@ class _GridPageState extends State<GridPage> {
                                       gridView.changeRows(grid.gridRows);
                                       gridView.changeGrid(grid.combinedGroups);
                                       gridView.changeGridJSON(grid.grid_json);
+                                      gridView.changeCustomBackground(
+                                          value.gridCustomBackground);
                                     });
                                   });
                                 });
@@ -158,6 +162,8 @@ class _GridPageState extends State<GridPage> {
                                       gridView.changeRows(grid.gridRows);
                                       gridView.changeGrid(grid.combinedGroups);
                                       gridView.changeGridJSON(grid.grid_json);
+                                      gridView.changeCustomBackground(
+                                          value.gridCustomBackground);
                                     });
                                   });
                                 });
@@ -187,6 +193,8 @@ class _GridPageState extends State<GridPage> {
                                       gridView.changeRows(grid.gridRows);
                                       gridView.changeGrid(grid.combinedGroups);
                                       gridView.changeGridJSON(grid.grid_json);
+                                      gridView.changeCustomBackground(
+                                          value.gridCustomBackground);
                                     });
                                   });
                                 });
@@ -216,6 +224,8 @@ class _GridPageState extends State<GridPage> {
                                       gridView.changeRows(grid.gridRows);
                                       gridView.changeGrid(grid.combinedGroups);
                                       gridView.changeGridJSON(grid.grid_json);
+                                      gridView.changeCustomBackground(
+                                          value.gridCustomBackground);
                                     });
                                   });
                                 });

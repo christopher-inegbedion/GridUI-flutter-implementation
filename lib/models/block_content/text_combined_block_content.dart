@@ -4,17 +4,10 @@ class TextContent {
   double fontSize;
   String blockColor;
   String color;
-  String font;
+  String font_family;
 
-  TextContent(String value, int position, double fontSize, String blockColor,
-      String color, String font) {
-    this.value = value;
-    this.position = position;
-    this.fontSize = fontSize;
-    this.blockColor = blockColor;
-    this.color = color;
-    this.font = font;
-  }
+  TextContent(this.value, this.position, this.fontSize, this.blockColor,
+      this.color, this.font_family);
 
   Map<String, dynamic> toJSON(TextContent content) {
     return {
@@ -23,7 +16,7 @@ class TextContent {
       "font_size": fontSize,
       "block_color": blockColor,
       "color": color,
-      "font": font
+      "font_family": font_family
     };
   }
 }

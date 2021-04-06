@@ -11,6 +11,7 @@ import 'package:grid_ui_implementation/models/block_content/text_combined_block_
 import 'package:grid_ui_implementation/models/block_content/color_combined_block_content.dart';
 
 import 'block_content/image_combined_block_content.dart';
+import 'grid_custom_background.dart';
 
 class Grid {
   static Grid instance;
@@ -19,6 +20,7 @@ class Grid {
   int gridRows;
   List<CombinedGroup> combinedGroups;
   String grid_json;
+  CustomGridBackground gridCustomBackground;
 
   bool editMode = false;
 
@@ -50,6 +52,13 @@ class Grid {
 
     ///Number or rows in the grid
     this.gridRows = gridJSON["grid_rows"];
+
+    ///Grid's custom background
+    this.gridCustomBackground = CustomGridBackground(
+      gridJSON["custom_background"]["is_link"],
+      gridJSON["custom_background"]["is_color"],
+      gridJSON["custom_background"]["link_or_color"],
+    );
 
     ///All combined groups in the grid
     this.combinedGroups = [];
@@ -128,7 +137,7 @@ class Grid {
     this.combinedGroups = grid.combinedGroups;
 
     return GridUIView(
-        grid.grid_json, grid.gridColumns, grid.gridRows, grid.combinedGroups);
+        grid.grid_json, grid.gridColumns, grid.gridRows, grid.gridCustomBackground, grid.combinedGroups);
   }
 
   CombinedGroupType convertFromStringToCombinedGroupType(String type) {
