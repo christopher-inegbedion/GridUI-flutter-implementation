@@ -675,24 +675,27 @@ class _GridUIViewState extends State<GridUIView> {
 
       return Container(
         color: blockColor == "transperent"
-                    ? Colors.transparent
-                    : Color(int.parse(blockColor)),
+            ? Colors.transparent
+            : Color(int.parse(blockColor)),
         child: Align(
           alignment: textPosition,
           child: Text(
             text,
-            style: TextStyle(
-                color: Color(int.parse(color)),
-                fontSize: fontSize),
+            style:
+                TextStyle(color: Color(int.parse(color)), fontSize: fontSize),
           ),
         ),
       );
     } else if (blockContent.content_type == "color") {
       ColorContent content = blockContent.content;
-      String color = content.colorVal.replaceAll("#", "0xff");
+      String color = content.colorVal == "transparent"
+          ? "transparent"
+          : content.colorVal.replaceAll("#", "0xff");
 
       return Container(
-        color: Color(int.parse(color)),
+        color: color == "transperent"
+            ? Colors.transparent
+            : Color(int.parse(color)),
       );
     } else if (blockContent.content_type == "image") {
       ImageContent content = blockContent.content;
