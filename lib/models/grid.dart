@@ -136,8 +136,8 @@ class Grid {
     this.gridRows = grid.gridRows;
     this.combinedGroups = grid.combinedGroups;
 
-    return GridUIView(
-        grid.grid_json, grid.gridColumns, grid.gridRows, grid.gridCustomBackground, grid.combinedGroups);
+    return GridUIView(grid.grid_json, grid.gridColumns, grid.gridRows,
+        grid.gridCustomBackground, grid.combinedGroups);
   }
 
   CombinedGroupType convertFromStringToCombinedGroupType(String type) {
@@ -168,7 +168,7 @@ class Grid {
   }
 
   CombinedGroup getSpecificCombinedGroup(int index) {
-    return combinedGroups[index - 1];
+    return combinedGroups[index];
   }
 
   CombinedBlockInGroup getSpecificCombinedBlockInGroup(
@@ -214,7 +214,7 @@ class Grid {
     int columnsAboveCombinedBlock = 0;
 
     for (int i = 0; i < combinedGroups.length; i++) {
-      CombinedGroup combinedGroup = getSpecificCombinedGroup(i + 1);
+      CombinedGroup combinedGroup = getSpecificCombinedGroup(i);
 
       if (i != combinedGroupIndex - 1) {
         columnsAboveCombinedBlock +=
@@ -256,9 +256,9 @@ class Grid {
       possibleColumns
           .add((columnsAboveCombinedGroup - combinedGroupHeight) + i);
     }
+    print(combinedGroupHeight);
 
     int targetColumn = possibleColumns[(blockColumn + offset) - 1];
-    // print(possibleColumns);
     return targetColumn;
   }
 
