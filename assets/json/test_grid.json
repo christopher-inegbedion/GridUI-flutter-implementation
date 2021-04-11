@@ -2,136 +2,131 @@
     "grid_columns": 15,
     "grid_rows": 6,
     "custom_background": {
-      "is_link": true,
-      "is_color": false,
-      "link_or_color": "https://media.giphy.com/media/fA7rLtaJDIWEzU57CT/giphy.gif"
+        "is_link": true,
+        "is_color": false,
+        "link_or_color": "https://media.giphy.com/media/fA7rLtaJDIWEzU57CT/giphy.gif"
     },
     "combined_groups": [
-      {
-        "combined_group_type": "MULTIPLE_COMBINED_GROUP_DIFF_HEIGHT",
-        "columns_above": 0,
-        "columns_below": 3,
-        "number_of_columns": 4,
-        "number_of_rows": 6,
-        "combined_blocks": [
-          {
-            "number_of_rows_left": 4,
-            "number_of_rows_right": 1,
-            "number_of_columns_above": 0,
-            "number_of_columns_below": 1,
-            "position_in_combined_group": 1,
-            "block": {
-              "index": 1,
-              "type": "COMBINED",
-              "content": {
-                "content_type": "image",
-                "value": {
-                  "link": "https://media.giphy.com/media/2xEC0LZnEqsk3Xv3gJ/giphy.gif"
+        {
+            "combined_group_type": "MULTIPLE_COMBINED_GROUP_DIFF_HEIGHT",
+            "columns_above": 0,
+            "columns_below": 3,
+            "number_of_columns": 4,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 4,
+                    "number_of_rows_right": 1,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 1,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "index": 1,
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "text",
+                            "value": {
+                                "value": "This is dummy text",
+                                "position": 5,
+                                "font_size": 10.0,
+                                "block_color": "#000000",
+                                "color": "#ffffff",
+                                "font_family": ""
+                            }
+                        },
+                        "number_of_rows": 1,
+                        "number_of_columns": 3,
+                        "combined_group_position": 1,
+                        "block_position": 1
+                    }
+                },
+                {
+                    "number_of_rows_left": 0,
+                    "number_of_rows_right": 1,
+                    "number_of_columns_above": 1,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 2,
+                    "block": {
+                        "index": 2,
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "image",
+                            "value": {
+                                "link": "https://media.giphy.com/media/IfysB3QZTYADqxSk0x/giphy.gif"
+                            }
+                        },
+                        "number_of_rows": 3,
+                        "number_of_columns": 3,
+                        "combined_group_position": 1,
+                        "block_position": 2
+                    }
                 }
-              },
-              "number_of_rows": 1,
-              "number_of_columns": 3,
-              "combined_group_position": 1,
-              "block_position": 1
-            }
-          },
-          {
-            "number_of_rows_left": 0,
-            "number_of_rows_right": 1,
-            "number_of_columns_above": 1,
-            "number_of_columns_below": 0,
-            "position_in_combined_group": 2,
-            "block": {
-              "index": 2,
-              "type": "COMBINED",
-              "content": {
-                "content_type": "text",
-                "value": {
-                  "value": "test",
-                  "position": 5,
-                  "font_size": 10.0,
-                  "block_color": "#000000",
-                  "color": "#ffffff",
-                  "font_family": ""
+            ]
+        },
+        {
+            "combined_group_type": "SINGLE_COMBINED_GROUP",
+            "columns_above": 5,
+            "columns_below": 8,
+            "number_of_columns": 4,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 1,
+                    "number_of_rows_right": 2,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "index": 3,
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "image",
+                            "value": {
+                                "link": "https://media.giphy.com/media/d8cQYkiJUiwfxKC5HQ/giphy.gif"
+                            }
+                        },
+                        "number_of_rows": 3,
+                        "number_of_columns": 4,
+                        "combined_group_position": 2,
+                        "block_position": 1
+                    }
                 }
-              },
-              "number_of_rows": 3,
-              "number_of_columns": 3,
-              "combined_group_position": 1,
-              "block_position": 2
-            }
-          }
-        ]
-      },
-      {
-        "combined_group_type": "SINGLE_COMBINED_GROUP",
-        "columns_above": 5,
-        "columns_below": 8,
-        "number_of_columns": 4,
-        "number_of_rows": 6,
-        "combined_blocks": [
-          {
-            "number_of_rows_left": 1,
-            "number_of_rows_right": 2,
-            "number_of_columns_above": 0,
-            "number_of_columns_below": 0,
-            "position_in_combined_group": 1,
-            "block": {
-              "index": 3,
-              "type": "COMBINED",
-              "content": {
-                "content_type": "text",
-                "value": {
-                  "value": "test",
-                  "position": 5,
-                  "font_size": 10.0,
-                  "block_color": "#000000",
-                  "color": "#ffffff",
-                  "font_family": ""
+            ]
+        },
+        {
+            "combined_group_type": "SINGLE_COMBINED_GROUP",
+            "columns_above": 13,
+            "columns_below": 13,
+            "number_of_columns": 1,
+            "number_of_rows": 6,
+            "combined_blocks": [
+                {
+                    "number_of_rows_left": 2,
+                    "number_of_rows_right": 2,
+                    "number_of_columns_above": 0,
+                    "number_of_columns_below": 0,
+                    "position_in_combined_group": 1,
+                    "block": {
+                        "index": 4,
+                        "type": "COMBINED",
+                        "content": {
+                            "content_type": "text",
+                            "value": {
+                                "value": "dummy text",
+                                "position": 5,
+                                "font_size": 10.0,
+                                "block_color": "#000000",
+                                "color": "#ffffff",
+                                "font_family": ""
+                            }
+                        },
+                        "number_of_rows": 2,
+                        "number_of_columns": 1,
+                        "combined_group_position": 3,
+                        "block_position": 1
+                    }
                 }
-              },
-              "number_of_rows": 3,
-              "number_of_columns": 4,
-              "combined_group_position": 2,
-              "block_position": 1
-            }
-          }
-        ]
-      },
-      {
-        "combined_group_type": "SINGLE_COMBINED_GROUP",
-        "columns_above": 13,
-        "columns_below": 13,
-        "number_of_columns": 1,
-        "number_of_rows": 6,
-        "combined_blocks": [
-          {
-            "number_of_rows_left": 2,
-            "number_of_rows_right": 2,
-            "number_of_columns_above": 0,
-            "number_of_columns_below": 0,
-            "position_in_combined_group": 1,
-            "block": {
-              "index": 4,
-              "type": "COMBINED",
-              "content": {
-                "content_type": "text",
-                "value": {
-                  "value": "test",
-                  "position": 5,
-                  "font_size": 10.0,
-                  "block_color": "#000000",
-                  "color": "#ffffff",
-                  "font_family": ""
-                }
-              },
-              "number_of_rows": 2,
-              "number_of_columns": 1,
-              "combined_group_position": 3,
-              "block_position": 1
-            }
-          }
-        ]
-      }
+            ]
+        }
     ]
-  }
+}

@@ -13,6 +13,7 @@ import 'package:grid_ui_implementation/models/block_content/text_combined_block_
 import 'package:grid_ui_implementation/models/grid_custom_background.dart';
 import 'package:http/http.dart' as http;
 import 'package:grid_ui_implementation/network_config.dart';
+import 'package:drag_select_grid_view/drag_select_grid_view.dart';
 
 class GridUIView extends StatefulWidget {
   int rows;
@@ -460,14 +461,19 @@ class _GridUIViewState extends State<GridUIView> {
   ///added and also as a drop target when moving combined blocks to another location.
   ///
   ///The [combinedGroupSection] is either 1 or 3, because empty blocks are only created for the sections above/below the main combined group section.
-  Widget createSingleEmptyBlock(int targetColumn, int targetRow) {
+  Widget createSingleEmptyBlock(
+      int targetColumn, int targetRow, bool selected) {
+    if (selected) {
+      // print(targetColumn);
+      columnCurrentlyOn = targetColumn;
+      rowCurrentlyOn = targetRow;
+    }
     return Visibility(
       visible: editMode,
       child: DragTarget(
         builder: (context, List<CombBlockDragInformation> candidateData,
             rejectedData) {
           return GestureDetector(
-            onTap: () {},
             child: Container(
               width: blockSize,
               child: Center(
@@ -477,7 +483,13 @@ class _GridUIViewState extends State<GridUIView> {
                 ),
               ),
               decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: selected &&
+                          targetColumn >= startGridColumn &&
+                          targetRow >= startGridRow &&
+                          targetColumn >= columnCurrentlyOn &&
+                          targetRow >= rowCurrentlyOn
+                      ? Colors.blueGrey
+                      : Colors.black,
                   border: Border.all(color: Colors.grey[900], width: 1)),
             ),
           );
@@ -526,7 +538,6 @@ class _GridUIViewState extends State<GridUIView> {
       data: dragInformation,
       child: GestureDetector(
         onDoubleTap: () {
-
           int height = numberOfColumns.toInt();
           int width = numberOfRows.toInt();
 
@@ -625,7 +636,6 @@ class _GridUIViewState extends State<GridUIView> {
     if (blockContent.content_type == "text") {
       TextContent content = blockContent.content;
       String text = content.value;
-      print(content.blockColor);
       String blockColor = content.blockColor == "transperent"
           ? "transperent"
           : content.blockColor.replaceAll("#", "0xff");
@@ -697,45 +707,35 @@ class _GridUIViewState extends State<GridUIView> {
     return textPosition;
   }
 
+  int columnCurrentlyOn = 0;
+  int rowCurrentlyOn = 0;
+  int startGridRow = 0;
+  int startGridColumn = 0;
+  bool startDrag = false;
+
   ///Creates empty blocks above/below combined group
   ///
   ///Creates a group of empty blocks in the grid. The [combinedGroupIndexInCombinedGroupList] argument defines the index of the empty block's combined group in the combined
   ///group list.
-  Widget createEmptyBlocks(
-      int combinedGroupSection,
-      int combinedBlockParentIndexInCombinedGroup,
-      int combinedBlockColumnSection,
-      int combinedBlockRowSection,
-      int combinedGroupHeight,
-      int combinedGroupWidth,
-      Block parentBlock,
-      int columnsAbove,
-      int rowsToTheLeft,
-      int columnOffset,
-      int rowOffset,
-      int columns,
-      int rows,
-      {int difference = 0}) {
-    return Container(
-      width: blockSize * rows,
-      child: ListView.builder(
-        padding: EdgeInsets.all(0),
-        physics: NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        itemCount: columns,
-        itemBuilder: (context, columnIndex) {
-          return Container(
-            height: blockSize,
-            child: ListView.builder(
-              shrinkWrap: true,
-              scrollDirection: Axis.horizontal,
-              itemCount: rows,
-              itemBuilder: (context, rowIndex) {
-                return createSingleEmptyBlock(columnIndex, rowIndex);
-              },
-            ),
-          );
-        },
+  Widget createEmptyBlocks() {
+    final controller = DragSelectGridViewController();
+
+    return DragSelectGridView(
+      gridController: controller,
+      itemCount: this.rows * this.columns,
+      itemBuilder: (context, index, selected) {
+        int colIndex = (index / this.rows).floor();
+        int rowIndex = index % this.rows;
+
+        return GestureDetector(
+            onLongPressEnd: (f) {
+              startDrag = false;
+              print("dfdfg");
+            },
+            child: createSingleEmptyBlock(colIndex, rowIndex, selected));
+      },
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 80,
       ),
     );
   }
@@ -762,17 +762,16 @@ class _GridUIViewState extends State<GridUIView> {
           double blockWidth = block.numberOfRows * blockSize;
 
           widgets.add(Positioned(
-              top: (emptyColsAbove+totalColumnsAbove) * blockSize,
+              top: (emptyColsAbove + totalColumnsAbove) * blockSize,
               left: emptyRowsBefore * blockSize,
               child: Container(
                 height: blockHeight,
                 width: blockWidth,
                 child: createCombinedBlock(combGroupIndex, i, block,
-                    (emptyColsAbove+totalColumnsAbove), emptyRowsBefore,
+                    (emptyColsAbove + totalColumnsAbove), emptyRowsBefore,
                     height: blockHeight, width: blockWidth),
               )));
         }
-
       }
     }
 
@@ -809,8 +808,7 @@ class _GridUIViewState extends State<GridUIView> {
       child: Stack(
         children: [
           _buildGridBackground(gridCustomBackgroudData),
-          createEmptyBlocks(0, 0, 0, 0, 0, 0, null, 0, 0, 0, 0, columns, rows),
-          // initGrids(data, blockSize)
+          createEmptyBlocks(),
           Stack(children: initGrids(data, blockSize))
         ],
       ),

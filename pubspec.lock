@@ -64,6 +64,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0"
+  drag_select_grid_view:
+    dependency: "direct main"
+    description:
+      name: drag_select_grid_view
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.1"
   fake_async:
     dependency: transitive
     description:
