@@ -2,9 +2,9 @@
     "grid_columns": 15,
     "grid_rows": 6,
     "custom_background": {
-        "is_link": true,
-        "is_color": false,
-        "link_or_color": "https://media.giphy.com/media/fA7rLtaJDIWEzU57CT/giphy.gif"
+        "is_link": false,
+        "is_color": true,
+        "link_or_color": "#000000"
     },
     "combined_groups": [
         {

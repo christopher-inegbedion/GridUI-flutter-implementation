@@ -463,35 +463,33 @@ class _GridUIViewState extends State<GridUIView> {
   ///The [combinedGroupSection] is either 1 or 3, because empty blocks are only created for the sections above/below the main combined group section.
   Widget createSingleEmptyBlock(
       int targetColumn, int targetRow, bool selected) {
-    if (selected) {
-      // print(targetColumn);
-      columnCurrentlyOn = targetColumn;
-      rowCurrentlyOn = targetRow;
+    Color color;
+
+    if (controller.value.isSelecting &&
+        targetColumn >= startGridColumn &&
+        targetColumn <= endColumnCurrentlyOn &&
+        targetRow >= startGridRow &&
+        targetRow <= endRowCurrentlyOn) {
+      color = Colors.blueGrey;
+    } else {
+      color = Colors.black;
     }
     return Visibility(
       visible: editMode,
       child: DragTarget(
         builder: (context, List<CombBlockDragInformation> candidateData,
             rejectedData) {
-          return GestureDetector(
-            child: Container(
-              width: blockSize,
-              child: Center(
-                child: Text(
-                  '.',
-                  style: TextStyle(color: Colors.white),
-                ),
+          return Container(
+            width: blockSize,
+            child: Center(
+              child: Text(
+                '.',
+                style: TextStyle(color: Colors.white),
               ),
-              decoration: BoxDecoration(
-                  color: selected &&
-                          targetColumn >= startGridColumn &&
-                          targetRow >= startGridRow &&
-                          targetColumn >= columnCurrentlyOn &&
-                          targetRow >= rowCurrentlyOn
-                      ? Colors.blueGrey
-                      : Colors.black,
-                  border: Border.all(color: Colors.grey[900], width: 1)),
             ),
+            decoration: BoxDecoration(
+                color: color,
+                border: Border.all(color: Colors.grey[900], width: 1)),
           );
         },
         onWillAccept: (CombBlockDragInformation data) {
@@ -707,35 +705,74 @@ class _GridUIViewState extends State<GridUIView> {
     return textPosition;
   }
 
-  int columnCurrentlyOn = 0;
-  int rowCurrentlyOn = 0;
+  int endColumnCurrentlyOn = 0;
+  int endRowCurrentlyOn = 0;
   int startGridRow = 0;
   int startGridColumn = 0;
   bool startDrag = false;
+  final controller = DragSelectGridViewController();
 
   ///Creates empty blocks above/below combined group
   ///
   ///Creates a group of empty blocks in the grid. The [combinedGroupIndexInCombinedGroupList] argument defines the index of the empty block's combined group in the combined
   ///group list.
   Widget createEmptyBlocks() {
-    final controller = DragSelectGridViewController();
+    controller.addListener(() {
+      Set<int> selectedIndices = controller.value.selectedIndexes;
+      startDrag = false;
+      endColumnCurrentlyOn =
+          (selectedIndices.elementAt(controller.value.amount - 1) / this.rows)
+              .floor();
+      endRowCurrentlyOn =
+          selectedIndices.elementAt(controller.value.amount - 1) % this.rows;
+      print("startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
+    });
+    return Listener(
+      onPointerUp: (d) {
+        if (controller.value.isSelecting) {
+          int newCombinedBlockHeight =
+              (endColumnCurrentlyOn - startGridColumn) + 1;
+          int newCombinedBlockWidth = (endRowCurrentlyOn - startGridRow) + 1;
 
-    return DragSelectGridView(
-      gridController: controller,
-      itemCount: this.rows * this.columns,
-      itemBuilder: (context, index, selected) {
-        int colIndex = (index / this.rows).floor();
-        int rowIndex = index % this.rows;
+          addCombinedBlock(
+              grid_json,
+              newCombinedBlockHeight.toString(),
+              newCombinedBlockWidth.toString(),
+              startGridColumn.toString(),
+              startGridRow.toString());
 
-        return GestureDetector(
-            onLongPressEnd: (f) {
-              startDrag = false;
-              print("dfdfg");
-            },
-            child: createSingleEmptyBlock(colIndex, rowIndex, selected));
+          controller.clear();
+        }
       },
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 80,
+      onPointerDown: (d) {
+        controller.addListener(() {
+          print("startdrag: $startDrag");
+
+          Set<int> selectedIndices = controller.value.selectedIndexes;
+          setState(() {
+            if (!startDrag) {
+              startDrag = true;
+              startGridColumn =
+                  (selectedIndices.elementAt(0) / this.rows).floor();
+              startGridRow = selectedIndices.elementAt(0) % this.rows;
+              print(
+                  "startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
+            }
+          });
+        });
+      },
+      child: DragSelectGridView(
+        gridController: controller,
+        itemCount: this.rows * this.columns,
+        itemBuilder: (context, index, selected) {
+          int colIndex = (index / this.rows).floor();
+          int rowIndex = index % this.rows;
+
+          return createSingleEmptyBlock(colIndex, rowIndex, selected);
+        },
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 80,
+        ),
       ),
     );
   }
