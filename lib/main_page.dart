@@ -261,14 +261,16 @@ class _GridPageState extends State<GridPage> {
                               color: Colors.white,
                               child: Text("Create combined block"),
                               onPressed: () {
-                                gridView.createCombinedBlockialog(context);
+                                gridView.state
+                                    .createCombinedBlockialog(context, false);
                               },
                             ),
                             FlatButton(
                               color: Colors.white,
                               child: Text("Delete combined block"),
                               onPressed: () {
-                                gridView.deleteCombinedBlockialog(context);
+                                gridView.state
+                                    .deleteCombinedBlockialog(context);
                               },
                             ),
                           ],

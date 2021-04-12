@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
@@ -59,12 +61,6 @@ class GridUIView extends StatefulWidget {
     state.gridCustomBackgroudData = customGridBackground;
   }
 
-  final _createCombinedBlockKey = GlobalKey<FormState>();
-  final blockHeightController = TextEditingController();
-  final blockWidthController = TextEditingController();
-  final blockStartColumnController = TextEditingController();
-  final blockStartRowController = TextEditingController();
-
   final _editCombinedBlockKey = GlobalKey<FormState>();
   final combinedBlockContentController = TextEditingController();
 
@@ -100,80 +96,335 @@ class GridUIView extends StatefulWidget {
               ));
         });
   }
+}
+
+class _GridUIViewState extends State<GridUIView> {
+  int columns;
+  int rows;
+  List<CombinedGroup> data;
+  CustomGridBackground gridCustomBackgroudData;
+  String grid_json;
+  double blockSize;
+  bool editMode = false;
+  GlobalKey<FormState> _createCombinedBlockKey = GlobalKey<FormState>();
+  GlobalKey<FormState> _enterTextGlobalKey = GlobalKey<FormState>();
+  final enterBlockTextController = TextEditingController();
+  final enterBlockFontSizeController = TextEditingController();
+  final enterBlockTextColorController = TextEditingController();
+
+  final _enterURLGlobalKey = GlobalKey<FormState>();
+  final enterBlockURLController = TextEditingController();
+
+  final _enterColorGlobalKey = GlobalKey<FormState>();
+  final enterBlockColorController = TextEditingController();
+  int selectedBlockContentType = -1;
+
+  final blockHeightController = TextEditingController();
+  final blockWidthController = TextEditingController();
+  final blockStartColumnController = TextEditingController();
+  final blockStartRowController = TextEditingController();
+  _GridUIViewState(this.columns, this.rows, this.data,
+      {String grid_json, CustomGridBackground gridCustomBackgroudData}) {
+    this.grid_json = grid_json;
+    this.gridCustomBackgroudData = gridCustomBackgroudData;
+    _createCombinedBlockKey = GlobalKey<FormState>();
+    _enterTextGlobalKey = GlobalKey<FormState>();
+  }
 
   ///Combined block creation dialog
-  Future<void> createCombinedBlockialog(BuildContext context) async {
+  Future<void> createCombinedBlockialog(
+      BuildContext context, bool fromDragging) async {
+    String contentType = "";
+    String content = "";
+    Map<String, dynamic> textContent = {
+      "position": 5,
+      "block_color": "#000000",
+      "color": "#ffffff",
+      "font_family": ""
+    };
     return showDialog<void>(
       context: context,
       barrierDismissible: true, // user must tap button!
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Create a combined block'),
-          content: SingleChildScrollView(
-              child: Form(
-                  key: _createCombinedBlockKey,
-                  child: Column(children: <Widget>[
-                    TextFormField(
-                      controller: blockHeightController,
-                      decoration:
-                          InputDecoration(labelText: 'Combined block height'),
-                      validator: (value) {
-                        if (value.isEmpty) {
-                          return 'Height required';
-                        }
-                        return null;
-                      },
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Create a combined block'),
+              content: SingleChildScrollView(
+                  child: Column(
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(bottom: 40),
+                    child: Opacity(
+                      opacity: fromDragging ? 0.5 : 1,
+                      child: IgnorePointer(
+                        ignoring: fromDragging,
+                        child: Form(
+                            key: _createCombinedBlockKey,
+                            child: Column(children: <Widget>[
+                              TextFormField(
+                                controller: blockHeightController,
+                                decoration: InputDecoration(
+                                    labelText: 'Combined block height'),
+                                validator: (value) {
+                                  if (value.isEmpty) {
+                                    return 'Height required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              TextFormField(
+                                controller: blockWidthController,
+                                decoration: InputDecoration(
+                                    labelText: 'Combined block width'),
+                                validator: (value) {
+                                  if (value.isEmpty) {
+                                    return 'Width required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              TextFormField(
+                                controller: blockStartColumnController,
+                                decoration: InputDecoration(
+                                    labelText: 'Grid start column'),
+                                validator: (value) {
+                                  if (value.isEmpty) {
+                                    return 'Column required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              TextFormField(
+                                controller: blockStartRowController,
+                                decoration: InputDecoration(
+                                    labelText: 'Grid start row'),
+                                validator: (value) {
+                                  if (value.isEmpty) {
+                                    return 'Row required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ])),
+                      ),
                     ),
-                    TextFormField(
-                      controller: blockWidthController,
-                      decoration:
-                          InputDecoration(labelText: 'Combined block width'),
-                      validator: (value) {
-                        if (value.isEmpty) {
-                          return 'Width required';
-                        }
-                        return null;
-                      },
-                    ),
-                    TextFormField(
-                      controller: blockStartColumnController,
-                      decoration:
-                          InputDecoration(labelText: 'Grid start column'),
-                      validator: (value) {
-                        if (value.isEmpty) {
-                          return 'Column required';
-                        }
-                        return null;
-                      },
-                    ),
-                    TextFormField(
-                      controller: blockStartRowController,
-                      decoration: InputDecoration(labelText: 'Grid start row'),
-                      validator: (value) {
-                        if (value.isEmpty) {
-                          return 'Row required';
-                        }
-                        return null;
-                      },
-                    ),
-                  ]))),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Approve'),
-              onPressed: () {
-                // Validate returns true if the form is valid, otherwise false.
-                if (_createCombinedBlockKey.currentState.validate()) {
-                  state.addCombinedBlock(
-                      state.grid_json,
-                      blockHeightController.text,
-                      blockWidthController.text,
-                      blockStartColumnController.text,
-                      blockStartRowController.text);
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
+                  ),
+                  Visibility(
+                    child: Container(
+                        child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Select content type",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          child: Wrap(
+                            // alignment: WrapAlignment.spaceAround,
+                            children: [
+                              TextButton(
+                                child: Text("Text"),
+                                onPressed: () {
+                                  setState(() {
+                                    selectedBlockContentType = 1;
+                                  });
+                                },
+                              ),
+                              TextButton(
+                                child: Text("Image/GIF"),
+                                onPressed: () {
+                                  setState(() {
+                                    selectedBlockContentType = 2;
+                                  });
+                                },
+                              ),
+                              TextButton(
+                                child: Text("Color"),
+                                onPressed: () {
+                                  setState(() {
+                                    selectedBlockContentType = 3;
+                                  });
+                                },
+                              )
+                            ],
+                          ),
+                        ),
+
+                        //Text
+                        Visibility(
+                          visible: selectedBlockContentType == 1,
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            child: Form(
+                                key: _enterTextGlobalKey,
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: enterBlockTextController,
+                                      decoration: InputDecoration(
+                                          labelText: 'Combined block text'),
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Text required';
+                                        }
+                                        contentType = "text";
+                                        textContent["value"] = value;
+                                        return null;
+                                      },
+                                    ),
+                                    TextFormField(
+                                      controller: enterBlockFontSizeController,
+                                      decoration: InputDecoration(
+                                          labelText:
+                                              'Combined block font size'),
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Font size required';
+                                        }
+                                        contentType = "text";
+                                        textContent["font_size"] = value;
+                                        return null;
+                                      },
+                                    ),
+                                    TextFormField(
+                                      controller: enterBlockColorController,
+                                      decoration: InputDecoration(
+                                          labelText: 'Combined block color'),
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Block color required';
+                                        }
+                                        contentType = "text";
+                                        textContent["block_color"] = value;
+                                        return null;
+                                      },
+                                    ),
+                                    TextFormField(
+                                      controller: enterBlockTextColorController,
+                                      decoration: InputDecoration(
+                                          labelText:
+                                              'Combined block text color'),
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Block text color required';
+                                        }
+                                        contentType = "text";
+                                        textContent["color"] = value;
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                )),
+                          ),
+                        ),
+
+                        //Image/GIF
+                        Visibility(
+                          visible: selectedBlockContentType == 2,
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            child: Form(
+                              key: _enterURLGlobalKey,
+                              child: TextFormField(
+                                controller: enterBlockURLController,
+                                decoration: InputDecoration(
+                                    labelText: 'Combined block image/gif url'),
+                                validator: (value) {
+                                  if (value.isEmpty) {
+                                    return 'URL required';
+                                  }
+                                  contentType = "image";
+                                  content = value;
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        //Color
+                        Visibility(
+                          visible: selectedBlockContentType == 3,
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            child: Form(
+                              key: _enterColorGlobalKey,
+                              child: TextFormField(
+                                controller: enterBlockColorController,
+                                decoration: InputDecoration(
+                                    labelText:
+                                        'Combined block color(or transperent)'),
+                                validator: (value) {
+                                  if (value.isEmpty) {
+                                    return 'Hex color required';
+                                  }
+                                  contentType = "color";
+                                  content = value;
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
+                  )
+                ],
+              )),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Approve'),
+                  onPressed: () {
+                    bool complete = false;
+                    // Validate returns true if the form is valid, otherwise false.
+                    if (_createCombinedBlockKey.currentState.validate()) {
+                      if (selectedBlockContentType == 1 &&
+                          _enterTextGlobalKey.currentState.validate()) {
+                        complete = true;
+                      } else if (selectedBlockContentType == 2 &&
+                          _enterURLGlobalKey.currentState.validate()) {
+                        complete = true;
+                      } else if (selectedBlockContentType == 3 &&
+                          _enterColorGlobalKey.currentState.validate()) {
+                        complete = true;
+                      } else {
+                        complete = false;
+                      }
+                    }
+
+                    if (complete) {
+                      if (contentType == "text") {
+                        addCombinedBlock(
+                            grid_json,
+                            blockHeightController.text,
+                            blockWidthController.text,
+                            blockStartColumnController.text,
+                            blockStartRowController.text,
+                            contentType,
+                            textContent);
+                      } else {
+                        addCombinedBlock(
+                            grid_json,
+                            blockHeightController.text,
+                            blockWidthController.text,
+                            blockStartColumnController.text,
+                            blockStartRowController.text,
+                            contentType,
+                            content);
+                      }
+
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -241,8 +492,8 @@ class GridUIView extends StatefulWidget {
               onPressed: () {
                 // Validate returns true if the form is valid, otherwise false.
                 if (_createCombinedBlockKey.currentState.validate()) {
-                  state.deleteCombinedBlock(
-                      state.grid_json,
+                  deleteCombinedBlock(
+                      grid_json,
                       blockHeightController.text,
                       blockWidthController.text,
                       blockStartColumnController.text,
@@ -255,22 +506,6 @@ class GridUIView extends StatefulWidget {
         );
       },
     );
-  }
-}
-
-class _GridUIViewState extends State<GridUIView> {
-  int columns;
-  int rows;
-  List<CombinedGroup> data;
-  CustomGridBackground gridCustomBackgroudData;
-  String grid_json;
-  double blockSize;
-  bool editMode = false;
-
-  _GridUIViewState(this.columns, this.rows, this.data,
-      {String grid_json, CustomGridBackground gridCustomBackgroudData}) {
-    this.grid_json = grid_json;
-    this.gridCustomBackgroudData = gridCustomBackgroudData;
   }
 
   bool getEditState() {
@@ -377,16 +612,38 @@ class _GridUIViewState extends State<GridUIView> {
   }
 
   ///Create a combined block
-  void addCombinedBlock(String gridJSON, String height, String width,
-      String startColumn, String startRow) {
-    Map<String, String> data = {
-      'grid_json': gridJSON,
-      'height': height,
-      'width': width,
-      'start_row': width,
-      'target_column': startColumn,
-      'target_row': startRow.toString()
-    };
+  void addCombinedBlock(
+      String gridJSON,
+      String height,
+      String width,
+      String startColumn,
+      String startRow,
+      String contentType,
+      dynamic content) {
+    Map<String, String> data;
+    if (contentType == "text") {
+      data = {
+        'grid_json': gridJSON,
+        'height': height,
+        'width': width,
+        'start_row': width,
+        'target_column': startColumn,
+        'target_row': startRow.toString(),
+        'content_type': contentType,
+        'content': jsonEncode(content)
+      };
+    } else {
+      data = {
+        'grid_json': gridJSON,
+        'height': height,
+        'width': width,
+        'start_row': width,
+        'target_column': startColumn,
+        'target_row': startRow.toString(),
+        'content_type': contentType,
+        'content': content
+      };
+    }
 
     postGridToServer(
             "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/create",
@@ -657,6 +914,7 @@ class _GridUIViewState extends State<GridUIView> {
       );
     } else if (blockContent.content_type == "color") {
       ColorContent content = blockContent.content;
+      print(content.colorVal);
       String color = content.colorVal == "transparent"
           ? "transparent"
           : content.colorVal.replaceAll("#", "0xff");
@@ -718,47 +976,55 @@ class _GridUIViewState extends State<GridUIView> {
   ///group list.
   Widget createEmptyBlocks() {
     controller.addListener(() {
-      Set<int> selectedIndices = controller.value.selectedIndexes;
-      startDrag = false;
-      endColumnCurrentlyOn =
-          (selectedIndices.elementAt(controller.value.amount - 1) / this.rows)
-              .floor();
-      endRowCurrentlyOn =
-          selectedIndices.elementAt(controller.value.amount - 1) % this.rows;
-      print("startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
+      if (editMode) {
+        Set<int> selectedIndices = controller.value.selectedIndexes;
+        startDrag = false;
+        endColumnCurrentlyOn =
+            (selectedIndices.elementAt(controller.value.amount - 1) / this.rows)
+                .floor();
+        endRowCurrentlyOn =
+            selectedIndices.elementAt(controller.value.amount - 1) % this.rows;
+        print("startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
+      }
     });
     return Listener(
       onPointerUp: (d) {
-        if (controller.value.isSelecting) {
+        if (controller.value.isSelecting && editMode) {
           int newCombinedBlockHeight =
               (endColumnCurrentlyOn - startGridColumn) + 1;
           int newCombinedBlockWidth = (endRowCurrentlyOn - startGridRow) + 1;
 
-          addCombinedBlock(
-              grid_json,
-              newCombinedBlockHeight.toString(),
-              newCombinedBlockWidth.toString(),
-              startGridColumn.toString(),
-              startGridRow.toString());
+          blockHeightController.text = newCombinedBlockHeight.toString();
+          blockWidthController.text = newCombinedBlockWidth.toString();
+          blockStartColumnController.text = startGridColumn.toString();
+          blockStartRowController.text = startGridRow.toString();
+          createCombinedBlockialog(context, true);
+
+          // addCombinedBlock(
+          //     grid_json,
+          //     newCombinedBlockHeight.toString(),
+          //     newCombinedBlockWidth.toString(),
+          //     startGridColumn.toString(),
+          //     startGridRow.toString());
 
           controller.clear();
         }
       },
       onPointerDown: (d) {
         controller.addListener(() {
-          print("startdrag: $startDrag");
-
-          Set<int> selectedIndices = controller.value.selectedIndexes;
-          setState(() {
-            if (!startDrag) {
-              startDrag = true;
-              startGridColumn =
-                  (selectedIndices.elementAt(0) / this.rows).floor();
-              startGridRow = selectedIndices.elementAt(0) % this.rows;
-              print(
-                  "startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
-            }
-          });
+          if (editMode) {
+            Set<int> selectedIndices = controller.value.selectedIndexes;
+            setState(() {
+              if (!startDrag) {
+                startDrag = true;
+                startGridColumn =
+                    (selectedIndices.elementAt(0) / this.rows).floor();
+                startGridRow = selectedIndices.elementAt(0) % this.rows;
+                print(
+                    "startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
+              }
+            });
+          }
         });
       },
       child: DragSelectGridView(
