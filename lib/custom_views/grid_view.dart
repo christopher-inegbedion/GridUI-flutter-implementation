@@ -58,44 +58,11 @@ class GridUIView extends StatefulWidget {
   }
 
   void changeCustomBackground(CustomGridBackground customGridBackground) {
-    state.gridCustomBackgroudData = customGridBackground;
+    state.changeGridBackround(customGridBackground);
   }
 
   final _editCombinedBlockKey = GlobalKey<FormState>();
   final combinedBlockContentController = TextEditingController();
-
-  ///Edit a combined block
-  Future<void> editCombinedBlockDialog(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-              title: Text("Edit a combined block"),
-              content: DropdownButton<String>(
-                value: "dropdownValue",
-                icon: const Icon(Icons.arrow_downward),
-                iconSize: 24,
-                elevation: 16,
-                style: const TextStyle(color: Colors.deepPurple),
-                underline: Container(
-                  height: 2,
-                  color: Colors.deepPurpleAccent,
-                ),
-                onChanged: (String newValue) {
-                  // setState(() {
-                  //   dropdownValue = newValue!;
-                  // });
-                },
-                items: <String>['One', 'Two', 'Free', 'Four']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ));
-        });
-  }
 }
 
 class _GridUIViewState extends State<GridUIView> {
@@ -515,6 +482,12 @@ class _GridUIViewState extends State<GridUIView> {
   void changeEditState(bool state) {
     setState(() {
       editMode = state;
+    });
+  }
+
+  void changeGridBackround(CustomGridBackground background) {
+    setState(() {
+      this.gridCustomBackgroudData = background;
     });
   }
 
@@ -1037,7 +1010,7 @@ class _GridUIViewState extends State<GridUIView> {
           return createSingleEmptyBlock(colIndex, rowIndex, selected);
         },
         gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 80,
+          maxCrossAxisExtent: (this.rows * blockSize) / this.rows,
         ),
       ),
     );
@@ -1112,7 +1085,7 @@ class _GridUIViewState extends State<GridUIView> {
         children: [
           _buildGridBackground(gridCustomBackgroudData),
           createEmptyBlocks(),
-          Stack(children: initGrids(data, blockSize))
+          Stack(children: initGrids(data, blockSize)),
         ],
       ),
     );
