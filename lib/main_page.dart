@@ -55,6 +55,12 @@ class _GridPageState extends State<GridPage> {
   GlobalKey<FormState> newGridBackgroundFormKey = new GlobalKey<FormState>();
   TextEditingController imageOrGifController = new TextEditingController();
 
+  GlobalKey<FormState> saveGridFormKey = new GlobalKey<FormState>();
+  TextEditingController gridNameController = new TextEditingController();
+
+  GlobalKey<FormState> loadGridFromKey = new GlobalKey<FormState>();
+  TextEditingController gridLoadNameController = new TextEditingController();
+
   Future<void> createGridDialog(BuildContext context) async {
     return showDialog<void>(
       context: context,
@@ -188,6 +194,163 @@ class _GridPageState extends State<GridPage> {
     );
   }
 
+  Future<void> saveGridDialog(BuildContext context) async {
+    return showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, state) {
+              return AlertDialog(
+                title: Text(
+                  "Save Grid's config",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Form(
+                        key: saveGridFormKey,
+                        child: TextFormField(
+                          controller: gridNameController,
+                          decoration: InputDecoration(
+                              labelText: "Set a name for the grid"),
+                          validator: (value) {
+                            if (value.isEmpty) {
+                              return "Grid name required";
+                            }
+                            return null;
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text("Save"),
+                    onPressed: () {
+                      if (saveGridFormKey.currentState.validate()) {
+                        saveGrid(gridNameController.text, grid.grid_json);
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  )
+                ],
+              );
+            },
+          );
+        });
+  }
+
+  Future<void> loadGridDialog(BuildContext context) async {
+    return showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, state) {
+              return AlertDialog(
+                title: Text(
+                  "Load grid",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Form(
+                        key: loadGridFromKey,
+                        child: TextFormField(
+                          controller: gridLoadNameController,
+                          decoration: InputDecoration(
+                              labelText: "Set a name for the grid"),
+                          validator: (value) {
+                            if (value.isEmpty) {
+                              return "Grid name required";
+                            }
+                            return null;
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text("Load"),
+                    onPressed: () {
+                      if (loadGridFromKey.currentState.validate()) {
+                        loadGrid(gridLoadNameController.text);
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  )
+                ],
+              );
+            },
+          );
+        });
+  }
+
+  void saveGrid(String gridName, String gridJson) {
+    Map<String, String> data = {"grid_name": gridName, "grid": gridJson};
+
+    postGridToServer(
+            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/save_grid",
+            data)
+        .then((val) {
+      if (val == "") {
+        Scaffold.of(context).showSnackBar(SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('An error occured'),
+        ));
+      } else {
+        Scaffold.of(context).showSnackBar(SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text("Grid '$gridName' saved"),
+        ));
+      }
+    });
+  }
+
+  void loadGrid(String gridName) {
+    Map<String, String> data = {"grid_name": gridName};
+
+    postGridToServer(
+            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/load_grid",
+            data)
+        .then((value1) {
+      if (value1 == "") {
+        Scaffold.of(context).showSnackBar(SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('An error occured'),
+        ));
+      } else {
+        Grid.getInstance()
+            .loadJSON("", fromNetwork: true, grid: value1)
+            .then((value) {
+          setState(() {
+            grid.grid_json = value1;
+            grid.gridColumns = value.gridColumns;
+            grid.gridRows = value.gridRows;
+            grid.combinedGroups = value.combinedGroups;
+
+            gridView.changeCols(grid.gridColumns);
+            gridView.changeRows(grid.gridRows);
+            gridView.changeGrid(grid.combinedGroups);
+            gridView.changeGridJSON(grid.grid_json);
+            gridView.changeCustomBackground(value.gridCustomBackground);
+          });
+
+          Scaffold.of(context).showSnackBar(SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text("Grid '$gridName' loaded"),
+          ));
+        });
+      }
+    });
+  }
+
   void changeGridBackground(bool isColor, bool isImage, String colorOrImage) {
     Map<String, String> data = {
       "grid_json": grid.grid_json,
@@ -269,59 +432,86 @@ class _GridPageState extends State<GridPage> {
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIOverlays([]);
     return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              /* ====
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            /* ====
                * Grid
                =====*/
-              loadGridView(gridView),
+            loadGridView(gridView),
 
-              /* ==============
+            /* ==============
                * Bottom buttons
                ===============*/
-              Visibility(
-                visible: areBtnsHidden,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Container(
-                          alignment: Alignment.centerLeft,
-                          margin: EdgeInsets.only(top: 10, left: 30),
-                          child: Text(
-                            "Pre-defined layouts:",
-                            style: TextStyle(color: Colors.white),
-                          )),
-                      Container(
-                        child: Wrap(
-                          spacing: 10,
-                          alignment: WrapAlignment.spaceEvenly,
-                          children: [
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text(
-                                "New grid",
-                              ),
-                              onPressed: () {
-                                createGridDialog(context);
-                              },
+            Visibility(
+              visible: areBtnsHidden,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Container(
+                        alignment: Alignment.centerLeft,
+                        margin: EdgeInsets.only(top: 10, left: 30),
+                        child: Text(
+                          "Pre-defined layouts:",
+                          style: TextStyle(color: Colors.white),
+                        )),
+                    Container(
+                      child: Wrap(
+                        spacing: 10,
+                        alignment: WrapAlignment.spaceEvenly,
+                        children: [
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text(
+                              "New grid",
                             ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text(
-                                "from JSON",
-                              ),
-                              onPressed: () {
+                            onPressed: () {
+                              createGridDialog(context);
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text(
+                              "from JSON",
+                            ),
+                            onPressed: () {
+                              grid
+                                  .loadJSON("assets/json/test_grid.json",
+                                      fromNetwork: false, grid: "")
+                                  .then((value) {
+                                setState(() {
+                                  grid.grid_json = value.grid_json;
+                                  print(value.grid_json);
+
+                                  grid.gridColumns = value.gridColumns;
+                                  grid.gridRows = value.gridRows;
+                                  grid.combinedGroups = value.combinedGroups;
+
+                                  gridView.changeCols(grid.gridColumns);
+                                  gridView.changeRows(grid.gridRows);
+                                  gridView.changeGrid(grid.combinedGroups);
+                                  gridView.changeGridJSON(grid.grid_json);
+                                  gridView.changeCustomBackground(
+                                      value.gridCustomBackground);
+                                });
+                              });
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text(
+                              "Default",
+                            ),
+                            onPressed: () {
+                              getGridFromServer(
+                                      'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/default')
+                                  .then((value1) {
                                 grid
-                                    .loadJSON("assets/json/test_grid.json",
-                                        fromNetwork: false, grid: "")
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
                                     .then((value) {
                                   setState(() {
-                                    grid.grid_json = value.grid_json;
-                                    print(value.grid_json);
-
+                                    grid.grid_json = value1;
                                     grid.gridColumns = value.gridColumns;
                                     grid.gridRows = value.gridRows;
                                     grid.combinedGroups = value.combinedGroups;
@@ -334,202 +524,181 @@ class _GridPageState extends State<GridPage> {
                                         value.gridCustomBackground);
                                   });
                                 });
-                              },
+                              });
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text(
+                              "Preset 1",
                             ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text(
-                                "Default",
-                              ),
-                              onPressed: () {
-                                getGridFromServer(
-                                        'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/default')
-                                    .then((value1) {
-                                  grid
-                                      .loadJSON("",
-                                          fromNetwork: true, grid: value1)
-                                      .then((value) {
-                                    setState(() {
-                                      grid.grid_json = value1;
-                                      grid.gridColumns = value.gridColumns;
-                                      grid.gridRows = value.gridRows;
-                                      grid.combinedGroups =
-                                          value.combinedGroups;
+                            onPressed: () {
+                              getGridFromServer(
+                                      'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/preset1')
+                                  .then((value1) {
+                                grid
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
+                                    .then((value) {
+                                  setState(() {
+                                    grid.grid_json = value1;
+                                    grid.gridColumns = value.gridColumns;
+                                    grid.gridRows = value.gridRows;
+                                    grid.combinedGroups = value.combinedGroups;
 
-                                      gridView.changeCols(grid.gridColumns);
-                                      gridView.changeRows(grid.gridRows);
-                                      gridView.changeGrid(grid.combinedGroups);
-                                      gridView.changeGridJSON(grid.grid_json);
-                                      gridView.changeCustomBackground(
-                                          value.gridCustomBackground);
-                                    });
+                                    gridView.changeCols(grid.gridColumns);
+                                    gridView.changeRows(grid.gridRows);
+                                    gridView.changeGrid(grid.combinedGroups);
+                                    gridView.changeGridJSON(grid.grid_json);
+                                    gridView.changeCustomBackground(
+                                        value.gridCustomBackground);
                                   });
                                 });
-                              },
+                              });
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text(
+                              "Preset 2",
                             ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text(
-                                "Preset 1",
-                              ),
-                              onPressed: () {
-                                getGridFromServer(
-                                        'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/preset1')
-                                    .then((value1) {
-                                  grid
-                                      .loadJSON("",
-                                          fromNetwork: true, grid: value1)
-                                      .then((value) {
-                                    setState(() {
-                                      grid.grid_json = value1;
-                                      grid.gridColumns = value.gridColumns;
-                                      grid.gridRows = value.gridRows;
-                                      grid.combinedGroups =
-                                          value.combinedGroups;
+                            onPressed: () {
+                              getGridFromServer(
+                                      'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/preset2')
+                                  .then((value1) {
+                                grid
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
+                                    .then((value) {
+                                  setState(() {
+                                    grid.grid_json = value1;
+                                    grid.gridColumns = value.gridColumns;
+                                    grid.gridRows = value.gridRows;
+                                    grid.combinedGroups = value.combinedGroups;
 
-                                      gridView.changeCols(grid.gridColumns);
-                                      gridView.changeRows(grid.gridRows);
-                                      gridView.changeGrid(grid.combinedGroups);
-                                      gridView.changeGridJSON(grid.grid_json);
-                                      gridView.changeCustomBackground(
-                                          value.gridCustomBackground);
-                                    });
+                                    gridView.changeCols(grid.gridColumns);
+                                    gridView.changeRows(grid.gridRows);
+                                    gridView.changeGrid(grid.combinedGroups);
+                                    gridView.changeGridJSON(grid.grid_json);
+                                    gridView.changeCustomBackground(
+                                        value.gridCustomBackground);
                                   });
                                 });
-                              },
+                              });
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text(
+                              "Preset 3",
                             ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text(
-                                "Preset 2",
-                              ),
-                              onPressed: () {
-                                getGridFromServer(
-                                        'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/preset2')
-                                    .then((value1) {
-                                  grid
-                                      .loadJSON("",
-                                          fromNetwork: true, grid: value1)
-                                      .then((value) {
-                                    setState(() {
-                                      grid.grid_json = value1;
-                                      grid.gridColumns = value.gridColumns;
-                                      grid.gridRows = value.gridRows;
-                                      grid.combinedGroups =
-                                          value.combinedGroups;
+                            onPressed: () {
+                              getGridFromServer(
+                                      'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/preset3')
+                                  .then((value1) {
+                                grid
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
+                                    .then((value) {
+                                  setState(() {
+                                    grid.grid_json = value1;
+                                    grid.gridColumns = value.gridColumns;
+                                    grid.gridRows = value.gridRows;
+                                    grid.combinedGroups = value.combinedGroups;
 
-                                      gridView.changeCols(grid.gridColumns);
-                                      gridView.changeRows(grid.gridRows);
-                                      gridView.changeGrid(grid.combinedGroups);
-                                      gridView.changeGridJSON(grid.grid_json);
-                                      gridView.changeCustomBackground(
-                                          value.gridCustomBackground);
-                                    });
+                                    gridView.changeCols(grid.gridColumns);
+                                    gridView.changeRows(grid.gridRows);
+                                    gridView.changeGrid(grid.combinedGroups);
+                                    gridView.changeGridJSON(grid.grid_json);
+                                    gridView.changeCustomBackground(
+                                        value.gridCustomBackground);
                                   });
                                 });
-                              },
-                            ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text(
-                                "Preset 3",
-                              ),
-                              onPressed: () {
-                                getGridFromServer(
-                                        'http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/preset3')
-                                    .then((value1) {
-                                  grid
-                                      .loadJSON("",
-                                          fromNetwork: true, grid: value1)
-                                      .then((value) {
-                                    setState(() {
-                                      grid.grid_json = value1;
-                                      grid.gridColumns = value.gridColumns;
-                                      grid.gridRows = value.gridRows;
-                                      grid.combinedGroups =
-                                          value.combinedGroups;
-
-                                      gridView.changeCols(grid.gridColumns);
-                                      gridView.changeRows(grid.gridRows);
-                                      gridView.changeGrid(grid.combinedGroups);
-                                      gridView.changeGridJSON(grid.grid_json);
-                                      gridView.changeCustomBackground(
-                                          value.gridCustomBackground);
-                                    });
-                                  });
-                                });
-                              },
-                            ),
-                          ],
-                        ),
+                              });
+                            },
+                          ),
+                          FlatButton(
+                            child: Text("Load grid"),
+                            color: Colors.white,
+                            onPressed: () {
+                              loadGridDialog(context);
+                            },
+                          )
+                        ],
                       ),
+                    ),
 
-                      // Menu buttons 2
-                      Container(
-                          alignment: Alignment.centerLeft,
-                          margin: EdgeInsets.only(top: 10, left: 30),
-                          child: Text(
-                            "Options:",
-                            style: TextStyle(color: Colors.white),
-                          )),
-                      Container(
-                        child: Wrap(
-                          alignment: WrapAlignment.spaceEvenly,
-                          spacing: 10,
-                          children: [
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text("Customise grid background"),
-                              onPressed: () {
-                                changeGridBackgroundDialog(context);
-                              },
-                            ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text("Toggle edit mode"),
-                              onPressed: () {
-                                setState(() {
-                                  gridView.state.editMode =
-                                      !gridView.state.editMode;
-                                  gridView
-                                      .changeEditMode(gridView.state.editMode);
-                                });
-                              },
-                            ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text("Create combined block"),
-                              onPressed: () {
-                                gridView.state
-                                    .createCombinedBlockialog(context, false);
-                              },
-                            ),
-                            FlatButton(
-                              color: Colors.white,
-                              child: Text("Delete combined block"),
-                              onPressed: () {
-                                gridView.state
-                                    .deleteCombinedBlockialog(context);
-                              },
-                            ),
-                          ],
-                        ),
+                    // Menu buttons 2
+                    Container(
+                        alignment: Alignment.centerLeft,
+                        margin: EdgeInsets.only(top: 10, left: 30),
+                        child: Text(
+                          "Options:",
+                          style: TextStyle(color: Colors.white),
+                        )),
+                    Container(
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceEvenly,
+                        spacing: 10,
+                        children: [
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text("Customise grid background"),
+                            onPressed: () {
+                              changeGridBackgroundDialog(context);
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text("Toggle edit mode"),
+                            onPressed: () {
+                              setState(() {
+                                gridView.state.editMode =
+                                    !gridView.state.editMode;
+                                gridView
+                                    .changeEditMode(gridView.state.editMode);
+                              });
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text("Create combined block"),
+                            onPressed: () {
+                              gridView.state
+                                  .createCombinedBlockialog(context, false);
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text("Delete combined block"),
+                            onPressed: () {
+                              gridView.state.deleteCombinedBlockialog(context);
+                            },
+                          ),
+                          FlatButton(
+                            color: Colors.white,
+                            child: Text("Save grid"),
+                            onPressed: () {
+                              saveGridDialog(context);
+                            },
+                          )
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              FlatButton(
-                color: Colors.white,
-                child: Text(areBtnsHidden ? "Hide buttons" : "Show butttons"),
-                onPressed: () {
-                  setState(() {
-                    areBtnsHidden = !areBtnsHidden;
-                  });
-                },
-              )
-            ],
-          ),
+            ),
+            FlatButton(
+              color: Colors.white,
+              child: Text(areBtnsHidden ? "Hide buttons" : "Show butttons"),
+              onPressed: () {
+                setState(() {
+                  areBtnsHidden = !areBtnsHidden;
+                });
+              },
+            )
+          ],
         ),
       ),
     );

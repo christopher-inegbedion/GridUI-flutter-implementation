@@ -11,8 +11,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'GridUI implementation',
-      theme: ThemeData(fontFamily: 'DMMono-Regular'),
-      home: GridPage(),
+      theme: ThemeData(fontFamily: 'IBMPlexSans-Regular'),
+      home: Scaffold(
+        backgroundColor: Colors.black,
+        body: GridPage()),
     );
   }
 }
