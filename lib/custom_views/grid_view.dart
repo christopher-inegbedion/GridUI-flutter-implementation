@@ -103,12 +103,7 @@ class _GridUIViewState extends State<GridUIView> {
       BuildContext context, bool fromDragging) async {
     String contentType = "";
     String content = "";
-    Map<String, dynamic> textContent = {
-      "position": 5,
-      "block_color": "#000000",
-      "color": "#ffffff",
-      "font_family": ""
-    };
+    Map<String, dynamic> textContent = {"font_family": ""};
     return showDialog<void>(
       context: context,
       barrierDismissible: true, // user must tap button!
@@ -177,6 +172,8 @@ class _GridUIViewState extends State<GridUIView> {
                       ),
                     ),
                   ),
+
+                  // Select content type
                   Visibility(
                     child: Container(
                         child: Column(
@@ -285,6 +282,70 @@ class _GridUIViewState extends State<GridUIView> {
                                         return null;
                                       },
                                     ),
+                                    Container(
+                                        margin: EdgeInsets.only(top: 20),
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Text position",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold))),
+                                    Wrap(
+                                      children: [
+                                        TextButton(
+                                          child: Text("Top left"),
+                                          onPressed: () {
+                                            textContent["position"] = 1;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Top center"),
+                                          onPressed: () {
+                                            textContent["position"] = 2;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Top right"),
+                                          onPressed: () {
+                                            textContent["position"] = 3;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Center left"),
+                                          onPressed: () {
+                                            textContent["position"] = 4;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Center"),
+                                          onPressed: () {
+                                            textContent["position"] = 5;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Center right"),
+                                          onPressed: () {
+                                            textContent["position"] = 6;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Bottom left"),
+                                          onPressed: () {
+                                            textContent["position"] = 7;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Bottom center"),
+                                          onPressed: () {
+                                            textContent["position"] = 8;
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Bottom right"),
+                                          onPressed: () {
+                                            textContent["position"] = 9;
+                                          },
+                                        ),
+                                      ],
+                                    )
                                   ],
                                 )),
                           ),
