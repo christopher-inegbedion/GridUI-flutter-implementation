@@ -16,6 +16,7 @@ import 'package:grid_ui_implementation/models/grid_custom_background.dart';
 import 'package:http/http.dart' as http;
 import 'package:grid_ui_implementation/network_config.dart';
 import 'package:drag_select_grid_view/drag_select_grid_view.dart';
+import 'package:dotted_border/dotted_border.dart';
 
 class GridUIView extends StatefulWidget {
   int rows;
@@ -755,7 +756,6 @@ class _GridUIViewState extends State<GridUIView> {
   Widget createSingleEmptyBlock(
       int targetColumn, int targetRow, bool selected) {
     Color color;
-
     if (controller.value.isSelecting &&
         targetColumn >= startGridColumn &&
         targetColumn <= endColumnCurrentlyOn &&
@@ -765,42 +765,36 @@ class _GridUIViewState extends State<GridUIView> {
     } else {
       color = Colors.black;
     }
-    return Visibility(
-      visible: editMode,
-      child: DragTarget(
-        builder: (context, List<CombBlockDragInformation> candidateData,
-            rejectedData) {
-          return Container(
+    return DragTarget(
+      builder: (context, List<CombBlockDragInformation> candidateData,
+          rejectedData) {
+        return DottedBorder(
+          // This is what produces the dot effect when in edit mode
+          dashPattern: [1, blockSize - 1],
+          color: Colors.grey[700],
+          child: Container(
             width: blockSize,
-            child: Center(
-              child: Text(
-                '.',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            decoration: BoxDecoration(
-                color: color,
-                border: Border.all(color: Colors.grey[900], width: 1)),
-          );
-        },
-        onWillAccept: (CombBlockDragInformation data) {
-          return true;
-        },
-        onAccept: (data) {
-          CombBlockDragInformation dragInformation = data;
-          moveCombinedBlock(
-              grid_json,
-              dragInformation.combinedBlockStartColumn,
-              dragInformation.combinedBlockStartRow,
-              dragInformation.combinedBlockHeight,
-              dragInformation.combinedBlockWidth,
-              targetColumn,
-              targetRow,
-              dragInformation.blockQuadrantDraggingFrom,
-              dragInformation.blockQuadrantColumn,
-              dragInformation.blockQuadrantRow);
-        },
-      ),
+            decoration: BoxDecoration(color: color),
+          ),
+        );
+      },
+      onWillAccept: (CombBlockDragInformation data) {
+        return true;
+      },
+      onAccept: (data) {
+        CombBlockDragInformation dragInformation = data;
+        moveCombinedBlock(
+            grid_json,
+            dragInformation.combinedBlockStartColumn,
+            dragInformation.combinedBlockStartRow,
+            dragInformation.combinedBlockHeight,
+            dragInformation.combinedBlockWidth,
+            targetColumn,
+            targetRow,
+            dragInformation.blockQuadrantDraggingFrom,
+            dragInformation.blockQuadrantColumn,
+            dragInformation.blockQuadrantRow);
+      },
     );
   }
 
@@ -809,14 +803,8 @@ class _GridUIViewState extends State<GridUIView> {
   ///Creates a combined block in a combined group on a grid. The [combinedGroupIndexInCombinedGroupList] is the index of the combined group in the CombinedGroup list, and the
   ///[combinedBlockIndexInCombinedGroup] is the section of the combined group the combined block resides is. The first combined block in a combined group will have
   ///a [combinedBlockIndexInCombinedGroup] value of 1, the second will have a value of 2 and so on.
-  Widget createCombinedBlock(
-      int combinedGroupIndexInCombinedGroupList,
-      int combinedBlockIndexInCombinedGroup,
-      Block block,
-      int startCol,
-      int startRow,
-      {double height = 0.0,
-      double width}) {
+  Widget createCombinedBlock(Block block, int startCol, int startRow,
+      {double height = 0.0, double width}) {
     double numberOfColumns = height / blockSize;
     double numberOfRows = width / blockSize;
     int blockQuadrant =
@@ -1034,13 +1022,6 @@ class _GridUIViewState extends State<GridUIView> {
           blockStartRowController.text = startGridRow.toString();
           createCombinedBlockialog(context, true);
 
-          // addCombinedBlock(
-          //     grid_json,
-          //     newCombinedBlockHeight.toString(),
-          //     newCombinedBlockWidth.toString(),
-          //     startGridColumn.toString(),
-          //     startGridRow.toString());
-
           controller.clear();
         }
       },
@@ -1054,24 +1035,28 @@ class _GridUIViewState extends State<GridUIView> {
                 startGridColumn =
                     (selectedIndices.elementAt(0) / this.rows).floor();
                 startGridRow = selectedIndices.elementAt(0) % this.rows;
-                print(
-                    "startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
               }
             });
           }
         });
       },
-      child: DragSelectGridView(
-        gridController: controller,
-        itemCount: this.rows * this.columns,
-        itemBuilder: (context, index, selected) {
-          int colIndex = (index / this.rows).floor();
-          int rowIndex = index % this.rows;
+      child: Visibility(
+        visible: editMode,
+        child: Container(
+          color: Colors.black,
+          child: DragSelectGridView(
+            gridController: controller,
+            itemCount: this.rows * this.columns,
+            itemBuilder: (context, index, selected) {
+              int colIndex = (index / this.rows).floor();
+              int rowIndex = index % this.rows;
 
-          return createSingleEmptyBlock(colIndex, rowIndex, selected);
-        },
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: (this.rows * blockSize) / this.rows,
+              return createSingleEmptyBlock(colIndex, rowIndex, selected);
+            },
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: (this.rows * blockSize) / this.rows,
+            ),
+          ),
         ),
       ),
     );
@@ -1104,7 +1089,7 @@ class _GridUIViewState extends State<GridUIView> {
               child: Container(
                 height: blockHeight,
                 width: blockWidth,
-                child: createCombinedBlock(combGroupIndex, i, block,
+                child: createCombinedBlock(block,
                     (emptyColsAbove + totalColumnsAbove), emptyRowsBefore,
                     height: blockHeight, width: blockWidth),
               )));
