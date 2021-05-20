@@ -54,7 +54,6 @@ class GridUIView extends StatefulWidget {
   }
 
   void changeGridJSON(String value) {
-    // print(value);
     state.grid_json = value;
   }
 
@@ -636,12 +635,10 @@ class _GridUIViewState extends State<GridUIView> {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        setState(() {
-          grid_json = value.grid_json;
-          columns = value.gridColumns;
-          rows = value.gridRows;
-          changeData(value.combinedGroups);
-        });
+        grid_json = value.grid_json;
+        columns = value.gridColumns;
+        rows = value.gridRows;
+        changeData(value.combinedGroups);
       });
     });
   }
@@ -687,12 +684,10 @@ class _GridUIViewState extends State<GridUIView> {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        setState(() {
-          grid_json = value.grid_json;
-          columns = value.gridColumns;
-          rows = value.gridRows;
-          changeData(value.combinedGroups);
-        });
+        grid_json = value.grid_json;
+        columns = value.gridColumns;
+        rows = value.gridRows;
+        changeData(value.combinedGroups);
       });
     });
   }
@@ -716,12 +711,10 @@ class _GridUIViewState extends State<GridUIView> {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        setState(() {
-          grid_json = value.grid_json;
-          columns = value.gridColumns;
-          rows = value.gridRows;
-          changeData(value.combinedGroups);
-        });
+        grid_json = value.grid_json;
+        columns = value.gridColumns;
+        rows = value.gridRows;
+        changeData(value.combinedGroups);
       });
     });
   }
@@ -753,8 +746,7 @@ class _GridUIViewState extends State<GridUIView> {
   ///added and also as a drop target when moving combined blocks to another location.
   ///
   ///The [combinedGroupSection] is either 1 or 3, because empty blocks are only created for the sections above/below the main combined group section.
-  Widget createSingleEmptyBlock(
-      int targetColumn, int targetRow, bool selected) {
+  Widget createSingleEmptyBlock(int targetColumn, int targetRow) {
     Color color;
     if (controller.value.isSelecting &&
         targetColumn >= startGridColumn &&
@@ -773,9 +765,9 @@ class _GridUIViewState extends State<GridUIView> {
           dashPattern: [1, blockSize - 1],
           color: Colors.grey[700],
           child: Container(
-            width: blockSize,
-            decoration: BoxDecoration(color: color),
-          ),
+              width: blockSize,
+              padding: EdgeInsets.zero,
+              decoration: BoxDecoration(color: color)),
         );
       },
       onWillAccept: (CombBlockDragInformation data) {
@@ -936,7 +928,6 @@ class _GridUIViewState extends State<GridUIView> {
       );
     } else if (blockContent.content_type == "color") {
       ColorContent content = blockContent.content;
-      print(content.colorVal);
       String color = content.colorVal == "transparent"
           ? "transparent"
           : content.colorVal.replaceAll("#", "0xff");
@@ -997,18 +988,6 @@ class _GridUIViewState extends State<GridUIView> {
   ///Creates a group of empty blocks in the grid. The [combinedGroupIndexInCombinedGroupList] argument defines the index of the empty block's combined group in the combined
   ///group list.
   Widget createEmptyBlocks() {
-    controller.addListener(() {
-      if (editMode) {
-        Set<int> selectedIndices = controller.value.selectedIndexes;
-        startDrag = false;
-        endColumnCurrentlyOn =
-            (selectedIndices.elementAt(controller.value.amount - 1) / this.rows)
-                .floor();
-        endRowCurrentlyOn =
-            selectedIndices.elementAt(controller.value.amount - 1) % this.rows;
-        print("startcol: $endColumnCurrentlyOn, startrow: $endRowCurrentlyOn");
-      }
-    });
     return Listener(
       onPointerUp: (d) {
         if (controller.value.isSelecting && editMode) {
@@ -1029,14 +1008,12 @@ class _GridUIViewState extends State<GridUIView> {
         controller.addListener(() {
           if (editMode) {
             Set<int> selectedIndices = controller.value.selectedIndexes;
-            setState(() {
-              if (!startDrag) {
-                startDrag = true;
-                startGridColumn =
-                    (selectedIndices.elementAt(0) / this.rows).floor();
-                startGridRow = selectedIndices.elementAt(0) % this.rows;
-              }
-            });
+            if (!startDrag) {
+              startDrag = true;
+              startGridColumn =
+                  (selectedIndices.elementAt(0) / this.rows).floor();
+              startGridRow = selectedIndices.elementAt(0) % this.rows;
+            }
           }
         });
       },
@@ -1045,13 +1022,15 @@ class _GridUIViewState extends State<GridUIView> {
         child: Container(
           color: Colors.black,
           child: DragSelectGridView(
+            addAutomaticKeepAlives: true,
+            addRepaintBoundaries: false,
             gridController: controller,
             itemCount: this.rows * this.columns,
             itemBuilder: (context, index, selected) {
               int colIndex = (index / this.rows).floor();
               int rowIndex = index % this.rows;
 
-              return createSingleEmptyBlock(colIndex, rowIndex, selected);
+              return createSingleEmptyBlock(colIndex, rowIndex);
             },
             gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: (this.rows * blockSize) / this.rows,
@@ -1119,6 +1098,24 @@ class _GridUIViewState extends State<GridUIView> {
   @override
   void initState() {
     super.initState();
+
+    controller.addListener(() {
+      if (editMode) {
+        Set<int> selectedIndices = controller.value.selectedIndexes;
+        startDrag = false;
+        endColumnCurrentlyOn =
+            (selectedIndices.elementAt(controller.value.amount - 1) / this.rows)
+                .floor();
+        endRowCurrentlyOn =
+            selectedIndices.elementAt(controller.value.amount - 1) % this.rows;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    controller.dispose();
   }
 
   @override

@@ -11,6 +11,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'GridUI implementation',
+      // checkerboardRasterCacheImages: true,
       theme: ThemeData(fontFamily: 'IBMPlexSans-Regular'),
       home: Scaffold(
         backgroundColor: Colors.black,

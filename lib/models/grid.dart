@@ -38,10 +38,8 @@ class Grid {
     Map<String, dynamic> gridJSON;
     if (fromNetwork) {
       gridJSON = jsonDecode(grid);
-      // print(gridJSON);
     } else {
       gridJSON = await parseJsonFromAssets(path);
-      // print(gridJSON);
     }
 
     ///Grid in json format
@@ -62,7 +60,6 @@ class Grid {
 
     ///All combined groups in the grid
     this.combinedGroups = [];
-    // print("${gridJSON["combined_groups"]}");
 
     ///Create each combined group object and asign each to [combinedGroups]
     for (Map<String, dynamic> combinedGroupFromJSON
@@ -131,7 +128,6 @@ class Grid {
   Future<GridUIView> initGridView(path) async {
     Grid grid = await loadJSON(path);
     this.grid_json = grid.grid_json;
-    print(this.grid_json);
     this.gridColumns = grid.gridColumns;
     this.gridRows = grid.gridRows;
     this.combinedGroups = grid.combinedGroups;
@@ -152,7 +148,6 @@ class Grid {
   }
 
   Future<Map<String, dynamic>> parseJsonFromAssets(String assetsPath) async {
-    print('--- Parse json from: $assetsPath');
     return rootBundle
         .loadString(assetsPath)
         .then((jsonStr) => jsonDecode(jsonStr));
@@ -256,7 +251,6 @@ class Grid {
       possibleColumns
           .add((columnsAboveCombinedGroup - combinedGroupHeight) + i);
     }
-    print(combinedGroupHeight);
 
     int targetColumn = possibleColumns[(blockColumn + offset) - 1];
     return targetColumn;
