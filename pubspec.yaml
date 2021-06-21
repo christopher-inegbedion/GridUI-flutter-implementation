@@ -63,12 +63,12 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: IBMPlexSans-Regular
+    - family: JetBrainsMono-Regular
       fonts:
-        - asset: assets/fonts/IBMPlexSans-Regular.ttf
-    - family: IBMPlexSans-Bold
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+    - family: JetBrainsMono-Bold
       fonts:
-        - asset: assets/fonts/IBMPlexSans-Bold.ttf
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
 
   #
   # For details regarding fonts from package dependencies,

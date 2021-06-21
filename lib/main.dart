@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'GridUI implementation',
       // checkerboardRasterCacheImages: true,
-      theme: ThemeData(fontFamily: 'IBMPlexSans-Regular'),
+      theme: ThemeData(fontFamily: 'JetBrainsMono-Regular'),
       home: Scaffold(
         backgroundColor: Colors.black,
         body: GridPage()),

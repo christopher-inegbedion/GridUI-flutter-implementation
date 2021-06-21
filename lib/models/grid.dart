@@ -80,6 +80,7 @@ class Grid {
             combinedBlocks["block"]["content"]["value"]["position"],
             combinedBlocks["block"]["content"]["value"]["font_size"],
             combinedBlocks["block"]["content"]["value"]["block_color"],
+            combinedBlocks["block"]["content"]["value"]["block_image"],
             combinedBlocks["block"]["content"]["value"]["color"],
             combinedBlocks["block"]["content"]["value"]["font_family"],
           );
@@ -122,6 +123,8 @@ class Grid {
       combinedGroups.add(combinedGroup);
     }
 
+    print(getInstance());
+
     return getInstance();
   }
 
@@ -131,6 +134,12 @@ class Grid {
     this.gridColumns = grid.gridColumns;
     this.gridRows = grid.gridRows;
     this.combinedGroups = grid.combinedGroups;
+
+    print(grid.grid_json);
+    print(grid.gridColumns);
+    print(grid.gridRows);
+    print(grid.gridCustomBackground);
+    print(grid.combinedGroups);
 
     return GridUIView(grid.grid_json, grid.gridColumns, grid.gridRows,
         grid.gridCustomBackground, grid.combinedGroups);

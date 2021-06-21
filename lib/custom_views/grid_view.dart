@@ -84,6 +84,7 @@ class _GridUIViewState extends State<GridUIView> {
 
   final _enterColorGlobalKey = GlobalKey<FormState>();
   final enterBlockColorController = TextEditingController();
+
   int selectedBlockContentType = -1;
 
   final blockHeightController = TextEditingController();
@@ -260,11 +261,21 @@ class _GridUIViewState extends State<GridUIView> {
                                       decoration: InputDecoration(
                                           labelText: 'Combined block color'),
                                       validator: (value) {
-                                        if (value.isEmpty) {
-                                          return 'Block color required';
-                                        }
                                         contentType = "text";
-                                        textContent["block_color"] = value;
+                                        textContent["block_color"] =
+                                            value.isEmpty ? "" : value;
+                                        return null;
+                                      },
+                                    ),
+                                    TextFormField(
+                                      controller: enterBlockURLController,
+                                      decoration: InputDecoration(
+                                          labelText:
+                                              'Combined block image link'),
+                                      validator: (value) {
+                                        contentType = "text";
+                                        textContent["block_image"] =
+                                            value.isEmpty ? "" : value;
                                         return null;
                                       },
                                     ),
@@ -275,7 +286,7 @@ class _GridUIViewState extends State<GridUIView> {
                                               'Combined block text color'),
                                       validator: (value) {
                                         if (value.isEmpty) {
-                                          return 'Block text color required';
+                                          return 'Text color required';
                                         }
                                         contentType = "text";
                                         textContent["color"] = value;
@@ -458,7 +469,7 @@ class _GridUIViewState extends State<GridUIView> {
     );
   }
 
-  ///Combined block creation dialog
+  ///Combined block removal dialog
   Future<void> deleteCombinedBlockialog(BuildContext context) async {
     return showDialog<void>(
       context: context,
@@ -802,6 +813,55 @@ class _GridUIViewState extends State<GridUIView> {
     int blockQuadrant =
         0; //stores the block quadrant value when the user begins dragging the combined block
     CombBlockDragInformation dragInformation = CombBlockDragInformation();
+    Widget combinedBlock = Stack(
+      children: [
+        createCombinedBlockContent(block.content),
+
+        ///Block quadrants
+        ListView.builder(
+            itemCount: numberOfColumns.toInt(),
+            physics: NeverScrollableScrollPhysics(),
+            itemBuilder: (context, colIndex) {
+              return Container(
+                  height: blockSize,
+                  child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: numberOfRows.toInt(),
+                      itemBuilder: (context, rowIndex) {
+                        return GestureDetector(
+                          onTapDown: (details) {
+                            int combinedBlockWidth = numberOfRows.toInt();
+                            int combinedBlockHeight = numberOfColumns.toInt();
+
+                            if (numberOfRows > 1) {
+                              blockQuadrant = colIndex + rowIndex + 1;
+                            } else {
+                              blockQuadrant = colIndex + 1;
+                            }
+
+                            dragInformation.block = block;
+                            dragInformation.blockQuadrantDraggingFrom =
+                                blockQuadrant;
+                            dragInformation.blockQuadrantColumn = colIndex;
+                            dragInformation.blockQuadrantRow = rowIndex;
+                            dragInformation.combinedBlockHeight =
+                                combinedBlockHeight;
+                            dragInformation.combinedBlockWidth =
+                                combinedBlockWidth;
+                            dragInformation.combinedBlockStartColumn = startCol;
+                            dragInformation.combinedBlockStartRow = startRow;
+                          },
+                          child: Container(
+                            width: blockSize,
+                            height: blockSize,
+                            decoration: BoxDecoration(color: null),
+                          ),
+                        );
+                      }));
+            }),
+      ],
+    );
 
     return LongPressDraggable(
       data: dragInformation,
@@ -819,60 +879,7 @@ class _GridUIViewState extends State<GridUIView> {
                 border: editMode
                     ? Border.all(color: Colors.white, width: 2)
                     : null),
-            child: Stack(
-              children: [
-                createCombinedBlockContent(block.content),
-
-                ///Block quadrants
-                ListView.builder(
-                    itemCount: numberOfColumns.toInt(),
-                    physics: NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, colIndex) {
-                      return Container(
-                          height: blockSize,
-                          child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: numberOfRows.toInt(),
-                              itemBuilder: (context, rowIndex) {
-                                return GestureDetector(
-                                  onTapDown: (details) {
-                                    int combinedBlockWidth =
-                                        numberOfRows.toInt();
-                                    int combinedBlockHeight =
-                                        numberOfColumns.toInt();
-
-                                    if (numberOfRows > 1) {
-                                      blockQuadrant = colIndex + rowIndex + 1;
-                                    } else {
-                                      blockQuadrant = colIndex + 1;
-                                    }
-
-                                    dragInformation.block = block;
-                                    dragInformation.blockQuadrantDraggingFrom =
-                                        blockQuadrant;
-                                    dragInformation.blockQuadrantColumn =
-                                        colIndex;
-                                    dragInformation.blockQuadrantRow = rowIndex;
-                                    dragInformation.combinedBlockHeight =
-                                        combinedBlockHeight;
-                                    dragInformation.combinedBlockWidth =
-                                        combinedBlockWidth;
-                                    dragInformation.combinedBlockStartColumn =
-                                        startCol;
-                                    dragInformation.combinedBlockStartRow =
-                                        startRow;
-                                  },
-                                  child: Container(
-                                    width: blockSize,
-                                    height: blockSize,
-                                    decoration: BoxDecoration(color: null),
-                                  ),
-                                );
-                              }));
-                    }),
-              ],
-            )),
+            child: combinedBlock),
       ),
       feedback: Material(
         child: Container(
@@ -914,16 +921,31 @@ class _GridUIViewState extends State<GridUIView> {
       Alignment textPosition = getTextAlignemtPosition(position);
 
       return Container(
-        color: blockColor == "transperent"
-            ? Colors.transparent
-            : Color(int.parse(blockColor)),
-        child: Align(
-          alignment: textPosition,
-          child: Text(
-            text,
-            style:
-                TextStyle(color: Color(int.parse(color)), fontSize: fontSize),
-          ),
+        child: Stack(
+          children: [
+            Container(
+              color: blockColor == "transperent" || blockColor == ""
+                  ? Colors.transparent
+                  : Color(int.parse(blockColor)),
+            ),
+            content.blockImage == null || content.blockImage == ""
+                ? Container()
+                : Container(
+                    width: double.maxFinite,
+                    child: Image(
+                      fit: BoxFit.fitWidth,
+                      image: NetworkImage(content.blockImage),
+                    ),
+                  ),
+            Align(
+              alignment: textPosition,
+              child: Text(
+                text,
+                style: TextStyle(
+                    color: Color(int.parse(color)), fontSize: fontSize),
+              ),
+            )
+          ],
         ),
       );
     } else if (blockContent.content_type == "color") {

@@ -30,6 +30,7 @@
                                 "position": 5,
                                 "font_size": 10.0,
                                 "block_color": "#000000",
+                                "block_image": "",
                                 "color": "#ffffff",
                                 "font_family": ""
                             }
@@ -116,6 +117,7 @@
                                 "position": 5,
                                 "font_size": 10.0,
                                 "block_color": "#000000",
+                                "block_image": "",
                                 "color": "#ffffff",
                                 "font_family": ""
                             }
