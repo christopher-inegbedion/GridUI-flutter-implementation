@@ -424,7 +424,6 @@ class _GridPageState extends State<GridPage> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setEnabledSystemUIOverlays([]);
     return SafeArea(
       child: ListView(
         children: [

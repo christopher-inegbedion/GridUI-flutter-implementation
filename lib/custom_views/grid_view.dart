@@ -13,10 +13,12 @@ import 'package:grid_ui_implementation/models/combined_group.dart';
 import 'package:grid_ui_implementation/models/grid.dart';
 import 'package:grid_ui_implementation/models/block_content/text_combined_block_content.dart';
 import 'package:grid_ui_implementation/models/grid_custom_background.dart';
+import 'package:hexcolor/hexcolor.dart';
 import 'package:http/http.dart' as http;
 import 'package:grid_ui_implementation/network_config.dart';
 import 'package:drag_select_grid_view/drag_select_grid_view.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:string_validator/string_validator.dart';
 
 class GridUIView extends StatefulWidget {
   int rows;
@@ -104,7 +106,16 @@ class _GridUIViewState extends State<GridUIView> {
       BuildContext context, bool fromDragging) async {
     String contentType = "";
     String content = "";
-    Map<String, dynamic> textContent = {"font_family": ""};
+
+    Map<String, dynamic> textContent = {"font_family": "", "position": 5};
+
+    //Text content preview settings
+    Alignment textPreviewAlignment = Alignment.center;
+    String textPreview = "None";
+    double textSizePreview = 13;
+    String textColorPreview = "#000000";
+    String blockColorPreview = "#ffffff";
+
     return showDialog<void>(
       context: context,
       barrierDismissible: true, // user must tap button!
@@ -187,6 +198,8 @@ class _GridUIViewState extends State<GridUIView> {
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
+
+                        //Content type options
                         Container(
                           alignment: Alignment.centerLeft,
                           child: Wrap(
@@ -223,142 +236,308 @@ class _GridUIViewState extends State<GridUIView> {
                         //Text
                         Visibility(
                           visible: selectedBlockContentType == 1,
-                          child: Container(
-                            alignment: Alignment.centerLeft,
-                            child: Form(
-                                key: _enterTextGlobalKey,
-                                child: Column(
-                                  children: [
-                                    TextFormField(
-                                      controller: enterBlockTextController,
-                                      decoration: InputDecoration(
-                                          labelText: 'Combined block text'),
-                                      validator: (value) {
-                                        if (value.isEmpty) {
-                                          return 'Text required';
-                                        }
-                                        contentType = "text";
-                                        textContent["value"] = value;
-                                        return null;
-                                      },
-                                    ),
-                                    TextFormField(
-                                      controller: enterBlockFontSizeController,
-                                      decoration: InputDecoration(
-                                          labelText:
-                                              'Combined block font size'),
-                                      validator: (value) {
-                                        if (value.isEmpty) {
-                                          return 'Font size required';
-                                        }
-                                        contentType = "text";
-                                        textContent["font_size"] = value;
-                                        return null;
-                                      },
-                                    ),
-                                    TextFormField(
-                                      controller: enterBlockColorController,
-                                      decoration: InputDecoration(
-                                          labelText: 'Combined block color'),
-                                      validator: (value) {
-                                        contentType = "text";
-                                        textContent["block_color"] =
-                                            value.isEmpty ? "" : value;
-                                        return null;
-                                      },
-                                    ),
-                                    TextFormField(
-                                      controller: enterBlockURLController,
-                                      decoration: InputDecoration(
-                                          labelText:
-                                              'Combined block image link'),
-                                      validator: (value) {
-                                        contentType = "text";
-                                        textContent["block_image"] =
-                                            value.isEmpty ? "" : value;
-                                        return null;
-                                      },
-                                    ),
-                                    TextFormField(
-                                      controller: enterBlockTextColorController,
-                                      decoration: InputDecoration(
-                                          labelText:
-                                              'Combined block text color'),
-                                      validator: (value) {
-                                        if (value.isEmpty) {
-                                          return 'Text color required';
-                                        }
-                                        contentType = "text";
-                                        textContent["color"] = value;
-                                        return null;
-                                      },
-                                    ),
-                                    Container(
-                                        margin: EdgeInsets.only(top: 20),
-                                        alignment: Alignment.centerLeft,
-                                        child: Text("Text position",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold))),
-                                    Wrap(
+                          child: Column(
+                            children: [
+                              //Text preview
+                              Container(
+                                  decoration: BoxDecoration(
+                                      color: HexColor(blockColorPreview),
+                                      border: Border.all(width: 1)),
+                                  height: 100,
+                                  child: Align(
+                                      alignment: textPreviewAlignment,
+                                      child: Text(
+                                        textPreview,
+                                        style: TextStyle(
+                                            color: HexColor(textColorPreview),
+                                            fontSize: textSizePreview),
+                                      ))),
+                              Container(
+                                margin: EdgeInsets.only(top: 10),
+                                child: Text(
+                                  "Text preview",
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+
+                              //Text options
+                              Container(
+                                alignment: Alignment.centerLeft,
+                                child: Form(
+                                    key: _enterTextGlobalKey,
+                                    child: Column(
                                       children: [
-                                        TextButton(
-                                          child: Text("Top left"),
-                                          onPressed: () {
-                                            textContent["position"] = 1;
+                                        //Block text
+                                        TextFormField(
+                                          onChanged: (text) {
+                                            setState(() {
+                                              if (text == "") {
+                                                textPreview = "None";
+                                              } else {
+                                                textPreview = text;
+                                              }
+                                            });
+                                          },
+                                          controller: enterBlockTextController,
+                                          decoration: InputDecoration(
+                                              labelText: 'Combined block text'),
+                                          validator: (value) {
+                                            if (value.isEmpty) {
+                                              return 'Text required';
+                                            }
+                                            contentType = "text";
+                                            textContent["value"] = value;
+                                            return null;
                                           },
                                         ),
-                                        TextButton(
-                                          child: Text("Top center"),
-                                          onPressed: () {
-                                            textContent["position"] = 2;
+
+                                        //Block text font size
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextFormField(
+                                                onChanged: (size) {
+                                                  setState(() {
+                                                    if (size == "") {
+                                                      textSizePreview = 13;
+                                                    } else {
+                                                      textSizePreview =
+                                                          double.tryParse(size);
+                                                    }
+                                                  });
+                                                },
+                                                controller:
+                                                    enterBlockFontSizeController,
+                                                decoration: InputDecoration(
+                                                    labelText:
+                                                        'Combined block font size'),
+                                                validator: (value) {
+                                                  if (value.isEmpty) {
+                                                    return 'Font size required';
+                                                  }
+                                                  contentType = "text";
+                                                  textContent["font_size"] =
+                                                      value;
+                                                  return null;
+                                                },
+                                              ),
+                                            ),
+                                            IconButton(
+                                                iconSize: 13,
+                                                onPressed: (() {
+                                                  if (isNumeric(
+                                                      enterBlockFontSizeController
+                                                          .text)) {
+                                                    setState(() {
+                                                      textSizePreview =
+                                                          double.parse(
+                                                                  enterBlockFontSizeController
+                                                                      .text) +
+                                                              1;
+                                                      enterBlockFontSizeController
+                                                              .text =
+                                                          (textSizePreview
+                                                                  .toInt())
+                                                              .toString();
+                                                    });
+                                                  }
+                                                }),
+                                                icon: Icon(Icons.add)),
+                                            IconButton(
+                                                iconSize: 13,
+                                                onPressed: (() {
+                                                  if (isNumeric(
+                                                      enterBlockFontSizeController
+                                                          .text)) {
+                                                    setState(() {
+                                                      textSizePreview =
+                                                          double.parse(
+                                                                  enterBlockFontSizeController
+                                                                      .text) -
+                                                              1;
+                                                      enterBlockFontSizeController
+                                                              .text =
+                                                          (textSizePreview
+                                                                  .toInt())
+                                                              .toString();
+                                                    });
+                                                  }
+                                                }),
+                                                icon: Icon(Icons.remove)),
+                                          ],
+                                        ),
+
+                                        //Block text color
+                                        TextFormField(
+                                          onChanged: (color) {
+                                            setState(() {
+                                              if (color == "") {
+                                                textColorPreview = "#000000";
+                                              } else {
+                                                if (isHexColor(color)) {
+                                                  textColorPreview = color;
+                                                } else {
+                                                  textColorPreview = "#000000";
+                                                }
+                                              }
+                                            });
+                                          },
+                                          controller:
+                                              enterBlockTextColorController,
+                                          decoration: InputDecoration(
+                                              labelText:
+                                                  'Combined block text color'),
+                                          validator: (value) {
+                                            if (value.isEmpty) {
+                                              return 'Text color required';
+                                            }
+                                            contentType = "text";
+                                            textContent["color"] = value;
+                                            return null;
                                           },
                                         ),
-                                        TextButton(
-                                          child: Text("Top right"),
-                                          onPressed: () {
-                                            textContent["position"] = 3;
+
+                                        //Combined block color
+                                        TextFormField(
+                                          onChanged: (color) {
+                                            if (isHexColor(color)) {
+                                              setState(() {
+                                                blockColorPreview = color;
+                                              });
+                                            }
+                                          },
+                                          controller: enterBlockColorController,
+                                          decoration: InputDecoration(
+                                              labelText:
+                                                  'Combined block color'),
+                                          validator: (value) {
+                                            contentType = "text";
+                                            textContent["block_color"] =
+                                                value.isEmpty ? "" : value;
+                                            return null;
                                           },
                                         ),
-                                        TextButton(
-                                          child: Text("Center left"),
-                                          onPressed: () {
-                                            textContent["position"] = 4;
+
+                                        //Block image link
+                                        TextFormField(
+                                          controller: enterBlockURLController,
+                                          decoration: InputDecoration(
+                                              labelText:
+                                                  'Combined block image link'),
+                                          validator: (value) {
+                                            contentType = "text";
+                                            textContent["block_image"] =
+                                                value.isEmpty ? "" : value;
+                                            return null;
                                           },
                                         ),
-                                        TextButton(
-                                          child: Text("Center"),
-                                          onPressed: () {
-                                            textContent["position"] = 5;
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("Center right"),
-                                          onPressed: () {
-                                            textContent["position"] = 6;
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("Bottom left"),
-                                          onPressed: () {
-                                            textContent["position"] = 7;
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("Bottom center"),
-                                          onPressed: () {
-                                            textContent["position"] = 8;
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("Bottom right"),
-                                          onPressed: () {
-                                            textContent["position"] = 9;
-                                          },
-                                        ),
+
+                                        //Text position
+                                        Container(
+                                            margin: EdgeInsets.only(top: 20),
+                                            alignment: Alignment.centerLeft,
+                                            child: Text("Text position",
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        Wrap(
+                                          children: [
+                                            TextButton(
+                                              child: Text("Top left"),
+                                              onPressed: () {
+                                                textContent["position"] = 1;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.topLeft;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Top center"),
+                                              onPressed: () {
+                                                textContent["position"] = 2;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.topCenter;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Top right"),
+                                              onPressed: () {
+                                                textContent["position"] = 3;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.topRight;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Center left"),
+                                              onPressed: () {
+                                                textContent["position"] = 4;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.centerLeft;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Center"),
+                                              onPressed: () {
+                                                textContent["position"] = 5;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.center;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Center right"),
+                                              onPressed: () {
+                                                textContent["position"] = 6;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.centerRight;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Bottom left"),
+                                              onPressed: () {
+                                                textContent["position"] = 7;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.bottomLeft;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Bottom center"),
+                                              onPressed: () {
+                                                textContent["position"] = 8;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.bottomCenter;
+                                                });
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text("Bottom right"),
+                                              onPressed: () {
+                                                textContent["position"] = 9;
+                                                setState(() {
+                                                  textPreviewAlignment =
+                                                      Alignment.bottomRight;
+                                                });
+                                              },
+                                            ),
+                                          ],
+                                        )
                                       ],
-                                    )
-                                  ],
-                                )),
+                                    )),
+                              ),
+                            ],
                           ),
                         ),
 
