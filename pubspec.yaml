@@ -31,6 +31,11 @@ dependencies:
   dotted_border: ^2.0.0
   hexcolor: ^2.0.3
   string_validator: ^0.3.0
+  constraint_view:
+    git:
+      url: https://github.com/christopher-inegbedion/ConstraintViewFlutter.git
+      ref: dev
+  google_fonts:
   
 dev_dependencies:
   uuid:
@@ -65,7 +70,7 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: JetBrainsMono-Regular
+    - family: JetBrainMono
       fonts:
         - asset: assets/fonts/JetBrainsMono-Regular.ttf
     - family: JetBrainsMono-Bold
