@@ -92,11 +92,11 @@ class Grid {
             combinedBlocks["block"]["content"]["value"]["y_pos"] == null
                 ? 0
                 : combinedBlocks["block"]["content"]["value"]["y_pos"],
+            combinedBlocks["block"]["content"]["value"]["font"],
             combinedBlocks["block"]["content"]["value"]["font_size"],
             combinedBlocks["block"]["content"]["value"]["block_color"],
             combinedBlocks["block"]["content"]["value"]["block_image"],
             combinedBlocks["block"]["content"]["value"]["color"],
-            combinedBlocks["block"]["content"]["value"]["font_family"],
           );
         } else if (blockContentType == "color") {
           content = ColorContent(

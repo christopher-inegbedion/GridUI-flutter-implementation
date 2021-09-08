@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:constraint_view/custom_views/task_view.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
@@ -121,9 +123,6 @@ class _GridUIViewState extends State<GridUIView> {
     String contentType = "";
     String content = "";
 
-    Map<String, dynamic> textContent = {"font_family": "", "position": 5};
-    Map<String, dynamic> taskContent = {"image": 5};
-
     //Text content preview settings
     Alignment textPreviewAlignment = Alignment.center;
     String textPreview = "None";
@@ -131,9 +130,20 @@ class _GridUIViewState extends State<GridUIView> {
     String textColorPreview = "#000000";
     String blockColorPreview = "#ffffff";
 
+    List<String> allFonts = GoogleFonts.asMap().keys.toList();
+    String selectedFont = allFonts[Random().nextInt(allFonts.length)];
+
     int _yPositionData = 1;
     int _xPositionData = 1;
 
+    Map<String, dynamic> textContent = {
+      "font_family": "",
+      "position": 5,
+      "font": selectedFont,
+      "x_pos": _xPositionData,
+      "y_pos": _yPositionData
+    };
+    Map<String, dynamic> taskContent = {"image": 5};
     return showDialog<void>(
       context: context,
       barrierDismissible: true, // user must tap button!
@@ -292,12 +302,12 @@ class _GridUIViewState extends State<GridUIView> {
                                                 ? (_xPositionData.toDouble())
                                                     .abs()
                                                 : 0),
-                                        child: Text(
-                                          textPreview,
-                                          style: TextStyle(
-                                              color: HexColor(textColorPreview),
-                                              fontSize: textSizePreview),
-                                        ),
+                                        child: Text(textPreview,
+                                            style: GoogleFonts.getFont(
+                                                selectedFont,
+                                                color:
+                                                    HexColor(textColorPreview),
+                                                fontSize: textSizePreview)),
                                       ))),
                               Container(
                                 margin: EdgeInsets.only(top: 10),
@@ -327,7 +337,7 @@ class _GridUIViewState extends State<GridUIView> {
                                           },
                                           controller: enterBlockTextController,
                                           decoration: InputDecoration(
-                                              labelText: 'Combined block text'),
+                                              labelText: 'Text'),
                                           validator: (value) {
                                             if (value.isEmpty) {
                                               return 'Text required';
@@ -336,6 +346,52 @@ class _GridUIViewState extends State<GridUIView> {
                                             textContent["value"] = value;
                                             return null;
                                           },
+                                        ),
+
+                                        //Text font
+                                        Container(
+                                          margin: EdgeInsets.only(
+                                              top: 30, bottom: 10),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Container(
+                                                child: Text(
+                                                  "Text font",
+                                                  style:
+                                                      TextStyle(fontSize: 13),
+                                                ),
+                                              ),
+                                              SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: DropdownButton(
+                                                  value: selectedFont,
+                                                  onChanged: (String newFont) {
+                                                    contentType = "text";
+                                                    textContent["font"] =
+                                                        newFont;
+                                                    setState(() {
+                                                      selectedFont = newFont;
+                                                    });
+                                                  },
+                                                  items: allFonts.map<
+                                                          DropdownMenuItem<
+                                                              String>>(
+                                                      (String value) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value: value,
+                                                      child: Text(
+                                                        value,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
 
                                         //Block text font size
@@ -1302,7 +1358,7 @@ class _GridUIViewState extends State<GridUIView> {
       int position = content.position;
       double xPos = (content.x_pos.toDouble());
       double yPos = (content.y_pos.toDouble());
-
+      String font = content.font;
       double fontSize = content.fontSize;
       Alignment textPosition = getTextAlignemtPosition(position);
 
@@ -1331,11 +1387,9 @@ class _GridUIViewState extends State<GridUIView> {
                     top: yPos < 0 ? yPos.abs() : 0,
                     left: xPos >= 0 ? xPos : 0,
                     right: xPos < 0 ? xPos.abs() : 0),
-                child: Text(
-                  text,
-                  style: TextStyle(
-                      color: Color(int.parse(color)), fontSize: fontSize),
-                ),
+                child: Text(text,
+                    style: GoogleFonts.getFont(font,
+                        color: Color(int.parse(color)), fontSize: fontSize)),
               ),
             )
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:grid_ui_implementation/main_page.dart';
 
 import 'reception_page.dart';
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'GridUI implementation',
       // checkerboardRasterCacheImages: true,
-      theme: ThemeData(fontFamily: 'JetBrainMono'),
+      theme: ThemeData(textTheme: GoogleFonts.jetBrainsMonoTextTheme()),
       home: Scaffold(body: ReceptionPage()),
     );
   }

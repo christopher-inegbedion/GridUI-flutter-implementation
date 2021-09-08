@@ -228,9 +228,6 @@ class _ReceptionPageState extends State<ReceptionPage> {
                         BoxDecoration(border: Border.all(color: Colors.black)),
                     child: Text(
                       "LOAD GRID",
-                      style: TextStyle(
-                        fontFamily: "JetBrainMono",
-                      ),
                     )),
               ),
             ),
@@ -247,9 +244,6 @@ class _ReceptionPageState extends State<ReceptionPage> {
                         BoxDecoration(border: Border.all(color: Colors.black)),
                     child: Text(
                       "CREATE GRID",
-                      style: TextStyle(
-                        fontFamily: "JetBrainMono",
-                      ),
                     )),
               ),
             ),
