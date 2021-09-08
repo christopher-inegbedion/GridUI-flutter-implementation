@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:constraint_view/custom_views/task_view.dart';
 import 'package:flutter/material.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
 import 'package:grid_ui_implementation/models/block_content/color_combined_block_content.dart';
 import 'package:grid_ui_implementation/models/block_content/image_combined_block_content.dart';
+import 'package:grid_ui_implementation/models/block_content/task_combined_block_content.dart';
 import 'package:grid_ui_implementation/models/comb_block_drag_info.dart';
 import 'package:grid_ui_implementation/models/combined_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
@@ -24,17 +26,25 @@ class GridUIView extends StatefulWidget {
   int rows;
   int columns;
   List<CombinedGroup> data;
-  String grid_json;
+  String gridJson;
   CustomGridBackground gridBackgroundData;
   _GridUIViewState state;
 
-  GridUIView(this.grid_json, this.columns, this.rows, this.gridBackgroundData,
+  GridUIView(this.gridJson, this.columns, this.rows, this.gridBackgroundData,
       this.data);
+
+  GridUIView.empty() {
+    this.gridJson = null;
+    this.columns = 0;
+    this.rows = 0;
+    this.gridBackgroundData = null;
+    this.data = null;
+  }
 
   @override
   _GridUIViewState createState() {
     state = _GridUIViewState(columns, rows, data,
-        grid_json: grid_json, gridCustomBackgroudData: gridBackgroundData);
+        gridJson: gridJson, gridCustomBackgroudData: gridBackgroundData);
 
     return state;
   }
@@ -56,7 +66,7 @@ class GridUIView extends StatefulWidget {
   }
 
   void changeGridJSON(String value) {
-    state.grid_json = value;
+    state.gridJson = value;
   }
 
   void changeCustomBackground(CustomGridBackground customGridBackground) {
@@ -72,7 +82,7 @@ class _GridUIViewState extends State<GridUIView> {
   int rows;
   List<CombinedGroup> data;
   CustomGridBackground gridCustomBackgroudData;
-  String grid_json;
+  String gridJson;
   double blockSize;
   bool editMode = false;
   GlobalKey<FormState> _createCombinedBlockKey = GlobalKey<FormState>();
@@ -87,6 +97,10 @@ class _GridUIViewState extends State<GridUIView> {
   final _enterColorGlobalKey = GlobalKey<FormState>();
   final enterBlockColorController = TextEditingController();
 
+  final _enterTaskIDGlobalKey = GlobalKey<FormState>();
+  final _enterTaskIDController = TextEditingController();
+  final _enterTaskImageController = TextEditingController();
+
   int selectedBlockContentType = -1;
 
   final blockHeightController = TextEditingController();
@@ -94,8 +108,8 @@ class _GridUIViewState extends State<GridUIView> {
   final blockStartColumnController = TextEditingController();
   final blockStartRowController = TextEditingController();
   _GridUIViewState(this.columns, this.rows, this.data,
-      {String grid_json, CustomGridBackground gridCustomBackgroudData}) {
-    this.grid_json = grid_json;
+      {String gridJson, CustomGridBackground gridCustomBackgroudData}) {
+    this.gridJson = gridJson;
     this.gridCustomBackgroudData = gridCustomBackgroudData;
     _createCombinedBlockKey = GlobalKey<FormState>();
     _enterTextGlobalKey = GlobalKey<FormState>();
@@ -108,6 +122,7 @@ class _GridUIViewState extends State<GridUIView> {
     String content = "";
 
     Map<String, dynamic> textContent = {"font_family": "", "position": 5};
+    Map<String, dynamic> taskContent = {"image": 5};
 
     //Text content preview settings
     Alignment textPreviewAlignment = Alignment.center;
@@ -115,6 +130,9 @@ class _GridUIViewState extends State<GridUIView> {
     double textSizePreview = 13;
     String textColorPreview = "#000000";
     String blockColorPreview = "#ffffff";
+
+    int _yPositionData = 1;
+    int _xPositionData = 1;
 
     return showDialog<void>(
       context: context,
@@ -201,9 +219,9 @@ class _GridUIViewState extends State<GridUIView> {
 
                         //Content type options
                         Container(
-                          alignment: Alignment.centerLeft,
+                          alignment: Alignment.center,
                           child: Wrap(
-                            // alignment: WrapAlignment.spaceAround,
+                            alignment: WrapAlignment.spaceAround,
                             children: [
                               TextButton(
                                 child: Text("Text"),
@@ -228,6 +246,14 @@ class _GridUIViewState extends State<GridUIView> {
                                     selectedBlockContentType = 3;
                                   });
                                 },
+                              ),
+                              TextButton(
+                                child: Text("Task"),
+                                onPressed: () {
+                                  setState(() {
+                                    selectedBlockContentType = 4;
+                                  });
+                                },
                               )
                             ],
                           ),
@@ -246,11 +272,32 @@ class _GridUIViewState extends State<GridUIView> {
                                   height: 100,
                                   child: Align(
                                       alignment: textPreviewAlignment,
-                                      child: Text(
-                                        textPreview,
-                                        style: TextStyle(
-                                            color: HexColor(textColorPreview),
-                                            fontSize: textSizePreview),
+                                      child: Container(
+                                        margin: EdgeInsets.only(
+                                            bottom: _yPositionData >= 0
+                                                ? _yPositionData
+                                                    .toDouble()
+                                                    .abs()
+                                                : 0,
+                                            top: _yPositionData < 0
+                                                ? (_yPositionData.toDouble())
+                                                    .abs()
+                                                : 0,
+                                            left: _xPositionData >= 0
+                                                ? _xPositionData
+                                                    .toDouble()
+                                                    .abs()
+                                                : 0,
+                                            right: _xPositionData < 0
+                                                ? (_xPositionData.toDouble())
+                                                    .abs()
+                                                : 0),
+                                        child: Text(
+                                          textPreview,
+                                          style: TextStyle(
+                                              color: HexColor(textColorPreview),
+                                              fontSize: textSizePreview),
+                                        ),
                                       ))),
                               Container(
                                 margin: EdgeInsets.only(top: 10),
@@ -365,6 +412,96 @@ class _GridUIViewState extends State<GridUIView> {
                                                 }),
                                                 icon: Icon(Icons.remove)),
                                           ],
+                                        ),
+
+                                        Container(
+                                          margin: EdgeInsets.only(top: 20),
+                                          child: Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      _yPositionData += 1;
+                                                    });
+                                                    contentType = "text";
+                                                    textContent["y_pos"] =
+                                                        _yPositionData;
+                                                  },
+                                                  iconSize: 13,
+                                                  icon: Icon(Icons.add)),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      _yPositionData -= 1;
+                                                    });
+                                                    contentType = "text";
+                                                    textContent["y_pos"] =
+                                                        _yPositionData;
+                                                  },
+                                                  iconSize: 13,
+                                                  icon: Icon(Icons.remove)),
+                                              Container(
+                                                  margin:
+                                                      EdgeInsets.only(left: 20),
+                                                  child: Text(_yPositionData
+                                                      .toString())),
+                                              Expanded(
+                                                child: Container(
+                                                  alignment: Alignment.center,
+                                                  child: Text(
+                                                    "Y position",
+                                                    style:
+                                                        TextStyle(fontSize: 12),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        Container(
+                                          margin: EdgeInsets.only(top: 20),
+                                          child: Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      _xPositionData += 1;
+                                                    });
+                                                    contentType = "text";
+                                                    textContent["x_pos"] =
+                                                        _xPositionData;
+                                                  },
+                                                  iconSize: 13,
+                                                  icon: Icon(Icons.add)),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      _xPositionData -= 1;
+                                                    });
+                                                    contentType = "text";
+                                                    textContent["x_pos"] =
+                                                        _xPositionData;
+                                                  },
+                                                  iconSize: 13,
+                                                  icon: Icon(Icons.remove)),
+                                              Container(
+                                                  margin:
+                                                      EdgeInsets.only(left: 20),
+                                                  child: Text(_xPositionData
+                                                      .toString())),
+                                              Expanded(
+                                                child: Container(
+                                                  alignment: Alignment.center,
+                                                  child: Text(
+                                                    "X position",
+                                                    style:
+                                                        TextStyle(fontSize: 12),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
 
                                         //Block text color
@@ -575,8 +712,7 @@ class _GridUIViewState extends State<GridUIView> {
                               child: TextFormField(
                                 controller: enterBlockColorController,
                                 decoration: InputDecoration(
-                                    labelText:
-                                        'Combined block color(or transperent)'),
+                                    labelText: 'Combined block color'),
                                 validator: (value) {
                                   if (value.isEmpty) {
                                     return 'Hex color required';
@@ -589,6 +725,43 @@ class _GridUIViewState extends State<GridUIView> {
                             ),
                           ),
                         ),
+
+                        //Task
+                        Visibility(
+                            visible: selectedBlockContentType == 4,
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              child: Form(
+                                key: _enterTaskIDGlobalKey,
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _enterTaskIDController,
+                                      decoration:
+                                          InputDecoration(labelText: "Task ID"),
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return "Task ID required";
+                                        }
+                                        contentType = "task";
+                                        taskContent["id"] = value;
+                                        return null;
+                                      },
+                                    ),
+                                    TextFormField(
+                                      controller: _enterTaskImageController,
+                                      decoration: InputDecoration(
+                                          labelText: "Image link"),
+                                      validator: (value) {
+                                        contentType = "task";
+                                        taskContent["image"] = value;
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ))
                       ],
                     )),
                   )
@@ -610,6 +783,9 @@ class _GridUIViewState extends State<GridUIView> {
                       } else if (selectedBlockContentType == 3 &&
                           _enterColorGlobalKey.currentState.validate()) {
                         complete = true;
+                      } else if (selectedBlockContentType == 4 &&
+                          _enterTaskIDGlobalKey.currentState.validate()) {
+                        complete = true;
                       } else {
                         complete = false;
                       }
@@ -618,16 +794,25 @@ class _GridUIViewState extends State<GridUIView> {
                     if (complete) {
                       if (contentType == "text") {
                         addCombinedBlock(
-                            grid_json,
+                            gridJson,
                             blockHeightController.text,
                             blockWidthController.text,
                             blockStartColumnController.text,
                             blockStartRowController.text,
                             contentType,
                             textContent);
+                      } else if (contentType == "task") {
+                        addCombinedBlock(
+                            gridJson,
+                            blockHeightController.text,
+                            blockWidthController.text,
+                            blockStartColumnController.text,
+                            blockStartRowController.text,
+                            contentType,
+                            taskContent);
                       } else {
                         addCombinedBlock(
-                            grid_json,
+                            gridJson,
                             blockHeightController.text,
                             blockWidthController.text,
                             blockStartColumnController.text,
@@ -711,7 +896,7 @@ class _GridUIViewState extends State<GridUIView> {
                 // Validate returns true if the form is valid, otherwise false.
                 if (_createCombinedBlockKey.currentState.validate()) {
                   deleteCombinedBlock(
-                      grid_json,
+                      gridJson,
                       blockHeightController.text,
                       blockWidthController.text,
                       blockStartColumnController.text,
@@ -742,6 +927,10 @@ class _GridUIViewState extends State<GridUIView> {
     });
   }
 
+  void changeState() {
+    setState(() {});
+  }
+
   ///Returns the actual size of a block
   double getBlockSize(int rows) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -749,14 +938,24 @@ class _GridUIViewState extends State<GridUIView> {
   }
 
   ///Post changes made to the UI grid to the server
-  Future<String> postGridToServer(String url, Map<String, String> data) async {
-    http.Response response = await http.post(url, body: data);
+  Future<String> postGridToServer(
+      String addr, String path, Map<String, String> data) async {
     String grid;
+    print("grid");
+    try {
+      http.Response response =
+          await http.post(Uri.http(addr, path), body: data);
 
-    if (response.statusCode == 200) {
-      grid = response.body;
-    } else {
-      grid = '';
+      if (response.statusCode == 200) {
+        grid = response.body;
+      } else {
+        grid = '';
+      }
+    } catch (e, stacktrace) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text("An error occured. Try again."),
+      ));
     }
 
     return grid;
@@ -819,16 +1018,12 @@ class _GridUIViewState extends State<GridUIView> {
     };
 
     postGridToServer(
-            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/move",
-            data)
+            NetworkConfig.serverAddr + NetworkConfig.serverPort, "/move", data)
         .then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        grid_json = value.grid_json;
-        columns = value.gridColumns;
-        rows = value.gridRows;
-        changeData(value.combinedGroups);
+        Grid.getInstance().buildGridView();
       });
     });
   }
@@ -863,18 +1058,17 @@ class _GridUIViewState extends State<GridUIView> {
         'target_column': startColumn,
         'target_row': startRow.toString(),
         'content_type': contentType,
-        'content': content
+        'content': jsonEncode(content)
       };
     }
 
-    postGridToServer(
-            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/create",
-            data)
+    postGridToServer(NetworkConfig.serverAddr + NetworkConfig.serverPort,
+            "/create", data)
         .then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        grid_json = value.grid_json;
+        gridJson = value.gridJson;
         columns = value.gridColumns;
         rows = value.gridRows;
         changeData(value.combinedGroups);
@@ -894,14 +1088,13 @@ class _GridUIViewState extends State<GridUIView> {
       'target_row': startRow.toString()
     };
 
-    postGridToServer(
-            "http://${NetworkConfig.serverAddr}:${NetworkConfig.serverPort}/delete",
-            data)
+    postGridToServer(NetworkConfig.serverAddr + NetworkConfig.serverPort,
+            "/delete", data)
         .then((val) {
       Grid.getInstance()
           .loadJSON("", fromNetwork: true, grid: val)
           .then((value) {
-        grid_json = value.grid_json;
+        gridJson = value.gridJson;
         columns = value.gridColumns;
         rows = value.gridRows;
         changeData(value.combinedGroups);
@@ -953,6 +1146,7 @@ class _GridUIViewState extends State<GridUIView> {
         return DottedBorder(
           // This is what produces the dot effect when in edit mode
           dashPattern: [1, blockSize - 1],
+          strokeCap: StrokeCap.square,
           color: Colors.grey[700],
           child: Container(
               width: blockSize,
@@ -966,7 +1160,7 @@ class _GridUIViewState extends State<GridUIView> {
       onAccept: (data) {
         CombBlockDragInformation dragInformation = data;
         moveCombinedBlock(
-            grid_json,
+            gridJson,
             dragInformation.combinedBlockStartColumn,
             dragInformation.combinedBlockStartRow,
             dragInformation.combinedBlockHeight,
@@ -994,7 +1188,8 @@ class _GridUIViewState extends State<GridUIView> {
     CombBlockDragInformation dragInformation = CombBlockDragInformation();
     Widget combinedBlock = Stack(
       children: [
-        createCombinedBlockContent(block.content),
+        createCombinedBlockContent(
+            block.content, numberOfColumns.toInt(), numberOfRows.toInt()),
 
         ///Block quadrants
         ListView.builder(
@@ -1039,6 +1234,12 @@ class _GridUIViewState extends State<GridUIView> {
                         );
                       }));
             }),
+
+        GestureDetector(
+          onTap: () {
+            processCombinedBlockTap(block.content);
+          },
+        )
       ],
     );
 
@@ -1049,8 +1250,10 @@ class _GridUIViewState extends State<GridUIView> {
           int height = numberOfColumns.toInt();
           int width = numberOfRows.toInt();
 
-          deleteCombinedBlock(grid_json, height.toString(), width.toString(),
-              startCol.toString(), startRow.toString());
+          if (editMode) {
+            deleteCombinedBlock(gridJson, height.toString(), width.toString(),
+                startCol.toString(), startRow.toString());
+          }
         },
         child: Container(
             width: width,
@@ -1087,7 +1290,8 @@ class _GridUIViewState extends State<GridUIView> {
   }
 
   ///Create the content in the combined block.
-  Widget createCombinedBlockContent(BlockContent blockContent) {
+  Widget createCombinedBlockContent(
+      BlockContent blockContent, int cols, int rows) {
     if (blockContent.content_type == "text") {
       TextContent content = blockContent.content;
       String text = content.value;
@@ -1096,6 +1300,9 @@ class _GridUIViewState extends State<GridUIView> {
           : content.blockColor.replaceAll("#", "0xff");
       String color = content.color.replaceAll('#', '0xff');
       int position = content.position;
+      double xPos = (content.x_pos.toDouble());
+      double yPos = (content.y_pos.toDouble());
+
       double fontSize = content.fontSize;
       Alignment textPosition = getTextAlignemtPosition(position);
 
@@ -1118,10 +1325,17 @@ class _GridUIViewState extends State<GridUIView> {
                   ),
             Align(
               alignment: textPosition,
-              child: Text(
-                text,
-                style: TextStyle(
-                    color: Color(int.parse(color)), fontSize: fontSize),
+              child: Container(
+                margin: EdgeInsets.only(
+                    bottom: yPos >= 0 ? yPos : 0,
+                    top: yPos < 0 ? yPos.abs() : 0,
+                    left: xPos >= 0 ? xPos : 0,
+                    right: xPos < 0 ? xPos.abs() : 0),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                      color: Color(int.parse(color)), fontSize: fontSize),
+                ),
               ),
             )
           ],
@@ -1129,25 +1343,143 @@ class _GridUIViewState extends State<GridUIView> {
       );
     } else if (blockContent.content_type == "color") {
       ColorContent content = blockContent.content;
-      String color = content.colorVal == "transparent"
-          ? "transparent"
-          : content.colorVal.replaceAll("#", "0xff");
-
-      return Container(
-        color: color == "transperent"
-            ? Colors.transparent
-            : Color(int.parse(color)),
-      );
+      String color = content.colorVal.replaceAll("#", "").replaceAll('"', "");
+      if (isHexColor(color)) {
+        return Container(
+          color: color == "transperent" ? Colors.transparent : HexColor(color),
+        );
+      } else {
+        return Container(
+          color: Colors.transparent,
+          child: Center(
+            child: Text("Color error", style: TextStyle(color: Colors.white)),
+          ),
+        );
+      }
     } else if (blockContent.content_type == "image") {
       ImageContent content = blockContent.content;
-      String link = content.link;
+      String link = content.link.replaceAll('"', "");
 
       return Image(
         image: NetworkImage(link),
       );
+    } else if (blockContent.content_type == "task") {
+      double blockWidth = rows * blockSize;
+      double blockHeight = blockWidth / 1.778;
+      TaskContent content = blockContent.content;
+      String id = content.id;
+      String image = content.image;
+      print(image);
+
+      return FutureBuilder(
+        future: getCombinedBlockTaskDetails(id),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            Map data = snapshot.data;
+            if (data != null) {
+              return Column(
+                children: [
+                  Expanded(
+                    child: Container(
+                      child: Image(
+                        image: NetworkImage(image),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(
+                                  top: 5, bottom: 5, left: 10, right: 10),
+                              alignment: Alignment.centerLeft,
+                              child: Text(data["name"],
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                            Container(
+                              margin: EdgeInsets.only(left: 10, right: 10),
+                              alignment: Alignment.centerLeft,
+                              child: Text(data["desc"],
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                  )),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(right: 10),
+                        child: Text(
+                          data["currency"] == "USD"
+                              ? "\$" + data["price"]
+                              : data["currency"] == "GBP"
+                                  ? "£" + data["price"]
+                                  : data["currency"] == "EUR"
+                                      ? "€" + data["price"]
+                                      : "not implemented" + data["price"],
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      )
+                    ],
+                  )
+                ],
+              );
+            } else {
+              return Center(
+                child: Text("Data not found"),
+              );
+            }
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text("An error occured"),
+            );
+          } else {
+            return Center(
+              child:
+                  Text("No task data", style: TextStyle(color: Colors.white)),
+            );
+          }
+        },
+      );
     } else {
       return Text("nothing");
     }
+  }
+
+  void processCombinedBlockTap(BlockContent blockContent) {
+    if (blockContent.content_type == "task") {
+      TaskContent content = blockContent.content;
+      String id = content.id;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TaskView(id, "test")),
+      );
+    }
+  }
+
+  Future getCombinedBlockTaskDetails(String taskID) async {
+    try {
+      print("sdfs");
+      http.Response response = await http.Client()
+          .get(Uri.http(NetworkConfig.serverAddr + "8000", "/task/$taskID"));
+
+      if (response.statusCode == 200) {
+        Map taskData = jsonDecode(response.body);
+        if (taskData["msg"] == "not_found") {
+          return null;
+        } else {
+          return taskData;
+        }
+      } else {
+        return null;
+      }
+    } catch (e, stacktrace) {}
   }
 
   ///Return the alignment for the block content text type position property
@@ -1222,21 +1554,26 @@ class _GridUIViewState extends State<GridUIView> {
         visible: editMode,
         child: Container(
           color: Colors.black,
-          child: DragSelectGridView(
-            addAutomaticKeepAlives: true,
-            addRepaintBoundaries: false,
-            gridController: controller,
-            itemCount: this.rows * this.columns,
-            itemBuilder: (context, index, selected) {
-              int colIndex = (index / this.rows).floor();
-              int rowIndex = index % this.rows;
+          child: this.rows == 0 || this.rows == 0
+              ? Container(
+                  height: MediaQuery.of(context).size.height,
+                  color: Colors.amber,
+                )
+              : DragSelectGridView(
+                  addAutomaticKeepAlives: true,
+                  addRepaintBoundaries: false,
+                  gridController: controller,
+                  itemCount: this.rows * this.columns,
+                  itemBuilder: (context, index, selected) {
+                    int colIndex = (index / this.rows).floor();
+                    int rowIndex = index % this.rows;
 
-              return createSingleEmptyBlock(colIndex, rowIndex);
-            },
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: (this.rows * blockSize) / this.rows,
-            ),
-          ),
+                    return createSingleEmptyBlock(colIndex, rowIndex);
+                  },
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: (this.rows * blockSize) / this.rows,
+                  ),
+                ),
         ),
       ),
     );
@@ -1245,53 +1582,81 @@ class _GridUIViewState extends State<GridUIView> {
   List<Widget> initGrids(List data, double blockSize) {
     List<Widget> widgets = [];
 
-    if (data.length > 0) {
-      int numberOfCombinedGroups = data.length;
+    if (data != null) {
+      if (data.length > 0) {
+        int numberOfCombinedGroups = data.length;
 
-      for (int combGroupIndex = 0;
-          combGroupIndex < numberOfCombinedGroups;
-          combGroupIndex++) {
-        CombinedGroup combinedGroup = data[combGroupIndex];
-        int totalColumnsAbove = combinedGroup.columnsAbove;
+        for (int combGroupIndex = 0;
+            combGroupIndex < numberOfCombinedGroups;
+            combGroupIndex++) {
+          CombinedGroup combinedGroup = data[combGroupIndex];
+          int totalColumnsAbove = combinedGroup.columnsAbove;
 
-        for (int i = 0; i < combinedGroup.combinedBlocks.length; i++) {
-          CombinedBlockInGroup combinedBlockInGroup =
-              combinedGroup.combinedBlocks[i];
-          Block block = combinedBlockInGroup.block;
-          int emptyColsAbove = combinedBlockInGroup.numberOfColumnsAbove;
-          int emptyRowsBefore = combinedBlockInGroup.numberOfRowsLeft;
-          double blockHeight = block.numberOfColumns * blockSize;
-          double blockWidth = block.numberOfRows * blockSize;
+          for (int i = 0; i < combinedGroup.combinedBlocks.length; i++) {
+            CombinedBlockInGroup combinedBlockInGroup =
+                combinedGroup.combinedBlocks[i];
+            Block block = combinedBlockInGroup.block;
+            int emptyColsAbove = combinedBlockInGroup.numberOfColumnsAbove;
+            int emptyRowsBefore = combinedBlockInGroup.numberOfRowsLeft;
+            double blockHeight = block.numberOfColumns * blockSize;
+            double blockWidth = block.numberOfRows * blockSize;
 
-          widgets.add(Positioned(
-              top: (emptyColsAbove + totalColumnsAbove) * blockSize,
-              left: emptyRowsBefore * blockSize,
-              child: Container(
-                height: blockHeight,
-                width: blockWidth,
-                child: createCombinedBlock(block,
-                    (emptyColsAbove + totalColumnsAbove), emptyRowsBefore,
-                    height: blockHeight, width: blockWidth),
-              )));
+            widgets.add(Positioned(
+                top: (emptyColsAbove + totalColumnsAbove) * blockSize,
+                left: emptyRowsBefore * blockSize,
+                child: Container(
+                  height: blockHeight,
+                  width: blockWidth,
+                  child: createCombinedBlock(block,
+                      (emptyColsAbove + totalColumnsAbove), emptyRowsBefore,
+                      height: blockHeight, width: blockWidth),
+                )));
+          }
         }
       }
+    } else {
+      widgets.add(Container(
+        height: MediaQuery.of(context).size.height,
+        color: Colors.black,
+        child: Align(
+          alignment: Alignment.center,
+          child: Text(
+            "No grid data",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ));
     }
 
     return widgets;
   }
 
   Widget _buildGridBackground(CustomGridBackground gridBackgroundData) {
-    if (gridBackgroundData.is_color) {
-      String color = gridBackgroundData.link_or_color.replaceAll("#", "0xff");
+    if (gridBackgroundData != null) {
+      if (gridBackgroundData.is_color) {
+        String color = gridBackgroundData.link_or_color.replaceAll("#", "0xff");
+        return Container(
+          height: columns * getBlockSize(rows),
+          color: Color(int.parse(color)),
+        );
+      } else if (gridBackgroundData.is_link) {
+        String link = gridBackgroundData.link_or_color;
+        return Container(
+          height: columns * getBlockSize(rows),
+          child: Image.network(link, fit: BoxFit.cover),
+        );
+      }
+    } else {
       return Container(
-        height: columns * getBlockSize(rows),
-        color: Color(int.parse(color)),
-      );
-    } else if (gridBackgroundData.is_link) {
-      String link = gridBackgroundData.link_or_color;
-      return Container(
-        height: columns * getBlockSize(rows),
-        child: Image.network(link, fit: BoxFit.cover),
+        height: MediaQuery.of(context).size.height,
+        color: Colors.black,
+        child: Align(
+          alignment: Alignment.center,
+          child: Text(
+            "No grid backgroud data",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
       );
     }
   }
@@ -1324,7 +1689,9 @@ class _GridUIViewState extends State<GridUIView> {
     blockSize = getBlockSize(this.rows);
 
     return Container(
-      height: this.columns * blockSize,
+      height: this.columns == 0
+          ? MediaQuery.of(context).size.height
+          : this.columns * blockSize,
       child: Stack(
         children: [
           _buildGridBackground(gridCustomBackgroudData),

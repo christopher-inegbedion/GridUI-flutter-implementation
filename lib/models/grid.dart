@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
@@ -11,6 +13,7 @@ import 'package:grid_ui_implementation/models/block_content/text_combined_block_
 import 'package:grid_ui_implementation/models/block_content/color_combined_block_content.dart';
 
 import 'block_content/image_combined_block_content.dart';
+import 'block_content/task_combined_block_content.dart';
 import 'grid_custom_background.dart';
 
 class Grid {
@@ -19,12 +22,15 @@ class Grid {
   int gridColumns;
   int gridRows;
   List<CombinedGroup> combinedGroups;
-  String grid_json;
+  String gridJson;
   CustomGridBackground gridCustomBackground;
+  GridUIView _gridUIView;
 
   bool editMode = false;
 
-  Grid._();
+  Grid._() {
+    _gridUIView = GridUIView.empty();
+  }
 
   static Grid getInstance() {
     if (instance == null) instance = Grid._();
@@ -32,10 +38,15 @@ class Grid {
     return instance;
   }
 
+  void setGridUI(GridUIView view) {
+    instance._gridUIView = view;
+  }
+
   ///Load the grid's data from JSON file
   Future<Grid> loadJSON(String path,
       {bool fromNetwork = false, String grid}) async {
     Map<String, dynamic> gridJSON;
+    instance.combinedGroups = [];
     if (fromNetwork) {
       gridJSON = jsonDecode(grid);
     } else {
@@ -43,23 +54,20 @@ class Grid {
     }
 
     ///Grid in json format
-    this.grid_json = json.encode(gridJSON);
+    instance.gridJson = json.encode(gridJSON);
 
     ///Number of columns in the grid
-    this.gridColumns = gridJSON["grid_columns"];
+    instance.gridColumns = gridJSON["grid_columns"];
 
     ///Number or rows in the grid
-    this.gridRows = gridJSON["grid_rows"];
+    getInstance().gridRows = gridJSON["grid_rows"];
 
     ///Grid's custom background
-    this.gridCustomBackground = CustomGridBackground(
+    instance.gridCustomBackground = CustomGridBackground(
       gridJSON["custom_background"]["is_link"],
       gridJSON["custom_background"]["is_color"],
       gridJSON["custom_background"]["link_or_color"],
     );
-
-    ///All combined groups in the grid
-    this.combinedGroups = [];
 
     ///Create each combined group object and asign each to [combinedGroups]
     for (Map<String, dynamic> combinedGroupFromJSON
@@ -78,6 +86,12 @@ class Grid {
           content = TextContent(
             combinedBlocks["block"]["content"]["value"]["value"],
             combinedBlocks["block"]["content"]["value"]["position"],
+            combinedBlocks["block"]["content"]["value"]["x_pos"] == null
+                ? 0
+                : combinedBlocks["block"]["content"]["value"]["x_pos"],
+            combinedBlocks["block"]["content"]["value"]["y_pos"] == null
+                ? 0
+                : combinedBlocks["block"]["content"]["value"]["y_pos"],
             combinedBlocks["block"]["content"]["value"]["font_size"],
             combinedBlocks["block"]["content"]["value"]["block_color"],
             combinedBlocks["block"]["content"]["value"]["block_image"],
@@ -90,6 +104,14 @@ class Grid {
         } else if (blockContentType == "image") {
           content =
               ImageContent(combinedBlocks["block"]["content"]["value"]["link"]);
+        } else if (blockContentType == "task") {
+          print(combinedBlocks["block"]["content"]["value"]);
+
+          content = TaskContent(
+              combinedBlocks["block"]["content"]["value"]["task_id"],
+              combinedBlocks["block"]["content"]["value"]["task_image"]);
+        } else {
+          throw Exception("Content type: $blockContentType not inplemented");
         }
 
         BlockContent blockContent = new BlockContent(blockContentType, content);
@@ -123,26 +145,27 @@ class Grid {
       combinedGroups.add(combinedGroup);
     }
 
-    print(getInstance());
+    instance.combinedGroups = combinedGroups;
 
     return getInstance();
   }
 
-  Future<GridUIView> initGridView(path) async {
-    Grid grid = await loadJSON(path);
-    this.grid_json = grid.grid_json;
-    this.gridColumns = grid.gridColumns;
-    this.gridRows = grid.gridRows;
-    this.combinedGroups = grid.combinedGroups;
+  void initGridView(path) {
+    loadJSON(path).then((value) {
+      print(gridRows);
+      buildGridView();
+    });
+    print(gridRows);
 
-    print(grid.grid_json);
-    print(grid.gridColumns);
-    print(grid.gridRows);
-    print(grid.gridCustomBackground);
-    print(grid.combinedGroups);
+    // _gridUIView.changeState();
+  }
 
-    return GridUIView(grid.grid_json, grid.gridColumns, grid.gridRows,
-        grid.gridCustomBackground, grid.combinedGroups);
+  Widget buildViewLayout() {
+    return _gridUIView;
+  }
+
+  get getGridUIView {
+    return _gridUIView;
   }
 
   CombinedGroupType convertFromStringToCombinedGroupType(String type) {
@@ -164,7 +187,7 @@ class Grid {
 
   Map<String, dynamic> toJSON(Grid grid) {
     return {
-      "grid_json": grid_json,
+      "grid_json": gridJson,
       "gridColumns": gridColumns,
       "gridRows": gridRows,
       "combinedGroups": combinedGroups
@@ -233,47 +256,25 @@ class Grid {
     return columnsAboveCombinedBlock;
   }
 
-  int getBlockStartColumn(int blockIndex, int combinedGroupIndex) {
-    int columnsAboveCombinedBlock =
-        getNumberofColumnsAboveCombinedBlock(blockIndex, combinedGroupIndex);
-    Block block = getSpecificCombinedBlockInGroup(
-            blockIndex, getSpecificCombinedGroup(combinedGroupIndex))
-        .block;
-
-    return columnsAboveCombinedBlock;
+  void setData(String gridJson, int columns, int rows, List combinedGroups,
+      CustomGridBackground customGridBackground) {
+    instance.gridJson = gridJson;
+    instance.gridColumns = columns;
+    instance.gridRows = rows;
+    instance.combinedGroups = combinedGroups;
+    instance.gridCustomBackground = customGridBackground;
   }
 
-  int getBlockStartRow(int blockIndex, int combinedGroupIndex) {
-    int rowsBeforeCombinedBlock =
-        getNumberOfRowsBeforeCombinedBlock(blockIndex, combinedGroupIndex);
-    Block block = getSpecificCombinedBlockInGroup(
-            blockIndex, getSpecificCombinedGroup(combinedGroupIndex))
-        .block;
-
-    return rowsBeforeCombinedBlock;
+  void buildGridView() {
+    _gridUIView.changeCols(gridColumns);
+    _gridUIView.changeRows(gridRows);
+    _gridUIView.changeGrid(combinedGroups);
+    _gridUIView.changeGridJSON(gridJson);
+    _gridUIView.changeCustomBackground(gridCustomBackground);
   }
 
-  int getTargetColumn(int combinedGroupSection, int columnsAboveCombinedGroup,
-      int blockColumn, int combinedGroupHeight, Block block, int offset) {
-    List possibleColumns = [];
-    for (int i = 0; i < combinedGroupHeight; i++) {
-      possibleColumns
-          .add((columnsAboveCombinedGroup - combinedGroupHeight) + i);
-    }
-
-    int targetColumn = possibleColumns[(blockColumn + offset) - 1];
-    return targetColumn;
-  }
-
-  int getTargetRow(
-      int rowsRightOfBlock, int blockRow, int offset, int combinedGroupWidth,
-      {int difference = 0}) {
-    List possibleRows = [];
-    for (int i = 0; i < combinedGroupWidth; i++) {
-      possibleRows.add(i);
-    }
-
-    int targetRow = possibleRows[((blockRow + offset) - difference) - 1];
-    return targetRow;
+  void toggleEditMode() {
+    instance.editMode = !instance.editMode;
+    _gridUIView.changeEditMode(instance.editMode);
   }
 }
