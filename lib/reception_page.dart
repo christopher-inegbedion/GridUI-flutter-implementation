@@ -12,7 +12,7 @@ class ReceptionPage extends StatefulWidget {
 }
 
 class _ReceptionPageState extends State<ReceptionPage> {
-  void showLoadGridDialog() {
+  void showLoadGridDialog(bool canEdit) {
     GlobalKey<FormState> loadGridKey = GlobalKey();
     TextEditingController gridLoadNameController = TextEditingController();
     showDialog<void>(
@@ -64,7 +64,7 @@ class _ReceptionPageState extends State<ReceptionPage> {
                         context,
                         MaterialPageRoute(
                             builder: (context) =>
-                                GridPage(gridLoadNameController.text)),
+                                GridPage(gridLoadNameController.text, canEdit)),
                       );
                     }
                   } else {
@@ -101,7 +101,7 @@ class _ReceptionPageState extends State<ReceptionPage> {
                       controller: gridLoadNameController,
                       decoration: InputDecoration(labelText: 'Grid name'),
                       validator: (value) {
-                        if (value.isEmpty) {
+                        if (value == null || value.isEmpty) {
                           return 'Grid name required';
                         }
                         return null;
@@ -219,7 +219,7 @@ class _ReceptionPageState extends State<ReceptionPage> {
               margin: EdgeInsets.only(top: 20),
               child: InkWell(
                 onTap: () {
-                  showLoadGridDialog();
+                  showLoadGridDialog(false);
                 },
                 child: Container(
                     padding:
@@ -244,6 +244,22 @@ class _ReceptionPageState extends State<ReceptionPage> {
                         BoxDecoration(border: Border.all(color: Colors.black)),
                     child: Text(
                       "CREATE GRID",
+                    )),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(top: 20),
+              child: InkWell(
+                onTap: () {
+                  showLoadGridDialog(true);
+                },
+                child: Container(
+                    padding:
+                        EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
+                    decoration:
+                        BoxDecoration(border: Border.all(color: Colors.black)),
+                    child: Text(
+                      "EDIT GRID",
                     )),
               ),
             ),
