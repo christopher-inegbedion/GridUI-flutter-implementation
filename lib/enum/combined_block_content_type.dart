@@ -2,5 +2,6 @@ enum ContentType {
   text,
   color,
   video,
-  image
+  image,
+  image_carousel
 }
