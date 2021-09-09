@@ -6,6 +6,7 @@ import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
+import 'package:grid_ui_implementation/models/block_content/image_carousel_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
 import 'package:grid_ui_implementation/models/combined_group.dart';
@@ -60,7 +61,7 @@ class Grid {
     instance.gridColumns = gridJSON["grid_columns"];
 
     ///Number or rows in the grid
-    getInstance().gridRows = gridJSON["grid_rows"];
+    instance.gridRows = gridJSON["grid_rows"];
 
     ///Grid's custom background
     instance.gridCustomBackground = CustomGridBackground(
@@ -81,7 +82,6 @@ class Grid {
             combinedBlocks["block"]["content"]["content_type"];
 
         dynamic content;
-        //TODO: Only text content is supported. Need to add more.
         if (blockContentType == "text") {
           content = TextContent(
             combinedBlocks["block"]["content"]["value"]["value"],
@@ -97,6 +97,10 @@ class Grid {
             combinedBlocks["block"]["content"]["value"]["block_color"],
             combinedBlocks["block"]["content"]["value"]["block_image"],
             combinedBlocks["block"]["content"]["value"]["color"],
+            combinedBlocks["block"]["content"]["value"]["underline"],
+            combinedBlocks["block"]["content"]["value"]["line_through"],
+            combinedBlocks["block"]["content"]["value"]["bold"],
+            combinedBlocks["block"]["content"]["value"]["italic"],
           );
         } else if (blockContentType == "color") {
           content = ColorContent(
@@ -110,6 +114,9 @@ class Grid {
           content = TaskContent(
               combinedBlocks["block"]["content"]["value"]["task_id"],
               combinedBlocks["block"]["content"]["value"]["task_image"]);
+        } else if (blockContentType == "image_carousel") {
+          content = ImageCarouselContent(
+              combinedBlocks["block"]["content"]["value"]["images"]);
         } else {
           throw Exception("Content type: $blockContentType not inplemented");
         }

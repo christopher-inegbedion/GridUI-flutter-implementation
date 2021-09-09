@@ -8,9 +8,14 @@ class TextContent {
   String blockImage;
   String color;
   String font;
+  bool underline;
+  bool lineThrough;
+  bool bold;
+  bool italic;
 
   TextContent(this.value, this.position, this.x_pos, this.y_pos, this.font,
-      this.fontSize, this.blockColor, this.blockImage, this.color);
+      this.fontSize, this.blockColor, this.blockImage, this.color, this.underline,
+      this.lineThrough, this.bold, this.italic);
 
   Map<String, dynamic> toJSON() {
     return {
@@ -23,6 +28,10 @@ class TextContent {
       "block_color": blockColor,
       "block_image": blockImage,
       "color": color,
+      "underline": underline,
+      "line_through": lineThrough,
+      "bold": bold,
+      "italic": italic
     };
   }
 }

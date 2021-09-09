@@ -1,4 +1,5 @@
 import 'package:constraint_view/main.dart';
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grid_ui_implementation/custom_views/grid_view.dart';
@@ -8,16 +9,18 @@ import 'network_config.dart';
 
 class GridPage extends StatefulWidget {
   String path;
-  int numOfCols;
-  int numOfRows;
+  int numOfCols = 0;
+  int numOfRows = 0;
+  bool canEdit = false;
   _GridPageState state;
 
-  GridPage(this.path) {
-    state = _GridPageState(path);
+  GridPage(this.path, this.canEdit) {
+    state = _GridPageState(path, canEdit);
   }
 
   GridPage.createNewGridAndSave(this.path, this.numOfCols, this.numOfRows) {
-    state = _GridPageState.createNewGridAndSave(path, numOfCols, numOfRows);
+    state = _GridPageState.createNewGridAndSave(
+        path, true, numOfCols, numOfRows);
   }
 
   @override
@@ -32,11 +35,12 @@ class _GridPageState extends State<GridPage> {
   String path;
   int initialNumOfCols;
   int initialNumOfRows;
+  bool canEdit = false;
 
-  _GridPageState(this.path);
+  _GridPageState(this.path, this.canEdit);
 
   _GridPageState.createNewGridAndSave(
-      this.path, this.initialNumOfCols, this.initialNumOfRows) {
+      this.path, this.canEdit, this.initialNumOfCols, this.initialNumOfRows) {
     newGridCreated = true;
   }
 
@@ -364,19 +368,37 @@ class _GridPageState extends State<GridPage> {
                     )
                   ],
                 ),
-                Form(
-                    key: newGridBackgroundFormKey,
-                    child: TextFormField(
-                      controller: imageOrGifController,
-                      decoration: InputDecoration(
-                          labelText: image_or_color ? 'Image/GIF' : 'Color'),
-                      validator: (value) {
-                        if (value.isEmpty) {
-                          return 'Grid row required';
-                        }
-                        return null;
-                      },
-                    )),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Form(
+                          key: newGridBackgroundFormKey,
+                          child: TextFormField(
+                            controller: imageOrGifController,
+                            decoration: InputDecoration(
+                                labelText:
+                                    image_or_color ? 'Image/GIF' : 'Color'),
+                            validator: (value) {
+                              if (value.isEmpty) {
+                                return 'Input required';
+                              }
+                              return null;
+                            },
+                          )),
+                    ),
+                    Visibility(
+                        visible: !image_or_color,
+                        child: TextButton(
+                            onPressed: () {
+                              showColorPickerDialog().then((value) {
+                                setState(() {
+                                  imageOrGifController.text = "#${value.hex}";
+                                });
+                              });
+                            },
+                            child: Text("Pick color")))
+                  ],
+                ),
               ],
             )),
             actions: <Widget>[
@@ -396,6 +418,47 @@ class _GridPageState extends State<GridPage> {
         });
       },
     );
+  }
+
+  Future<Color> showColorPickerDialog() {
+    Color selectedColor = Colors.blue; // Material blue.
+
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            // title: const Text('Pick a color!'),
+            content: SingleChildScrollView(
+              child: ColorPicker(
+                copyPasteBehavior: ColorPickerCopyPasteBehavior(
+                    copyFormat: ColorPickerCopyFormat.hexRRGGBB),
+                showRecentColors: true,
+                showColorCode: true,
+                pickersEnabled: {
+                  ColorPickerType.wheel: true,
+                  ColorPickerType.accent: false,
+                  ColorPickerType.primary: false
+                },
+                // Use the screenPickerColor as start color.
+                color: selectedColor,
+                // Update the screenPickerColor using the callback.
+                onColorChanged: (Color color) =>
+                    setState(() => selectedColor = color),
+                width: 44,
+                height: 44,
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Got it'),
+                onPressed: () {
+                  // setState(() => currentColor = pickerColor);
+                  Navigator.of(context).pop(selectedColor);
+                },
+              ),
+            ],
+          );
+        });
   }
 
   Future<void> saveGridDialog(BuildContext context) async {
@@ -972,13 +1035,13 @@ class _GridPageState extends State<GridPage> {
               ),
             ),
             TextButton(
-              child: Text(newGridCreated
+              child: Text(canEdit
                   ? areBtnsHidden
                       ? "Hide buttons"
                       : "Show butttons"
                   : "Grid cannot be edited"),
               onPressed: () {
-                if (newGridCreated) {
+                if (canEdit) {
                   setState(() {
                     areBtnsHidden = !areBtnsHidden;
                   });

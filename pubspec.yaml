@@ -36,7 +36,9 @@ dependencies:
       url: https://github.com/christopher-inegbedion/ConstraintViewFlutter.git
       ref: dev
   google_fonts:
-
+  flex_color_picker: ^2.1.2
+  carousel_slider: ^4.0.0
+  
 dev_dependencies:
   uuid:
   flutter_test:

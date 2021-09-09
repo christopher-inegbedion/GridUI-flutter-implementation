@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:constraint_view/custom_views/task_view.dart';
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
 import 'package:grid_ui_implementation/models/block_content/color_combined_block_content.dart';
+import 'package:grid_ui_implementation/models/block_content/image_carousel_block_content.dart';
 import 'package:grid_ui_implementation/models/block_content/image_combined_block_content.dart';
 import 'package:grid_ui_implementation/models/block_content/task_combined_block_content.dart';
 import 'package:grid_ui_implementation/models/comb_block_drag_info.dart';
@@ -103,6 +106,8 @@ class _GridUIViewState extends State<GridUIView> {
   final _enterTaskIDController = TextEditingController();
   final _enterTaskImageController = TextEditingController();
 
+  final _imageCarouselKey = GlobalKey<FormState>();
+
   int selectedBlockContentType = -1;
 
   final blockHeightController = TextEditingController();
@@ -133,17 +138,29 @@ class _GridUIViewState extends State<GridUIView> {
     List<String> allFonts = GoogleFonts.asMap().keys.toList();
     String selectedFont = allFonts[Random().nextInt(allFonts.length)];
 
-    int _yPositionData = 1;
-    int _xPositionData = 1;
+    int _yPositionData = 0;
+    int _xPositionData = 0;
+
+    enterBlockFontSizeController.text = "20";
+
+    List<TextEditingController> imageCarouselInputFields = [];
 
     Map<String, dynamic> textContent = {
       "font_family": "",
       "position": 5,
       "font": selectedFont,
+      "font_size": enterBlockFontSizeController.text,
       "x_pos": _xPositionData,
-      "y_pos": _yPositionData
+      "y_pos": _yPositionData,
+      "underline": false,
+      "line_through": false,
+      "bold": false,
+      "italic": false
     };
+
     Map<String, dynamic> taskContent = {"image": 5};
+
+    Map<String, dynamic> imageCarouselContent = {"images": []};
     return showDialog<void>(
       context: context,
       barrierDismissible: true, // user must tap button!
@@ -264,6 +281,14 @@ class _GridUIViewState extends State<GridUIView> {
                                     selectedBlockContentType = 4;
                                   });
                                 },
+                              ),
+                              TextButton(
+                                child: Text("Image carousel"),
+                                onPressed: () {
+                                  setState(() {
+                                    selectedBlockContentType = 5;
+                                  });
+                                },
                               )
                             ],
                           ),
@@ -278,7 +303,8 @@ class _GridUIViewState extends State<GridUIView> {
                               Container(
                                   decoration: BoxDecoration(
                                       color: HexColor(blockColorPreview),
-                                      border: Border.all(width: 1)),
+                                      border: Border.all(
+                                          width: 1, color: Colors.grey)),
                                   height: 100,
                                   child: Align(
                                       alignment: textPreviewAlignment,
@@ -305,6 +331,12 @@ class _GridUIViewState extends State<GridUIView> {
                                         child: Text(textPreview,
                                             style: GoogleFonts.getFont(
                                                 selectedFont,
+                                                fontWeight: textContent["bold"]
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                                fontStyle: textContent["italic"]
+                                                    ? FontStyle.italic
+                                                    : FontStyle.normal,
                                                 color:
                                                     HexColor(textColorPreview),
                                                 fontSize: textSizePreview)),
@@ -349,47 +381,144 @@ class _GridUIViewState extends State<GridUIView> {
                                         ),
 
                                         //Text font
-                                        Container(
-                                          margin: EdgeInsets.only(
-                                              top: 30, bottom: 10),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                child: Text(
-                                                  "Text font",
-                                                  style:
-                                                      TextStyle(fontSize: 13),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Container(
+                                                margin: EdgeInsets.only(
+                                                    top: 30, bottom: 10),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Container(
+                                                      child: Text(
+                                                        "Text font",
+                                                        style: TextStyle(
+                                                            fontSize: 13),
+                                                      ),
+                                                    ),
+                                                    SingleChildScrollView(
+                                                      scrollDirection:
+                                                          Axis.horizontal,
+                                                      child: DropdownButton(
+                                                        value: selectedFont,
+                                                        onChanged:
+                                                            (String newFont) {
+                                                          contentType = "text";
+                                                          textContent["font"] =
+                                                              newFont;
+                                                          setState(() {
+                                                            selectedFont =
+                                                                newFont;
+                                                          });
+                                                        },
+                                                        items: allFonts.map<
+                                                            DropdownMenuItem<
+                                                                String>>((String
+                                                            value) {
+                                                          return DropdownMenuItem<
+                                                              String>(
+                                                            value: value,
+                                                            child: Text(
+                                                              value,
+                                                            ),
+                                                          );
+                                                        }).toList(),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                              SingleChildScrollView(
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                child: DropdownButton(
-                                                  value: selectedFont,
-                                                  onChanged: (String newFont) {
-                                                    contentType = "text";
-                                                    textContent["font"] =
-                                                        newFont;
+                                            ),
+                                            Container(
+                                              child: Row(
+                                                children: [
+                                                  IconButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          textContent["bold"] =
+                                                              !textContent[
+                                                                  "bold"];
+                                                        });
+                                                      },
+                                                      icon: Icon(
+                                                        Icons.format_bold,
+                                                        color:
+                                                            textContent["bold"]
+                                                                ? Colors.green
+                                                                : Colors.black,
+                                                      )),
+                                                  IconButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          textContent[
+                                                                  "italic"] =
+                                                              !textContent[
+                                                                  "italic"];
+                                                        });
+                                                      },
+                                                      icon: Icon(
+                                                        Icons.format_italic,
+                                                        color: textContent[
+                                                                "italic"]
+                                                            ? Colors.green
+                                                            : Colors.black,
+                                                      )),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        Container(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
                                                     setState(() {
-                                                      selectedFont = newFont;
+                                                      textContent["underline"] =
+                                                          !textContent[
+                                                              "underline"];
+                                                      if (textContent[
+                                                          "line_through"]) {
+                                                        textContent[
+                                                                "line_through"] =
+                                                            false;
+                                                      }
                                                     });
                                                   },
-                                                  items: allFonts.map<
-                                                          DropdownMenuItem<
-                                                              String>>(
-                                                      (String value) {
-                                                    return DropdownMenuItem<
-                                                        String>(
-                                                      value: value,
-                                                      child: Text(
-                                                        value,
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                                ),
-                                              ),
+                                                  icon: Icon(
+                                                    Icons.format_underline,
+                                                    color:
+                                                        textContent["underline"]
+                                                            ? Colors.green
+                                                            : Colors.black,
+                                                  )),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      textContent[
+                                                              "line_through"] =
+                                                          !textContent[
+                                                              "line_through"];
+                                                      if (textContent[
+                                                          "underline"]) {
+                                                        textContent[
+                                                                "underline"] =
+                                                            false;
+                                                      }
+                                                    });
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.strikethrough_s,
+                                                    color: textContent[
+                                                            "line_through"]
+                                                        ? Colors.green
+                                                        : Colors.black,
+                                                  )),
                                             ],
                                           ),
                                         ),
@@ -413,7 +542,7 @@ class _GridUIViewState extends State<GridUIView> {
                                                     enterBlockFontSizeController,
                                                 decoration: InputDecoration(
                                                     labelText:
-                                                        'Combined block font size'),
+                                                        'Text font size'),
                                                 validator: (value) {
                                                   if (value.isEmpty) {
                                                     return 'Font size required';
@@ -470,6 +599,7 @@ class _GridUIViewState extends State<GridUIView> {
                                           ],
                                         ),
 
+                                        //Text X position
                                         Container(
                                           margin: EdgeInsets.only(top: 20),
                                           child: Row(
@@ -515,6 +645,7 @@ class _GridUIViewState extends State<GridUIView> {
                                           ),
                                         ),
 
+                                        //Text Y position
                                         Container(
                                           margin: EdgeInsets.only(top: 20),
                                           child: Row(
@@ -560,55 +691,102 @@ class _GridUIViewState extends State<GridUIView> {
                                           ),
                                         ),
 
-                                        //Block text color
-                                        TextFormField(
-                                          onChanged: (color) {
-                                            setState(() {
-                                              if (color == "") {
-                                                textColorPreview = "#000000";
-                                              } else {
-                                                if (isHexColor(color)) {
-                                                  textColorPreview = color;
-                                                } else {
-                                                  textColorPreview = "#000000";
-                                                }
-                                              }
-                                            });
-                                          },
-                                          controller:
-                                              enterBlockTextColorController,
-                                          decoration: InputDecoration(
-                                              labelText:
-                                                  'Combined block text color'),
-                                          validator: (value) {
-                                            if (value.isEmpty) {
-                                              return 'Text color required';
-                                            }
-                                            contentType = "text";
-                                            textContent["color"] = value;
-                                            return null;
-                                          },
+                                        //Text color
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextFormField(
+                                                onChanged: (color) {
+                                                  setState(() {
+                                                    if (color == "") {
+                                                      textColorPreview =
+                                                          "#000000";
+                                                    } else {
+                                                      if (isHexColor(color)) {
+                                                        textColorPreview =
+                                                            color;
+                                                      } else {
+                                                        textColorPreview =
+                                                            "#000000";
+                                                      }
+                                                    }
+                                                  });
+                                                },
+                                                controller:
+                                                    enterBlockTextColorController,
+                                                decoration: InputDecoration(
+                                                    labelText: 'Text color'),
+                                                validator: (value) {
+                                                  if (value.isEmpty) {
+                                                    return 'Text color required';
+                                                  }
+                                                  contentType = "text";
+                                                  textContent["color"] = value;
+                                                  return null;
+                                                },
+                                              ),
+                                            ),
+                                            TextButton(
+                                                onPressed: () {
+                                                  showColorPickerDialog()
+                                                      .then((value) {
+                                                    setState(() {
+                                                      enterBlockTextColorController
+                                                              .text =
+                                                          "#${value.hex}";
+                                                    });
+                                                    contentType = "text";
+                                                    textContent["color"] =
+                                                        "#${value.hex}";
+                                                  });
+                                                },
+                                                child: Text("Pick color"))
+                                          ],
                                         ),
 
                                         //Combined block color
-                                        TextFormField(
-                                          onChanged: (color) {
-                                            if (isHexColor(color)) {
-                                              setState(() {
-                                                blockColorPreview = color;
-                                              });
-                                            }
-                                          },
-                                          controller: enterBlockColorController,
-                                          decoration: InputDecoration(
-                                              labelText:
-                                                  'Combined block color'),
-                                          validator: (value) {
-                                            contentType = "text";
-                                            textContent["block_color"] =
-                                                value.isEmpty ? "" : value;
-                                            return null;
-                                          },
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextFormField(
+                                                onChanged: (color) {
+                                                  if (isHexColor(color)) {
+                                                    setState(() {
+                                                      blockColorPreview = color;
+                                                    });
+                                                  }
+                                                },
+                                                controller:
+                                                    enterBlockColorController,
+                                                decoration: InputDecoration(
+                                                    labelText:
+                                                        'Combined block color'),
+                                                validator: (value) {
+                                                  contentType = "text";
+                                                  textContent["block_color"] =
+                                                      value.isEmpty
+                                                          ? ""
+                                                          : value;
+                                                  return null;
+                                                },
+                                              ),
+                                            ),
+                                            TextButton(
+                                                onPressed: () {
+                                                  showColorPickerDialog()
+                                                      .then((value) {
+                                                    setState(() {
+                                                      enterBlockColorController
+                                                              .text =
+                                                          "#${value.hex}";
+                                                    });
+                                                    contentType = "text";
+                                                    textContent["block_color"] =
+                                                        "#${value.hex}";
+                                                  });
+                                                },
+                                                child: Text("Pick color"))
+                                          ],
                                         ),
 
                                         //Block image link
@@ -761,24 +939,42 @@ class _GridUIViewState extends State<GridUIView> {
                         //Color
                         Visibility(
                           visible: selectedBlockContentType == 3,
-                          child: Container(
-                            alignment: Alignment.centerLeft,
-                            child: Form(
-                              key: _enterColorGlobalKey,
-                              child: TextFormField(
-                                controller: enterBlockColorController,
-                                decoration: InputDecoration(
-                                    labelText: 'Combined block color'),
-                                validator: (value) {
-                                  if (value.isEmpty) {
-                                    return 'Hex color required';
-                                  }
-                                  contentType = "color";
-                                  content = value;
-                                  return null;
-                                },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: Form(
+                                    key: _enterColorGlobalKey,
+                                    child: TextFormField(
+                                      controller: enterBlockColorController,
+                                      decoration:
+                                          InputDecoration(labelText: 'Color'),
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Hex color required';
+                                        }
+                                        contentType = "color";
+                                        content = value;
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                              TextButton(
+                                  onPressed: () {
+                                    showColorPickerDialog().then((value) {
+                                      setState(() {
+                                        enterBlockColorController.text =
+                                            "#${value.hex}";
+                                      });
+                                      contentType = "color";
+                                      content = "#${value.hex}";
+                                    });
+                                  },
+                                  child: Text("Pick color"))
+                            ],
                           ),
                         ),
 
@@ -817,7 +1013,81 @@ class _GridUIViewState extends State<GridUIView> {
                                   ],
                                 ),
                               ),
-                            ))
+                            )),
+
+                        //Image carousel
+                        Visibility(
+                          visible: selectedBlockContentType == 5,
+                          child: Container(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  margin: EdgeInsets.only(top: 20),
+                                  child: TextButton(
+                                      onPressed: () {
+                                        imageCarouselContent["images"].add("");
+                                        contentType = "image_carousel";
+                                        setState(() {
+                                          imageCarouselInputFields
+                                              .add(TextEditingController());
+                                        });
+                                      },
+                                      child: Text("Add image")),
+                                ),
+                                Form(
+                                    key: _imageCarouselKey,
+                                    child: Container(
+                                      width: double.maxFinite,
+                                      height: 200,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount:
+                                            imageCarouselInputFields.length,
+                                        itemBuilder: (context, i) {
+                                          return Container(
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Expanded(
+                                                  child: TextFormField(
+                                                      onChanged: (val) {
+                                                        imageCarouselContent[
+                                                            "images"][i] = val;
+                                                      },
+                                                      validator: (String val) {
+                                                        if (val == "") {
+                                                          return "Please enter the image link";
+                                                        }
+
+                                                        return null;
+                                                      },
+                                                      controller:
+                                                          imageCarouselInputFields[
+                                                              i],
+                                                      decoration:
+                                                          InputDecoration(
+                                                        hintText: "Image link",
+                                                      )),
+                                                ),
+                                                TextButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        imageCarouselInputFields
+                                                            .removeAt(i);
+                                                      });
+                                                    },
+                                                    child: Text("Remove"))
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ))
+                              ],
+                            ),
+                          ),
+                        )
                       ],
                     )),
                   )
@@ -841,6 +1111,9 @@ class _GridUIViewState extends State<GridUIView> {
                         complete = true;
                       } else if (selectedBlockContentType == 4 &&
                           _enterTaskIDGlobalKey.currentState.validate()) {
+                        complete = true;
+                      } else if (selectedBlockContentType == 5 &&
+                          _imageCarouselKey.currentState.validate()) {
                         complete = true;
                       } else {
                         complete = false;
@@ -866,6 +1139,15 @@ class _GridUIViewState extends State<GridUIView> {
                             blockStartRowController.text,
                             contentType,
                             taskContent);
+                      } else if (contentType == "image_carousel") {
+                        addCombinedBlock(
+                            gridJson,
+                            blockHeightController.text,
+                            blockWidthController.text,
+                            blockStartColumnController.text,
+                            blockStartRowController.text,
+                            contentType,
+                            imageCarouselContent);
                       } else {
                         addCombinedBlock(
                             gridJson,
@@ -965,6 +1247,47 @@ class _GridUIViewState extends State<GridUIView> {
         );
       },
     );
+  }
+
+  Future<Color> showColorPickerDialog() {
+    Color selectedColor = Colors.blue; // Material blue.
+
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            // title: const Text('Pick a color!'),
+            content: SingleChildScrollView(
+              child: ColorPicker(
+                copyPasteBehavior: ColorPickerCopyPasteBehavior(
+                    copyFormat: ColorPickerCopyFormat.hexRRGGBB),
+                showRecentColors: true,
+                showColorCode: true,
+                pickersEnabled: {
+                  ColorPickerType.wheel: true,
+                  ColorPickerType.accent: false,
+                  ColorPickerType.primary: false
+                },
+                // Use the screenPickerColor as start color.
+                color: selectedColor,
+                // Update the screenPickerColor using the callback.
+                onColorChanged: (Color color) =>
+                    setState(() => selectedColor = color),
+                width: 44,
+                height: 44,
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Got it'),
+                onPressed: () {
+                  // setState(() => currentColor = pickerColor);
+                  Navigator.of(context).pop(selectedColor);
+                },
+              ),
+            ],
+          );
+        });
   }
 
   bool getEditState() {
@@ -1244,58 +1567,59 @@ class _GridUIViewState extends State<GridUIView> {
     CombBlockDragInformation dragInformation = CombBlockDragInformation();
     Widget combinedBlock = Stack(
       children: [
-        createCombinedBlockContent(
-            block.content, numberOfColumns.toInt(), numberOfRows.toInt()),
+        GestureDetector(
+          child: createCombinedBlockContent(
+              block.content, numberOfColumns.toInt(), numberOfRows.toInt()),
+        ),
 
         ///Block quadrants
-        ListView.builder(
-            itemCount: numberOfColumns.toInt(),
-            physics: NeverScrollableScrollPhysics(),
-            itemBuilder: (context, colIndex) {
-              return Container(
-                  height: blockSize,
-                  child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: numberOfRows.toInt(),
-                      itemBuilder: (context, rowIndex) {
-                        return GestureDetector(
-                          onTapDown: (details) {
-                            int combinedBlockWidth = numberOfRows.toInt();
-                            int combinedBlockHeight = numberOfColumns.toInt();
+        IgnorePointer(
+          ignoring: !editMode,
+          child: ListView.builder(
+              itemCount: numberOfColumns.toInt(),
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (context, colIndex) {
+                return Container(
+                    height: blockSize,
+                    child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: numberOfRows.toInt(),
+                        itemBuilder: (context, rowIndex) {
+                          return GestureDetector(
+                            behavior: HitTestBehavior.deferToChild,
+                            onTapDown: (details) {
+                              int combinedBlockWidth = numberOfRows.toInt();
+                              int combinedBlockHeight = numberOfColumns.toInt();
 
-                            if (numberOfRows > 1) {
-                              blockQuadrant = colIndex + rowIndex + 1;
-                            } else {
-                              blockQuadrant = colIndex + 1;
-                            }
+                              if (numberOfRows > 1) {
+                                blockQuadrant = colIndex + rowIndex + 1;
+                              } else {
+                                blockQuadrant = colIndex + 1;
+                              }
 
-                            dragInformation.block = block;
-                            dragInformation.blockQuadrantDraggingFrom =
-                                blockQuadrant;
-                            dragInformation.blockQuadrantColumn = colIndex;
-                            dragInformation.blockQuadrantRow = rowIndex;
-                            dragInformation.combinedBlockHeight =
-                                combinedBlockHeight;
-                            dragInformation.combinedBlockWidth =
-                                combinedBlockWidth;
-                            dragInformation.combinedBlockStartColumn = startCol;
-                            dragInformation.combinedBlockStartRow = startRow;
-                          },
-                          child: Container(
-                            width: blockSize,
-                            height: blockSize,
-                            decoration: BoxDecoration(color: null),
-                          ),
-                        );
-                      }));
-            }),
-
-        GestureDetector(
-          onTap: () {
-            processCombinedBlockTap(block.content);
-          },
-        )
+                              dragInformation.block = block;
+                              dragInformation.blockQuadrantDraggingFrom =
+                                  blockQuadrant;
+                              dragInformation.blockQuadrantColumn = colIndex;
+                              dragInformation.blockQuadrantRow = rowIndex;
+                              dragInformation.combinedBlockHeight =
+                                  combinedBlockHeight;
+                              dragInformation.combinedBlockWidth =
+                                  combinedBlockWidth;
+                              dragInformation.combinedBlockStartColumn =
+                                  startCol;
+                              dragInformation.combinedBlockStartRow = startRow;
+                            },
+                            child: Container(
+                              width: blockSize,
+                              height: blockSize,
+                              decoration: BoxDecoration(color: null),
+                            ),
+                          );
+                        }));
+              }),
+        ),
       ],
     );
 
@@ -1361,6 +1685,14 @@ class _GridUIViewState extends State<GridUIView> {
       String font = content.font;
       double fontSize = content.fontSize;
       Alignment textPosition = getTextAlignemtPosition(position);
+      bool underline = content.underline;
+      bool lineThrough = content.lineThrough;
+      bool bold = content.bold;
+      bool italic = content.italic;
+      print(underline);
+      print(lineThrough);
+      print(bold);
+      print(italic);
 
       return Container(
         child: Stack(
@@ -1388,8 +1720,16 @@ class _GridUIViewState extends State<GridUIView> {
                     left: xPos >= 0 ? xPos : 0,
                     right: xPos < 0 ? xPos.abs() : 0),
                 child: Text(text,
-                    style: GoogleFonts.getFont(font,
-                        color: Color(int.parse(color)), fontSize: fontSize)),
+                    style: GoogleFonts.getFont(font == "" ? "Roboto" : font,
+                        color: Color(int.parse(color)),
+                        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+                        fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+                        decoration: underline
+                            ? TextDecoration.underline
+                            : lineThrough
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                        fontSize: fontSize)),
               ),
             )
           ],
@@ -1423,83 +1763,104 @@ class _GridUIViewState extends State<GridUIView> {
       TaskContent content = blockContent.content;
       String id = content.id;
       String image = content.image;
-      print(image);
 
-      return FutureBuilder(
-        future: getCombinedBlockTaskDetails(id),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            Map data = snapshot.data;
-            if (data != null) {
-              return Column(
-                children: [
-                  Expanded(
-                    child: Container(
-                      child: Image(
-                        image: NetworkImage(image),
+      return GestureDetector(
+        onTap: () {
+          processCombinedBlockTap(blockContent.content);
+        },
+        child: FutureBuilder(
+          future: getCombinedBlockTaskDetails(id),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              Map data = snapshot.data;
+              if (data != null) {
+                return Column(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        child: Image(
+                          image: NetworkImage(image),
+                        ),
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Container(
-                              margin: EdgeInsets.only(
-                                  top: 5, bottom: 5, left: 10, right: 10),
-                              alignment: Alignment.centerLeft,
-                              child: Text(data["name"],
-                                  style: TextStyle(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Container(
+                                margin: EdgeInsets.only(
+                                    top: 5, bottom: 5, left: 10, right: 10),
+                                alignment: Alignment.centerLeft,
+                                child: Text(data["name"],
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              Container(
+                                margin: EdgeInsets.only(left: 10, right: 10),
+                                alignment: Alignment.centerLeft,
+                                child: Text(data["desc"],
+                                    style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                            Container(
-                              margin: EdgeInsets.only(left: 10, right: 10),
-                              alignment: Alignment.centerLeft,
-                              child: Text(data["desc"],
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                  )),
-                            ),
-                          ],
+                                      fontSize: 13,
+                                    )),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(right: 10),
-                        child: Text(
-                          data["currency"] == "USD"
-                              ? "\$" + data["price"]
-                              : data["currency"] == "GBP"
-                                  ? "£" + data["price"]
-                                  : data["currency"] == "EUR"
-                                      ? "€" + data["price"]
-                                      : "not implemented" + data["price"],
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      )
-                    ],
-                  )
-                ],
+                        Container(
+                          margin: EdgeInsets.only(right: 10),
+                          child: Text(
+                            data["currency"] == "USD"
+                                ? "\$" + data["price"]
+                                : data["currency"] == "GBP"
+                                    ? "£" + data["price"]
+                                    : data["currency"] == "EUR"
+                                        ? "€" + data["price"]
+                                        : "not implemented" + data["price"],
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                );
+              } else {
+                return Center(
+                  child: Text("Data not found"),
+                );
+              }
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text("An error occured"),
               );
             } else {
               return Center(
-                child: Text("Data not found"),
+                child:
+                    Text("No task data", style: TextStyle(color: Colors.white)),
               );
             }
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text("An error occured"),
-            );
-          } else {
-            return Center(
-              child:
-                  Text("No task data", style: TextStyle(color: Colors.white)),
-            );
-          }
-        },
+          },
+        ),
+      );
+    } else if (blockContent.content_type == "image_carousel") {
+      ImageCarouselContent content = blockContent.content;
+
+      List images = content.images;
+
+      return Container(
+        child: CarouselSlider(
+            options: CarouselOptions(autoPlay: true, height: blockSize * cols),
+            items: images.map((e) {
+              return Builder(builder: (context) {
+                return Image(
+                  fit: BoxFit.cover,
+                  image: NetworkImage(e),
+                );
+              });
+            }).toList()),
       );
     } else {
       return Text("nothing");
