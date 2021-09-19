@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:constraint_view/custom_views/task_view.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,7 +28,12 @@ import 'package:http/http.dart' as http;
 import 'package:grid_ui_implementation/network_config.dart';
 import 'package:drag_select_grid_view/drag_select_grid_view.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:invert_colors/invert_colors.dart';
+import 'package:palette_generator/palette_generator.dart';
 import 'package:string_validator/string_validator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:giphy_get/giphy_get.dart';
 
 class GridUIView extends StatefulWidget {
   int rows;
@@ -90,6 +98,7 @@ class _GridUIViewState extends State<GridUIView> {
   String gridJson;
   double blockSize;
   bool editMode = false;
+  Color taskTextColor = Colors.white;
   GlobalKey<FormState> _createCombinedBlockKey = GlobalKey<FormState>();
   GlobalKey<FormState> _enterTextGlobalKey = GlobalKey<FormState>();
   final enterBlockTextController = TextEditingController();
@@ -122,7 +131,29 @@ class _GridUIViewState extends State<GridUIView> {
     _enterTextGlobalKey = GlobalKey<FormState>();
   }
 
+  // Set default `_initialized` and `_error` state to false
+  bool _initialized = false;
+  bool _error = false;
+
+  // Define an async function to initialize FlutterFire
+  void initializeFlutterFire() async {
+    try {
+      // Wait for Firebase to initialize and set `_initialized` state to true
+      await Firebase.initializeApp();
+      setState(() {
+        _initialized = true;
+      });
+    } catch (e) {
+      // Set `_error` state to true if Firebase initialization fails
+      setState(() {
+        _error = true;
+      });
+    }
+  }
+
   ///Combined block creation dialog
+  String selectedFont = null;
+
   Future<void> createCombinedBlockialog(
       BuildContext context, bool fromDragging) async {
     String contentType = "";
@@ -136,7 +167,6 @@ class _GridUIViewState extends State<GridUIView> {
     String blockColorPreview = "#ffffff";
 
     List<String> allFonts = GoogleFonts.asMap().keys.toList();
-    String selectedFont = allFonts[Random().nextInt(allFonts.length)];
 
     int _yPositionData = 0;
     int _xPositionData = 0;
@@ -144,6 +174,10 @@ class _GridUIViewState extends State<GridUIView> {
     enterBlockFontSizeController.text = "20";
 
     List<TextEditingController> imageCarouselInputFields = [];
+
+    if (selectedFont == null) {
+      selectedFont = allFonts[Random().nextInt(allFonts.length)];
+    }
 
     Map<String, dynamic> textContent = {
       "font_family": "",
@@ -251,7 +285,13 @@ class _GridUIViewState extends State<GridUIView> {
                             alignment: WrapAlignment.spaceAround,
                             children: [
                               TextButton(
-                                child: Text("Text"),
+                                child: Text(
+                                  "Text",
+                                  style: TextStyle(
+                                      color: selectedBlockContentType == 1
+                                          ? Colors.green
+                                          : Colors.blue),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     selectedBlockContentType = 1;
@@ -259,7 +299,13 @@ class _GridUIViewState extends State<GridUIView> {
                                 },
                               ),
                               TextButton(
-                                child: Text("Image/GIF"),
+                                child: Text(
+                                  "Image/GIF",
+                                  style: TextStyle(
+                                      color: selectedBlockContentType == 2
+                                          ? Colors.green
+                                          : Colors.blue),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     selectedBlockContentType = 2;
@@ -267,7 +313,13 @@ class _GridUIViewState extends State<GridUIView> {
                                 },
                               ),
                               TextButton(
-                                child: Text("Color"),
+                                child: Text(
+                                  "Color",
+                                  style: TextStyle(
+                                      color: selectedBlockContentType == 3
+                                          ? Colors.green
+                                          : Colors.blue),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     selectedBlockContentType = 3;
@@ -275,7 +327,13 @@ class _GridUIViewState extends State<GridUIView> {
                                 },
                               ),
                               TextButton(
-                                child: Text("Task"),
+                                child: Text(
+                                  "Task",
+                                  style: TextStyle(
+                                      color: selectedBlockContentType == 4
+                                          ? Colors.green
+                                          : Colors.blue),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     selectedBlockContentType = 4;
@@ -283,7 +341,13 @@ class _GridUIViewState extends State<GridUIView> {
                                 },
                               ),
                               TextButton(
-                                child: Text("Image carousel"),
+                                child: Text(
+                                  "Image carousel",
+                                  style: TextStyle(
+                                      color: selectedBlockContentType == 5
+                                          ? Colors.green
+                                          : Colors.blue),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     selectedBlockContentType = 5;
@@ -304,7 +368,7 @@ class _GridUIViewState extends State<GridUIView> {
                                   decoration: BoxDecoration(
                                       color: HexColor(blockColorPreview),
                                       border: Border.all(
-                                          width: 1, color: Colors.grey)),
+                                          width: 1, color: Colors.grey[200])),
                                   height: 100,
                                   child: Align(
                                       alignment: textPreviewAlignment,
@@ -337,6 +401,14 @@ class _GridUIViewState extends State<GridUIView> {
                                                 fontStyle: textContent["italic"]
                                                     ? FontStyle.italic
                                                     : FontStyle.normal,
+                                                decoration: textContent[
+                                                        "underline"]
+                                                    ? TextDecoration.underline
+                                                    : textContent[
+                                                            "line_through"]
+                                                        ? TextDecoration
+                                                            .lineThrough
+                                                        : TextDecoration.none,
                                                 color:
                                                     HexColor(textColorPreview),
                                                 fontSize: textSizePreview)),
@@ -471,56 +543,65 @@ class _GridUIViewState extends State<GridUIView> {
                                           ],
                                         ),
 
-                                        Container(
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      textContent["underline"] =
-                                                          !textContent[
-                                                              "underline"];
-                                                      if (textContent[
-                                                          "line_through"]) {
-                                                        textContent[
-                                                                "line_through"] =
-                                                            false;
-                                                      }
-                                                    });
-                                                  },
-                                                  icon: Icon(
-                                                    Icons.format_underline,
-                                                    color:
-                                                        textContent["underline"]
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                                child: Text("Text decoration",
+                                                    style: TextStyle(
+                                                        fontSize: 15))),
+                                            Container(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  IconButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          textContent[
+                                                                  "underline"] =
+                                                              !textContent[
+                                                                  "underline"];
+                                                          if (textContent[
+                                                              "line_through"]) {
+                                                            textContent[
+                                                                    "line_through"] =
+                                                                false;
+                                                          }
+                                                        });
+                                                      },
+                                                      icon: Icon(
+                                                        Icons.format_underline,
+                                                        color: textContent[
+                                                                "underline"]
                                                             ? Colors.green
                                                             : Colors.black,
-                                                  )),
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      textContent[
-                                                              "line_through"] =
-                                                          !textContent[
-                                                              "line_through"];
-                                                      if (textContent[
-                                                          "underline"]) {
-                                                        textContent[
-                                                                "underline"] =
-                                                            false;
-                                                      }
-                                                    });
-                                                  },
-                                                  icon: Icon(
-                                                    Icons.strikethrough_s,
-                                                    color: textContent[
-                                                            "line_through"]
-                                                        ? Colors.green
-                                                        : Colors.black,
-                                                  )),
-                                            ],
-                                          ),
+                                                      )),
+                                                  IconButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          textContent[
+                                                                  "line_through"] =
+                                                              !textContent[
+                                                                  "line_through"];
+                                                          if (textContent[
+                                                              "underline"]) {
+                                                            textContent[
+                                                                    "underline"] =
+                                                                false;
+                                                          }
+                                                        });
+                                                      },
+                                                      icon: Icon(
+                                                        Icons.strikethrough_s,
+                                                        color: textContent[
+                                                                "line_through"]
+                                                            ? Colors.green
+                                                            : Colors.black,
+                                                      )),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ),
 
                                         //Block text font size
@@ -599,7 +680,7 @@ class _GridUIViewState extends State<GridUIView> {
                                           ],
                                         ),
 
-                                        //Text X position
+                                        //Text Y position
                                         Container(
                                           margin: EdgeInsets.only(top: 20),
                                           child: Row(
@@ -645,7 +726,7 @@ class _GridUIViewState extends State<GridUIView> {
                                           ),
                                         ),
 
-                                        //Text Y position
+                                        //Text X position
                                         Container(
                                           margin: EdgeInsets.only(top: 20),
                                           child: Row(
@@ -759,8 +840,7 @@ class _GridUIViewState extends State<GridUIView> {
                                                 controller:
                                                     enterBlockColorController,
                                                 decoration: InputDecoration(
-                                                    labelText:
-                                                        'Combined block color'),
+                                                    labelText: 'Block color'),
                                                 validator: (value) {
                                                   contentType = "text";
                                                   textContent["block_color"] =
@@ -805,104 +885,132 @@ class _GridUIViewState extends State<GridUIView> {
 
                                         //Text position
                                         Container(
-                                            margin: EdgeInsets.only(top: 20),
-                                            alignment: Alignment.centerLeft,
+                                            margin: EdgeInsets.only(top: 40),
+                                            alignment: Alignment.center,
                                             child: Text("Text position",
                                                 style: TextStyle(
                                                     fontWeight:
                                                         FontWeight.bold))),
-                                        Wrap(
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           children: [
-                                            TextButton(
-                                              child: Text("Top left"),
-                                              onPressed: () {
-                                                textContent["position"] = 1;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.topLeft;
-                                                });
-                                              },
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(Icons.north_west),
+                                                  onPressed: () {
+                                                    textContent["position"] = 1;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.topLeft;
+                                                    });
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.north),
+                                                  onPressed: () {
+                                                    textContent["position"] = 2;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.topCenter;
+                                                    });
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.north_east),
+                                                  onPressed: () {
+                                                    textContent["position"] = 3;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.topRight;
+                                                    });
+                                                  },
+                                                ),
+                                              ],
                                             ),
-                                            TextButton(
-                                              child: Text("Top center"),
-                                              onPressed: () {
-                                                textContent["position"] = 2;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.topCenter;
-                                                });
-                                              },
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(Icons.west),
+                                                  onPressed: () {
+                                                    textContent["position"] = 4;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.centerLeft;
+                                                    });
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons
+                                                      .filter_center_focus),
+                                                  onPressed: () {
+                                                    textContent["position"] = 5;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.center;
+                                                    });
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.east),
+                                                  onPressed: () {
+                                                    textContent["position"] = 6;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.centerRight;
+                                                    });
+                                                  },
+                                                ),
+                                              ],
                                             ),
-                                            TextButton(
-                                              child: Text("Top right"),
-                                              onPressed: () {
-                                                textContent["position"] = 3;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.topRight;
-                                                });
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: Text("Center left"),
-                                              onPressed: () {
-                                                textContent["position"] = 4;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.centerLeft;
-                                                });
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: Text("Center"),
-                                              onPressed: () {
-                                                textContent["position"] = 5;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.center;
-                                                });
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: Text("Center right"),
-                                              onPressed: () {
-                                                textContent["position"] = 6;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.centerRight;
-                                                });
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: Text("Bottom left"),
-                                              onPressed: () {
-                                                textContent["position"] = 7;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.bottomLeft;
-                                                });
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: Text("Bottom center"),
-                                              onPressed: () {
-                                                textContent["position"] = 8;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.bottomCenter;
-                                                });
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: Text("Bottom right"),
-                                              onPressed: () {
-                                                textContent["position"] = 9;
-                                                setState(() {
-                                                  textPreviewAlignment =
-                                                      Alignment.bottomRight;
-                                                });
-                                              },
-                                            ),
+                                            Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  IconButton(
+                                                    icon:
+                                                        Icon(Icons.south_west),
+                                                    onPressed: () {
+                                                      textContent["position"] =
+                                                          7;
+                                                      setState(() {
+                                                        textPreviewAlignment =
+                                                            Alignment
+                                                                .bottomLeft;
+                                                      });
+                                                    },
+                                                  ),
+                                                  IconButton(
+                                                    icon: Icon(Icons.south),
+                                                    onPressed: () {
+                                                      textContent["position"] =
+                                                          8;
+                                                      setState(() {
+                                                        textPreviewAlignment =
+                                                            Alignment
+                                                                .bottomCenter;
+                                                      });
+                                                    },
+                                                  ),
+                                                  IconButton(
+                                                    icon:
+                                                        Icon(Icons.south_east),
+                                                    onPressed: () {
+                                                      textContent["position"] =
+                                                          9;
+                                                      setState(() {
+                                                        textPreviewAlignment =
+                                                            Alignment
+                                                                .bottomRight;
+                                                      });
+                                                    },
+                                                  ),
+                                                ])
                                           ],
                                         )
                                       ],
@@ -915,24 +1023,56 @@ class _GridUIViewState extends State<GridUIView> {
                         //Image/GIF
                         Visibility(
                           visible: selectedBlockContentType == 2,
-                          child: Container(
-                            alignment: Alignment.centerLeft,
-                            child: Form(
-                              key: _enterURLGlobalKey,
-                              child: TextFormField(
-                                controller: enterBlockURLController,
-                                decoration: InputDecoration(
-                                    labelText: 'Combined block image/gif url'),
-                                validator: (value) {
-                                  if (value.isEmpty) {
-                                    return 'URL required';
-                                  }
-                                  contentType = "image";
-                                  content = value;
-                                  return null;
-                                },
+                          child: Column(
+                            children: [
+                              Container(
+                                margin: EdgeInsets.only(right: 20),
+                                alignment: Alignment.centerLeft,
+                                child: Form(
+                                  key: _enterURLGlobalKey,
+                                  child: TextFormField(
+                                    controller: enterBlockURLController,
+                                    decoration: InputDecoration(
+                                        labelText: 'Image/GIF url'),
+                                    validator: (value) {
+                                      if (value.isEmpty) {
+                                        return 'URL required';
+                                      }
+                                      contentType = "image";
+                                      content = value;
+                                      return null;
+                                    },
+                                  ),
+                                ),
                               ),
-                            ),
+                              Wrap(
+                                children: [
+                                  TextButton(
+                                      onPressed: () async {
+                                        GiphyGif gif = await GiphyGet.getGif(
+                                          context: context, //Required
+                                          apiKey:
+                                              "ShudUpzvLP3cWyNuNyfpZjF771JmVfhL", //Required.
+                                          lang: GiphyLanguage
+                                              .english, //Optional - Language for query.
+                                          tabColor: Colors
+                                              .teal, // Optional- default accent color.
+                                        );
+                                        setState(() {
+                                          enterBlockURLController.text =
+                                              gif.images.fixedHeight.url;
+                                        });
+                                      },
+                                      child: Text("Select a GIF")),
+                                  TextButton(
+                                      onPressed: () {
+                                        selectImageFromServerDialog(
+                                            enterBlockURLController);
+                                      },
+                                      child: Text("Select from upload")),
+                                ],
+                              )
+                            ],
                           ),
                         ),
 
@@ -1000,15 +1140,25 @@ class _GridUIViewState extends State<GridUIView> {
                                         return null;
                                       },
                                     ),
-                                    TextFormField(
-                                      controller: _enterTaskImageController,
-                                      decoration: InputDecoration(
-                                          labelText: "Image link"),
-                                      validator: (value) {
-                                        contentType = "task";
-                                        taskContent["image"] = value;
-                                        return null;
-                                      },
+                                    Column(
+                                      children: [
+                                        TextFormField(
+                                          controller: _enterTaskImageController,
+                                          decoration: InputDecoration(
+                                              labelText: "Image link"),
+                                          validator: (value) {
+                                            contentType = "task";
+                                            taskContent["image"] = value;
+                                            return null;
+                                          },
+                                        ),
+                                        TextButton(
+                                            onPressed: () {
+                                              selectImageFromServerDialog(
+                                                  _enterTaskImageController);
+                                            },
+                                            child: Text("Select from upload")),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -1039,49 +1189,118 @@ class _GridUIViewState extends State<GridUIView> {
                                     key: _imageCarouselKey,
                                     child: Container(
                                       width: double.maxFinite,
-                                      height: 200,
-                                      child: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount:
-                                            imageCarouselInputFields.length,
-                                        itemBuilder: (context, i) {
-                                          return Container(
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Expanded(
-                                                  child: TextFormField(
-                                                      onChanged: (val) {
-                                                        imageCarouselContent[
-                                                            "images"][i] = val;
-                                                      },
-                                                      validator: (String val) {
-                                                        if (val == "") {
-                                                          return "Please enter the image link";
-                                                        }
+                                      height: 300,
+                                      child: Expanded(
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount:
+                                              imageCarouselInputFields.length,
+                                          itemBuilder: (context, i) {
+                                            return Container(
+                                              height: 160,
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Expanded(
+                                                    child: TextFormField(
+                                                        onChanged: (val) {
+                                                          imageCarouselContent[
+                                                                  "images"][i] =
+                                                              val;
+                                                        },
+                                                        validator:
+                                                            (String val) {
+                                                          if (val == "") {
+                                                            return "Please enter the image link";
+                                                          }
 
-                                                        return null;
-                                                      },
-                                                      controller:
-                                                          imageCarouselInputFields[
-                                                              i],
-                                                      decoration:
-                                                          InputDecoration(
-                                                        hintText: "Image link",
-                                                      )),
-                                                ),
-                                                TextButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        imageCarouselInputFields
-                                                            .removeAt(i);
-                                                      });
-                                                    },
-                                                    child: Text("Remove"))
-                                              ],
-                                            ),
-                                          );
-                                        },
+                                                          return null;
+                                                        },
+                                                        controller:
+                                                            imageCarouselInputFields[
+                                                                i],
+                                                        decoration:
+                                                            InputDecoration(
+                                                          hintText:
+                                                              "Image link",
+                                                        )),
+                                                  ),
+                                                  Container(
+                                                    margin: EdgeInsets.only(
+                                                        top: 10),
+                                                    child: Row(
+                                                      children: [
+                                                        Column(
+                                                          children: [
+                                                            TextButton(
+                                                                onPressed: () {
+                                                                  selectImageFromServerDialog(
+                                                                          imageCarouselInputFields[
+                                                                              i])
+                                                                      .then(
+                                                                          (url) {
+                                                                    imageCarouselContent[
+                                                                            "images"]
+                                                                        [
+                                                                        i] = url;
+                                                                  });
+                                                                },
+                                                                child: Text(
+                                                                    "Select from upload")),
+                                                            TextButton(
+                                                                onPressed:
+                                                                    () async {
+                                                                  GiphyGif gif =
+                                                                      await GiphyGet
+                                                                          .getGif(
+                                                                    context:
+                                                                        context, //Required
+                                                                    apiKey:
+                                                                        "ShudUpzvLP3cWyNuNyfpZjF771JmVfhL", //Required.
+                                                                    lang: GiphyLanguage
+                                                                        .english, //Optional - Language for query.
+                                                                    tabColor: Colors
+                                                                        .teal, // Optional- default accent color.
+                                                                  );
+                                                                  setState(() {
+                                                                    String gifUrl = gif
+                                                                        .images
+                                                                        .fixedHeight
+                                                                        .url;
+                                                                    imageCarouselInputFields[i]
+                                                                            .text =
+                                                                        gifUrl;
+                                                                    imageCarouselContent["images"]
+                                                                            [
+                                                                            i] =
+                                                                        gifUrl;
+                                                                  });
+                                                                },
+                                                                child: Text(
+                                                                    "Select a GIF")),
+                                                          ],
+                                                        ),
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              setState(() {
+                                                                imageCarouselInputFields
+                                                                    .removeAt(
+                                                                        i);
+                                                              });
+                                                            },
+                                                            child: Text(
+                                                                "Remove",
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .red))),
+                                                      ],
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ))
                               ],
@@ -1169,6 +1388,90 @@ class _GridUIViewState extends State<GridUIView> {
         );
       },
     );
+  }
+
+  Future<String> selectImageFromServerDialog(TextEditingController controller) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text(
+                  "Select an image",
+                  style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold),
+                ),
+                content: FutureBuilder(
+                  future: getAllImagesFromServer(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      List<Reference> links = snapshot.data;
+                      return Container(
+                        height: 400,
+                        width: double.maxFinite,
+                        child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: links.length,
+                            itemBuilder: (context, i) {
+                              return Container(
+                                margin: EdgeInsets.only(bottom: 20),
+                                alignment: Alignment.centerLeft,
+                                child: TextButton(
+                                    onPressed: () {
+                                      links[i].getDownloadURL().then((url) {
+                                        setState(() {
+                                          controller.text = url;
+                                        });
+                                        Navigator.of(context).pop(url);
+                                      });
+                                    },
+                                    child: Wrap(
+                                      alignment: WrapAlignment.start,
+                                      direction: Axis.vertical,
+                                      children: [
+                                        FutureBuilder(
+                                          future: links[i].getDownloadURL(),
+                                          builder: (context, imageSnapshot) {
+                                            if (imageSnapshot.hasData) {
+                                              return Image.network(
+                                                imageSnapshot.data,
+                                                width: 50,
+                                              );
+                                            } else {
+                                              return CircularProgressIndicator();
+                                            }
+                                          },
+                                        ),
+                                        Container(
+                                            margin: EdgeInsets.only(top: 10),
+                                            child: Text(links[i].name)),
+                                      ],
+                                    )),
+                              );
+                            }),
+                      );
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  },
+                ),
+              );
+            },
+          );
+        });
+  }
+
+  Future<List> getAllImagesFromServer() async {
+    List<Reference> images = [];
+    firebase_storage.ListResult result =
+        await firebase_storage.FirebaseStorage.instance.ref().listAll();
+
+    result.items.forEach((element) async {
+      // String url = await element.getDownloadURL();
+      images.add(element);
+    });
+
+    return images;
   }
 
   ///Combined block removal dialog
@@ -1320,7 +1623,6 @@ class _GridUIViewState extends State<GridUIView> {
   Future<String> postGridToServer(
       String addr, String path, Map<String, String> data) async {
     String grid;
-    print("grid");
     try {
       http.Response response =
           await http.post(Uri.http(addr, path), body: data);
@@ -1567,10 +1869,8 @@ class _GridUIViewState extends State<GridUIView> {
     CombBlockDragInformation dragInformation = CombBlockDragInformation();
     Widget combinedBlock = Stack(
       children: [
-        GestureDetector(
-          child: createCombinedBlockContent(
-              block.content, numberOfColumns.toInt(), numberOfRows.toInt()),
-        ),
+        createCombinedBlockContent(
+            block.content, numberOfColumns.toInt(), numberOfRows.toInt()),
 
         ///Block quadrants
         IgnorePointer(
@@ -1689,10 +1989,6 @@ class _GridUIViewState extends State<GridUIView> {
       bool lineThrough = content.lineThrough;
       bool bold = content.bold;
       bool italic = content.italic;
-      print(underline);
-      print(lineThrough);
-      print(bold);
-      print(italic);
 
       return Container(
         child: Stack(
@@ -1766,7 +2062,7 @@ class _GridUIViewState extends State<GridUIView> {
 
       return GestureDetector(
         onTap: () {
-          processCombinedBlockTap(blockContent.content);
+          processCombinedBlockTap(blockContent);
         },
         child: FutureBuilder(
           future: getCombinedBlockTaskDetails(id),
@@ -1790,22 +2086,20 @@ class _GridUIViewState extends State<GridUIView> {
                             children: [
                               Container(
                                 margin: EdgeInsets.only(
-                                    top: 5, bottom: 5, left: 10, right: 10),
+                                    top: 5, bottom: 5, left: 20),
                                 alignment: Alignment.centerLeft,
                                 child: Text(data["name"],
-                                    style: TextStyle(
-                                        color: Colors.white,
+                                    style: GoogleFonts.jetBrainsMono(
+                                        color: taskTextColor,
                                         fontSize: 17,
                                         fontWeight: FontWeight.bold)),
                               ),
                               Container(
-                                margin: EdgeInsets.only(left: 10, right: 10),
+                                margin: EdgeInsets.only(left: 20, right: 10),
                                 alignment: Alignment.centerLeft,
                                 child: Text(data["desc"],
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                    )),
+                                    style: GoogleFonts.jetBrainsMono(
+                                        color: taskTextColor, fontSize: 13)),
                               ),
                             ],
                           ),
@@ -1820,7 +2114,7 @@ class _GridUIViewState extends State<GridUIView> {
                                     : data["currency"] == "EUR"
                                         ? "€" + data["price"]
                                         : "not implemented" + data["price"],
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: taskTextColor),
                           ),
                         )
                       ],
@@ -1880,7 +2174,6 @@ class _GridUIViewState extends State<GridUIView> {
 
   Future getCombinedBlockTaskDetails(String taskID) async {
     try {
-      print("sdfs");
       http.Response response = await http.Client()
           .get(Uri.http(NetworkConfig.serverAddr + "8000", "/task/$taskID"));
 
@@ -1999,6 +2292,8 @@ class _GridUIViewState extends State<GridUIView> {
 
     if (data != null) {
       if (data.length > 0) {
+        setTaskTextColor();
+
         int numberOfCombinedGroups = data.length;
 
         for (int combGroupIndex = 0;
@@ -2076,10 +2371,33 @@ class _GridUIViewState extends State<GridUIView> {
     }
   }
 
+  void setTaskTextColor() async {
+    if (editMode) {
+      setState(() {
+        taskTextColor = Colors.white;
+      });
+    } else {
+      if (gridCustomBackgroudData.is_link) {
+        final PaletteGenerator generator =
+            await PaletteGenerator.fromImageProvider(
+                Image.network(gridCustomBackgroudData.link_or_color).image);
+        setState(() {
+          taskTextColor = generator.dominantColor.bodyTextColor;
+        });
+      } else {
+        final PaletteGenerator generator = PaletteGenerator.fromColors(
+            [PaletteColor(HexColor(gridCustomBackgroudData.link_or_color), 1)]);
+        setState(() {
+          taskTextColor = generator.dominantColor.bodyTextColor;
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-
+    initializeFlutterFire();
     controller.addListener(() {
       if (editMode) {
         Set<int> selectedIndices = controller.value.selectedIndexes;
@@ -2102,6 +2420,16 @@ class _GridUIViewState extends State<GridUIView> {
   @override
   Widget build(BuildContext context) {
     blockSize = getBlockSize(this.rows);
+
+    if (_error) {
+      return Center(child: Text("An error occured. Try again."));
+    }
+
+    if (!_initialized) {
+      return Column(
+        children: [Text("Loading..."), CircularProgressIndicator()],
+      );
+    }
 
     return Container(
       height: this.columns == 0

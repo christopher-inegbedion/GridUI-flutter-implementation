@@ -26,6 +26,7 @@ class Grid {
   String gridJson;
   CustomGridBackground gridCustomBackground;
   GridUIView _gridUIView;
+  Function onViewInitComplete;
 
   bool editMode = false;
 
@@ -34,13 +35,12 @@ class Grid {
   }
 
   static Grid getInstance() {
-    if (instance == null) instance = Grid._();
+    if (instance == null) {
+      instance = Grid._();
+      instance._gridUIView = GridUIView.empty();
+    }
 
     return instance;
-  }
-
-  void setGridUI(GridUIView view) {
-    instance._gridUIView = view;
   }
 
   ///Load the grid's data from JSON file
@@ -109,7 +109,6 @@ class Grid {
           content =
               ImageContent(combinedBlocks["block"]["content"]["value"]["link"]);
         } else if (blockContentType == "task") {
-          print(combinedBlocks["block"]["content"]["value"]);
 
           content = TaskContent(
               combinedBlocks["block"]["content"]["value"]["task_id"],
@@ -157,21 +156,11 @@ class Grid {
     return getInstance();
   }
 
-  void initGridView(path) {
-    loadJSON(path).then((value) {
-      print(gridRows);
-      buildGridView();
-    });
-    print(gridRows);
-
-    // _gridUIView.changeState();
-  }
-
   Widget buildViewLayout() {
     return _gridUIView;
   }
 
-  get getGridUIView {
+  get gridUIView {
     return _gridUIView;
   }
 
@@ -278,6 +267,9 @@ class Grid {
     _gridUIView.changeGrid(combinedGroups);
     _gridUIView.changeGridJSON(gridJson);
     _gridUIView.changeCustomBackground(gridCustomBackground);
+
+    onViewInitComplete();
+
   }
 
   void toggleEditMode() {
