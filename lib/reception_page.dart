@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grid_ui_implementation/experimental_page.dart';
 import 'package:grid_ui_implementation/main_page.dart';
 import 'package:http/http.dart' as http;
 
@@ -260,6 +261,25 @@ class _ReceptionPageState extends State<ReceptionPage> {
                         BoxDecoration(border: Border.all(color: Colors.black)),
                     child: Text(
                       "EDIT GRID",
+                    )),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(top: 20),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ExperimentalPage()));
+                },
+                child: Container(
+                    padding:
+                        EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
+                    decoration:
+                        BoxDecoration(border: Border.all(color: Colors.black)),
+                    child: Text(
+                      "EXPERIMENTAL VIEW",
                     )),
               ),
             ),
