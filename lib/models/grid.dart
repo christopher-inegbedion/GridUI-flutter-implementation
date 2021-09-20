@@ -6,6 +6,7 @@ import 'package:grid_ui_implementation/custom_views/grid_view.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
+import 'package:grid_ui_implementation/models/block_command.dart';
 import 'package:grid_ui_implementation/models/block_content/image_carousel_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_content.dart';
 import 'package:grid_ui_implementation/models/combined_block_in_group.dart';
@@ -82,6 +83,7 @@ class Grid {
             combinedBlocks["block"]["content"]["content_type"];
 
         dynamic content;
+        //Serialize the block content
         if (blockContentType == "text") {
           content = TextContent(
             combinedBlocks["block"]["content"]["value"]["value"],
@@ -109,7 +111,6 @@ class Grid {
           content =
               ImageContent(combinedBlocks["block"]["content"]["value"]["link"]);
         } else if (blockContentType == "task") {
-
           content = TaskContent(
               combinedBlocks["block"]["content"]["value"]["task_id"],
               combinedBlocks["block"]["content"]["value"]["task_image"]);
@@ -120,13 +121,30 @@ class Grid {
           throw Exception("Content type: $blockContentType not inplemented");
         }
 
+        BlockCommand blockCommand;
+        if (combinedBlocks["block"]["block_command"] != null) {
+          String tapCommand =
+              combinedBlocks["block"]["block_command"]["tap_command"];
+          String tapCommandValue =
+              combinedBlocks["block"]["block_command"]["tap_command_value"];
+          String holdCommand =
+              combinedBlocks["block"]["block_command"]["hold_command"];
+          String holdCommandValue =
+              combinedBlocks["block"]["block_command"]["hold_command_value"];
+
+          blockCommand = BlockCommand(
+              tapCommand, tapCommandValue, holdCommand, holdCommandValue);
+        } else {
+          blockCommand = BlockCommand("", "", "", "");
+        }
+
         BlockContent blockContent = new BlockContent(blockContentType, content);
         Block block = new Block(
-          BlockType.combined,
-          blockContent,
-          combinedBlocks["block"]["number_of_rows"],
-          combinedBlocks["block"]["number_of_columns"],
-        );
+            BlockType.combined,
+            blockContent,
+            combinedBlocks["block"]["number_of_rows"],
+            combinedBlocks["block"]["number_of_columns"],
+            blockCommand);
 
         CombinedBlockInGroup combinedBlockInGroup = new CombinedBlockInGroup(
             combinedBlocks["number_of_rows_left"],
@@ -269,7 +287,6 @@ class Grid {
     _gridUIView.changeCustomBackground(gridCustomBackground);
 
     onViewInitComplete();
-
   }
 
   void toggleEditMode() {

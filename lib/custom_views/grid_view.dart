@@ -12,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:grid_ui_implementation/enum/block_type.dart';
 import 'package:grid_ui_implementation/enum/combined_group_type.dart';
 import 'package:grid_ui_implementation/models/block.dart';
+import 'package:grid_ui_implementation/models/block_command.dart';
 import 'package:grid_ui_implementation/models/block_content/color_combined_block_content.dart';
 import 'package:grid_ui_implementation/models/block_content/image_carousel_block_content.dart';
 import 'package:grid_ui_implementation/models/block_content/image_combined_block_content.dart';
@@ -118,6 +119,7 @@ class _GridUIViewState extends State<GridUIView> {
   final _imageCarouselKey = GlobalKey<FormState>();
 
   int selectedBlockContentType = -1;
+  int selectedBlockCommandType = -1;
 
   final blockHeightController = TextEditingController();
   final blockWidthController = TextEditingController();
@@ -179,6 +181,11 @@ class _GridUIViewState extends State<GridUIView> {
       selectedFont = allFonts[Random().nextInt(allFonts.length)];
     }
 
+    String selectedOnTapCommand = "Load task";
+    String selectedOnTapValue;
+    String selectedOnHoldCommand;
+    String selectedOnHoldValue;
+
     Map<String, dynamic> textContent = {
       "font_family": "",
       "position": 5,
@@ -195,6 +202,12 @@ class _GridUIViewState extends State<GridUIView> {
     Map<String, dynamic> taskContent = {"image": 5};
 
     Map<String, dynamic> imageCarouselContent = {"images": []};
+
+    //Block command
+    GlobalKey<FormState> onTapValueKey = GlobalKey();
+    TextEditingController onTapValueController = TextEditingController();
+    BlockCommand blockCommand = BlockCommand("", "", "", "");
+
     return showDialog<void>(
       context: context,
       barrierDismissible: true, // user must tap button!
@@ -265,20 +278,1031 @@ class _GridUIViewState extends State<GridUIView> {
                   ),
 
                   // Select content type
-                  Visibility(
-                    child: Container(
+                  Container(
+                      child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Select content type",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+
+                      //Content type options
+                      Container(
+                        alignment: Alignment.center,
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceAround,
+                          children: [
+                            TextButton(
+                              child: Text(
+                                "Text",
+                                style: TextStyle(
+                                    color: selectedBlockContentType == 1
+                                        ? Colors.green
+                                        : Colors.blue),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  selectedBlockContentType = 1;
+                                });
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                "Image/GIF",
+                                style: TextStyle(
+                                    color: selectedBlockContentType == 2
+                                        ? Colors.green
+                                        : Colors.blue),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  selectedBlockContentType = 2;
+                                });
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                "Color",
+                                style: TextStyle(
+                                    color: selectedBlockContentType == 3
+                                        ? Colors.green
+                                        : Colors.blue),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  selectedBlockContentType = 3;
+                                });
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                "Task",
+                                style: TextStyle(
+                                    color: selectedBlockContentType == 4
+                                        ? Colors.green
+                                        : Colors.blue),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  selectedBlockContentType = 4;
+                                });
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                "Image carousel",
+                                style: TextStyle(
+                                    color: selectedBlockContentType == 5
+                                        ? Colors.green
+                                        : Colors.blue),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  selectedBlockContentType = 5;
+                                });
+                              },
+                            )
+                          ],
+                        ),
+                      ),
+
+                      //Text
+                      Visibility(
+                        visible: selectedBlockContentType == 1,
                         child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            //Text preview
+                            Container(
+                                decoration: BoxDecoration(
+                                    color: HexColor(blockColorPreview),
+                                    border: Border.all(
+                                        width: 1, color: Colors.grey[200])),
+                                height: 100,
+                                child: Align(
+                                    alignment: textPreviewAlignment,
+                                    child: Container(
+                                      margin: EdgeInsets.only(
+                                          bottom: _yPositionData >= 0
+                                              ? _yPositionData.toDouble().abs()
+                                              : 0,
+                                          top: _yPositionData < 0
+                                              ? (_yPositionData.toDouble())
+                                                  .abs()
+                                              : 0,
+                                          left: _xPositionData >= 0
+                                              ? _xPositionData.toDouble().abs()
+                                              : 0,
+                                          right: _xPositionData < 0
+                                              ? (_xPositionData.toDouble())
+                                                  .abs()
+                                              : 0),
+                                      child: Text(textPreview,
+                                          style: GoogleFonts.getFont(
+                                              selectedFont,
+                                              fontWeight: textContent["bold"]
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                              fontStyle: textContent["italic"]
+                                                  ? FontStyle.italic
+                                                  : FontStyle.normal,
+                                              decoration: textContent[
+                                                      "underline"]
+                                                  ? TextDecoration.underline
+                                                  : textContent["line_through"]
+                                                      ? TextDecoration
+                                                          .lineThrough
+                                                      : TextDecoration.none,
+                                              color: HexColor(textColorPreview),
+                                              fontSize: textSizePreview)),
+                                    ))),
+                            Container(
+                              margin: EdgeInsets.only(top: 10),
+                              child: Text(
+                                "Text preview",
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+
+                            //Text options
+                            Container(
+                              alignment: Alignment.centerLeft,
+                              child: Form(
+                                  key: _enterTextGlobalKey,
+                                  child: Column(
+                                    children: [
+                                      //Block text
+                                      TextFormField(
+                                        onChanged: (text) {
+                                          setState(() {
+                                            if (text == "") {
+                                              textPreview = "None";
+                                            } else {
+                                              textPreview = text;
+                                            }
+                                          });
+                                        },
+                                        controller: enterBlockTextController,
+                                        decoration:
+                                            InputDecoration(labelText: 'Text'),
+                                        validator: (value) {
+                                          if (value.isEmpty) {
+                                            return 'Text required';
+                                          }
+                                          contentType = "text";
+                                          textContent["value"] = value;
+                                          return null;
+                                        },
+                                      ),
+
+                                      //Text font
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              margin: EdgeInsets.only(
+                                                  top: 30, bottom: 10),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Container(
+                                                    child: Text(
+                                                      "Text font",
+                                                      style: TextStyle(
+                                                          fontSize: 13),
+                                                    ),
+                                                  ),
+                                                  SingleChildScrollView(
+                                                    scrollDirection:
+                                                        Axis.horizontal,
+                                                    child: DropdownButton(
+                                                      value: selectedFont,
+                                                      onChanged:
+                                                          (String newFont) {
+                                                        contentType = "text";
+                                                        textContent["font"] =
+                                                            newFont;
+                                                        setState(() {
+                                                          selectedFont =
+                                                              newFont;
+                                                        });
+                                                      },
+                                                      items: allFonts.map<
+                                                              DropdownMenuItem<
+                                                                  String>>(
+                                                          (String value) {
+                                                        return DropdownMenuItem<
+                                                            String>(
+                                                          value: value,
+                                                          child: Text(
+                                                            value,
+                                                          ),
+                                                        );
+                                                      }).toList(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            child: Row(
+                                              children: [
+                                                IconButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        textContent["bold"] =
+                                                            !textContent[
+                                                                "bold"];
+                                                      });
+                                                    },
+                                                    icon: Icon(
+                                                      Icons.format_bold,
+                                                      color: textContent["bold"]
+                                                          ? Colors.green
+                                                          : Colors.black,
+                                                    )),
+                                                IconButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        textContent["italic"] =
+                                                            !textContent[
+                                                                "italic"];
+                                                      });
+                                                    },
+                                                    icon: Icon(
+                                                      Icons.format_italic,
+                                                      color:
+                                                          textContent["italic"]
+                                                              ? Colors.green
+                                                              : Colors.black,
+                                                    )),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                              child: Text("Text decoration",
+                                                  style:
+                                                      TextStyle(fontSize: 15))),
+                                          Container(
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                IconButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        textContent[
+                                                                "underline"] =
+                                                            !textContent[
+                                                                "underline"];
+                                                        if (textContent[
+                                                            "line_through"]) {
+                                                          textContent[
+                                                                  "line_through"] =
+                                                              false;
+                                                        }
+                                                      });
+                                                    },
+                                                    icon: Icon(
+                                                      Icons.format_underline,
+                                                      color: textContent[
+                                                              "underline"]
+                                                          ? Colors.green
+                                                          : Colors.black,
+                                                    )),
+                                                IconButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        textContent[
+                                                                "line_through"] =
+                                                            !textContent[
+                                                                "line_through"];
+                                                        if (textContent[
+                                                            "underline"]) {
+                                                          textContent[
+                                                                  "underline"] =
+                                                              false;
+                                                        }
+                                                      });
+                                                    },
+                                                    icon: Icon(
+                                                      Icons.strikethrough_s,
+                                                      color: textContent[
+                                                              "line_through"]
+                                                          ? Colors.green
+                                                          : Colors.black,
+                                                    )),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      //Block text font size
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: TextFormField(
+                                              onChanged: (size) {
+                                                setState(() {
+                                                  if (size == "") {
+                                                    textSizePreview = 13;
+                                                  } else {
+                                                    textSizePreview =
+                                                        double.tryParse(size);
+                                                  }
+                                                });
+                                              },
+                                              controller:
+                                                  enterBlockFontSizeController,
+                                              decoration: InputDecoration(
+                                                  labelText: 'Text font size'),
+                                              validator: (value) {
+                                                if (value.isEmpty) {
+                                                  return 'Font size required';
+                                                }
+                                                contentType = "text";
+                                                textContent["font_size"] =
+                                                    value;
+                                                return null;
+                                              },
+                                            ),
+                                          ),
+                                          IconButton(
+                                              iconSize: 13,
+                                              onPressed: (() {
+                                                if (isNumeric(
+                                                    enterBlockFontSizeController
+                                                        .text)) {
+                                                  setState(() {
+                                                    textSizePreview = double.parse(
+                                                            enterBlockFontSizeController
+                                                                .text) +
+                                                        1;
+                                                    enterBlockFontSizeController
+                                                        .text = (textSizePreview
+                                                            .toInt())
+                                                        .toString();
+                                                  });
+                                                }
+                                              }),
+                                              icon: Icon(Icons.add)),
+                                          IconButton(
+                                              iconSize: 13,
+                                              onPressed: (() {
+                                                if (isNumeric(
+                                                    enterBlockFontSizeController
+                                                        .text)) {
+                                                  setState(() {
+                                                    textSizePreview = double.parse(
+                                                            enterBlockFontSizeController
+                                                                .text) -
+                                                        1;
+                                                    enterBlockFontSizeController
+                                                        .text = (textSizePreview
+                                                            .toInt())
+                                                        .toString();
+                                                  });
+                                                }
+                                              }),
+                                              icon: Icon(Icons.remove)),
+                                        ],
+                                      ),
+
+                                      //Text Y position
+                                      Container(
+                                        margin: EdgeInsets.only(top: 20),
+                                        child: Row(
+                                          children: [
+                                            IconButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _yPositionData += 1;
+                                                  });
+                                                  contentType = "text";
+                                                  textContent["y_pos"] =
+                                                      _yPositionData;
+                                                },
+                                                iconSize: 13,
+                                                icon: Icon(Icons.add)),
+                                            IconButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _yPositionData -= 1;
+                                                  });
+                                                  contentType = "text";
+                                                  textContent["y_pos"] =
+                                                      _yPositionData;
+                                                },
+                                                iconSize: 13,
+                                                icon: Icon(Icons.remove)),
+                                            Container(
+                                                margin:
+                                                    EdgeInsets.only(left: 20),
+                                                child: Text(
+                                                    _yPositionData.toString())),
+                                            Expanded(
+                                              child: Container(
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  "Y position",
+                                                  style:
+                                                      TextStyle(fontSize: 12),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      //Text X position
+                                      Container(
+                                        margin: EdgeInsets.only(top: 20),
+                                        child: Row(
+                                          children: [
+                                            IconButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _xPositionData += 1;
+                                                  });
+                                                  contentType = "text";
+                                                  textContent["x_pos"] =
+                                                      _xPositionData;
+                                                },
+                                                iconSize: 13,
+                                                icon: Icon(Icons.add)),
+                                            IconButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _xPositionData -= 1;
+                                                  });
+                                                  contentType = "text";
+                                                  textContent["x_pos"] =
+                                                      _xPositionData;
+                                                },
+                                                iconSize: 13,
+                                                icon: Icon(Icons.remove)),
+                                            Container(
+                                                margin:
+                                                    EdgeInsets.only(left: 20),
+                                                child: Text(
+                                                    _xPositionData.toString())),
+                                            Expanded(
+                                              child: Container(
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  "X position",
+                                                  style:
+                                                      TextStyle(fontSize: 12),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      //Text color
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: TextFormField(
+                                              onChanged: (color) {
+                                                setState(() {
+                                                  if (color == "") {
+                                                    textColorPreview =
+                                                        "#000000";
+                                                  } else {
+                                                    if (isHexColor(color)) {
+                                                      textColorPreview = color;
+                                                    } else {
+                                                      textColorPreview =
+                                                          "#000000";
+                                                    }
+                                                  }
+                                                });
+                                              },
+                                              controller:
+                                                  enterBlockTextColorController,
+                                              decoration: InputDecoration(
+                                                  labelText: 'Text color'),
+                                              validator: (value) {
+                                                if (value.isEmpty) {
+                                                  return 'Text color required';
+                                                }
+                                                contentType = "text";
+                                                textContent["color"] = value;
+                                                return null;
+                                              },
+                                            ),
+                                          ),
+                                          TextButton(
+                                              onPressed: () {
+                                                showColorPickerDialog()
+                                                    .then((value) {
+                                                  setState(() {
+                                                    enterBlockTextColorController
+                                                        .text = "#${value.hex}";
+                                                  });
+                                                  contentType = "text";
+                                                  textContent["color"] =
+                                                      "#${value.hex}";
+                                                });
+                                              },
+                                              child: Text("Pick color"))
+                                        ],
+                                      ),
+
+                                      //Combined block color
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: TextFormField(
+                                              onChanged: (color) {
+                                                if (isHexColor(color)) {
+                                                  setState(() {
+                                                    blockColorPreview = color;
+                                                  });
+                                                }
+                                              },
+                                              controller:
+                                                  enterBlockColorController,
+                                              decoration: InputDecoration(
+                                                  labelText: 'Block color'),
+                                              validator: (value) {
+                                                contentType = "text";
+                                                textContent["block_color"] =
+                                                    value.isEmpty ? "" : value;
+                                                return null;
+                                              },
+                                            ),
+                                          ),
+                                          TextButton(
+                                              onPressed: () {
+                                                showColorPickerDialog()
+                                                    .then((value) {
+                                                  setState(() {
+                                                    enterBlockColorController
+                                                        .text = "#${value.hex}";
+                                                  });
+                                                  contentType = "text";
+                                                  textContent["block_color"] =
+                                                      "#${value.hex}";
+                                                });
+                                              },
+                                              child: Text("Pick color"))
+                                        ],
+                                      ),
+
+                                      //Block image link
+                                      TextFormField(
+                                        controller: enterBlockURLController,
+                                        decoration: InputDecoration(
+                                            labelText:
+                                                'Combined block image link'),
+                                        validator: (value) {
+                                          contentType = "text";
+                                          textContent["block_image"] =
+                                              value.isEmpty ? "" : value;
+                                          return null;
+                                        },
+                                      ),
+
+                                      //Text position
+                                      Container(
+                                          margin: EdgeInsets.only(top: 40),
+                                          alignment: Alignment.center,
+                                          child: Text("Text position",
+                                              style: TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(Icons.north_west),
+                                                onPressed: () {
+                                                  textContent["position"] = 1;
+                                                  setState(() {
+                                                    textPreviewAlignment =
+                                                        Alignment.topLeft;
+                                                  });
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.north),
+                                                onPressed: () {
+                                                  textContent["position"] = 2;
+                                                  setState(() {
+                                                    textPreviewAlignment =
+                                                        Alignment.topCenter;
+                                                  });
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.north_east),
+                                                onPressed: () {
+                                                  textContent["position"] = 3;
+                                                  setState(() {
+                                                    textPreviewAlignment =
+                                                        Alignment.topRight;
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(Icons.west),
+                                                onPressed: () {
+                                                  textContent["position"] = 4;
+                                                  setState(() {
+                                                    textPreviewAlignment =
+                                                        Alignment.centerLeft;
+                                                  });
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: Icon(
+                                                    Icons.filter_center_focus),
+                                                onPressed: () {
+                                                  textContent["position"] = 5;
+                                                  setState(() {
+                                                    textPreviewAlignment =
+                                                        Alignment.center;
+                                                  });
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.east),
+                                                onPressed: () {
+                                                  textContent["position"] = 6;
+                                                  setState(() {
+                                                    textPreviewAlignment =
+                                                        Alignment.centerRight;
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(Icons.south_west),
+                                                  onPressed: () {
+                                                    textContent["position"] = 7;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.bottomLeft;
+                                                    });
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.south),
+                                                  onPressed: () {
+                                                    textContent["position"] = 8;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment
+                                                              .bottomCenter;
+                                                    });
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.south_east),
+                                                  onPressed: () {
+                                                    textContent["position"] = 9;
+                                                    setState(() {
+                                                      textPreviewAlignment =
+                                                          Alignment.bottomRight;
+                                                    });
+                                                  },
+                                                ),
+                                              ])
+                                        ],
+                                      )
+                                    ],
+                                  )),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      //Image/GIF
+                      Visibility(
+                        visible: selectedBlockContentType == 2,
+                        child: Column(
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(right: 20),
+                              alignment: Alignment.centerLeft,
+                              child: Form(
+                                key: _enterURLGlobalKey,
+                                child: TextFormField(
+                                  controller: enterBlockURLController,
+                                  decoration: InputDecoration(
+                                      labelText: 'Image/GIF url'),
+                                  validator: (value) {
+                                    if (value.isEmpty) {
+                                      return 'URL required';
+                                    }
+                                    contentType = "image";
+                                    content = value;
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ),
+                            Wrap(
+                              children: [
+                                TextButton(
+                                    onPressed: () async {
+                                      GiphyGif gif = await GiphyGet.getGif(
+                                        context: context, //Required
+                                        apiKey:
+                                            "ShudUpzvLP3cWyNuNyfpZjF771JmVfhL", //Required.
+                                        lang: GiphyLanguage
+                                            .english, //Optional - Language for query.
+                                        tabColor: Colors
+                                            .teal, // Optional- default accent color.
+                                      );
+                                      setState(() {
+                                        enterBlockURLController.text =
+                                            gif.images.fixedHeight.url;
+                                      });
+                                    },
+                                    child: Text("Select a GIF")),
+                                TextButton(
+                                    onPressed: () {
+                                      selectImageFromServerDialog(
+                                          enterBlockURLController);
+                                    },
+                                    child: Text("Select from upload")),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+
+                      //Color
+                      Visibility(
+                        visible: selectedBlockContentType == 3,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                alignment: Alignment.centerLeft,
+                                child: Form(
+                                  key: _enterColorGlobalKey,
+                                  child: TextFormField(
+                                    controller: enterBlockColorController,
+                                    decoration:
+                                        InputDecoration(labelText: 'Color'),
+                                    validator: (value) {
+                                      if (value.isEmpty) {
+                                        return 'Hex color required';
+                                      }
+                                      contentType = "color";
+                                      content = value;
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                                onPressed: () {
+                                  showColorPickerDialog().then((value) {
+                                    setState(() {
+                                      enterBlockColorController.text =
+                                          "#${value.hex}";
+                                    });
+                                    contentType = "color";
+                                    content = "#${value.hex}";
+                                  });
+                                },
+                                child: Text("Pick color"))
+                          ],
+                        ),
+                      ),
+
+                      //Task
+                      Visibility(
+                          visible: selectedBlockContentType == 4,
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            child: Form(
+                              key: _enterTaskIDGlobalKey,
+                              child: Column(
+                                children: [
+                                  TextFormField(
+                                    controller: _enterTaskIDController,
+                                    decoration:
+                                        InputDecoration(labelText: "Task ID"),
+                                    validator: (value) {
+                                      if (value.isEmpty) {
+                                        return "Task ID required";
+                                      }
+                                      contentType = "task";
+                                      taskContent["id"] = value;
+                                      return null;
+                                    },
+                                  ),
+                                  Column(
+                                    children: [
+                                      TextFormField(
+                                        controller: _enterTaskImageController,
+                                        decoration: InputDecoration(
+                                            labelText: "Image link"),
+                                        validator: (value) {
+                                          contentType = "task";
+                                          taskContent["image"] = value;
+                                          return null;
+                                        },
+                                      ),
+                                      TextButton(
+                                          onPressed: () {
+                                            selectImageFromServerDialog(
+                                                _enterTaskImageController);
+                                          },
+                                          child: Text("Select from upload")),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )),
+
+                      //Image carousel
+                      Visibility(
+                        visible: selectedBlockContentType == 5,
+                        child: Container(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                margin: EdgeInsets.only(top: 20),
+                                child: TextButton(
+                                    onPressed: () {
+                                      imageCarouselContent["images"].add("");
+                                      contentType = "image_carousel";
+                                      setState(() {
+                                        imageCarouselInputFields
+                                            .add(TextEditingController());
+                                      });
+                                    },
+                                    child: Text("Add image")),
+                              ),
+                              Form(
+                                  key: _imageCarouselKey,
+                                  child: Container(
+                                    width: double.maxFinite,
+                                    height: 300,
+                                    child: Expanded(
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount:
+                                            imageCarouselInputFields.length,
+                                        itemBuilder: (context, i) {
+                                          return Container(
+                                            height: 160,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Expanded(
+                                                  child: TextFormField(
+                                                      onChanged: (val) {
+                                                        imageCarouselContent[
+                                                            "images"][i] = val;
+                                                      },
+                                                      validator: (String val) {
+                                                        if (val == "") {
+                                                          return "Please enter the image link";
+                                                        }
+
+                                                        return null;
+                                                      },
+                                                      controller:
+                                                          imageCarouselInputFields[
+                                                              i],
+                                                      decoration:
+                                                          InputDecoration(
+                                                        hintText: "Image link",
+                                                      )),
+                                                ),
+                                                Container(
+                                                  margin:
+                                                      EdgeInsets.only(top: 10),
+                                                  child: Row(
+                                                    children: [
+                                                      Column(
+                                                        children: [
+                                                          TextButton(
+                                                              onPressed: () {
+                                                                selectImageFromServerDialog(
+                                                                        imageCarouselInputFields[
+                                                                            i])
+                                                                    .then(
+                                                                        (url) {
+                                                                  imageCarouselContent[
+                                                                          "images"]
+                                                                      [i] = url;
+                                                                });
+                                                              },
+                                                              child: Text(
+                                                                  "Select from upload")),
+                                                          TextButton(
+                                                              onPressed:
+                                                                  () async {
+                                                                GiphyGif gif =
+                                                                    await GiphyGet
+                                                                        .getGif(
+                                                                  context:
+                                                                      context, //Required
+                                                                  apiKey:
+                                                                      "ShudUpzvLP3cWyNuNyfpZjF771JmVfhL", //Required.
+                                                                  lang: GiphyLanguage
+                                                                      .english, //Optional - Language for query.
+                                                                  tabColor: Colors
+                                                                      .teal, // Optional- default accent color.
+                                                                );
+                                                                setState(() {
+                                                                  String gifUrl = gif
+                                                                      .images
+                                                                      .fixedHeight
+                                                                      .url;
+                                                                  imageCarouselInputFields[
+                                                                              i]
+                                                                          .text =
+                                                                      gifUrl;
+                                                                  imageCarouselContent[
+                                                                          "images"]
+                                                                      [
+                                                                      i] = gifUrl;
+                                                                });
+                                                              },
+                                                              child: Text(
+                                                                  "Select a GIF")),
+                                                        ],
+                                                      ),
+                                                      TextButton(
+                                                          onPressed: () {
+                                                            setState(() {
+                                                              imageCarouselInputFields
+                                                                  .removeAt(i);
+                                                            });
+                                                          },
+                                                          child: Text("Remove",
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .red))),
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ))
+                            ],
+                          ),
+                        ),
+                      )
+                    ],
+                  )),
+
+                  Container(
+                    margin: EdgeInsets.only(top: 40),
+                    child: Column(
                       children: [
                         Container(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            "Select content type",
+                            "Select block command",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-
-                        //Content type options
                         Container(
                           alignment: Alignment.center,
                           child: Wrap(
@@ -286,1029 +1310,109 @@ class _GridUIViewState extends State<GridUIView> {
                             children: [
                               TextButton(
                                 child: Text(
-                                  "Text",
+                                  "On tap",
                                   style: TextStyle(
-                                      color: selectedBlockContentType == 1
+                                      color: selectedBlockCommandType == 1
                                           ? Colors.green
                                           : Colors.blue),
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    selectedBlockContentType = 1;
+                                    selectedBlockCommandType = 1;
                                   });
                                 },
                               ),
                               TextButton(
                                 child: Text(
-                                  "Image/GIF",
+                                  "On hold",
                                   style: TextStyle(
-                                      color: selectedBlockContentType == 2
+                                      color: selectedBlockCommandType == 2
                                           ? Colors.green
                                           : Colors.blue),
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    selectedBlockContentType = 2;
+                                    selectedBlockCommandType = 2;
                                   });
                                 },
-                              ),
-                              TextButton(
-                                child: Text(
-                                  "Color",
-                                  style: TextStyle(
-                                      color: selectedBlockContentType == 3
-                                          ? Colors.green
-                                          : Colors.blue),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    selectedBlockContentType = 3;
-                                  });
-                                },
-                              ),
-                              TextButton(
-                                child: Text(
-                                  "Task",
-                                  style: TextStyle(
-                                      color: selectedBlockContentType == 4
-                                          ? Colors.green
-                                          : Colors.blue),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    selectedBlockContentType = 4;
-                                  });
-                                },
-                              ),
-                              TextButton(
-                                child: Text(
-                                  "Image carousel",
-                                  style: TextStyle(
-                                      color: selectedBlockContentType == 5
-                                          ? Colors.green
-                                          : Colors.blue),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    selectedBlockContentType = 5;
-                                  });
-                                },
-                              )
-                            ],
-                          ),
-                        ),
-
-                        //Text
-                        Visibility(
-                          visible: selectedBlockContentType == 1,
-                          child: Column(
-                            children: [
-                              //Text preview
-                              Container(
-                                  decoration: BoxDecoration(
-                                      color: HexColor(blockColorPreview),
-                                      border: Border.all(
-                                          width: 1, color: Colors.grey[200])),
-                                  height: 100,
-                                  child: Align(
-                                      alignment: textPreviewAlignment,
-                                      child: Container(
-                                        margin: EdgeInsets.only(
-                                            bottom: _yPositionData >= 0
-                                                ? _yPositionData
-                                                    .toDouble()
-                                                    .abs()
-                                                : 0,
-                                            top: _yPositionData < 0
-                                                ? (_yPositionData.toDouble())
-                                                    .abs()
-                                                : 0,
-                                            left: _xPositionData >= 0
-                                                ? _xPositionData
-                                                    .toDouble()
-                                                    .abs()
-                                                : 0,
-                                            right: _xPositionData < 0
-                                                ? (_xPositionData.toDouble())
-                                                    .abs()
-                                                : 0),
-                                        child: Text(textPreview,
-                                            style: GoogleFonts.getFont(
-                                                selectedFont,
-                                                fontWeight: textContent["bold"]
-                                                    ? FontWeight.bold
-                                                    : FontWeight.normal,
-                                                fontStyle: textContent["italic"]
-                                                    ? FontStyle.italic
-                                                    : FontStyle.normal,
-                                                decoration: textContent[
-                                                        "underline"]
-                                                    ? TextDecoration.underline
-                                                    : textContent[
-                                                            "line_through"]
-                                                        ? TextDecoration
-                                                            .lineThrough
-                                                        : TextDecoration.none,
-                                                color:
-                                                    HexColor(textColorPreview),
-                                                fontSize: textSizePreview)),
-                                      ))),
-                              Container(
-                                margin: EdgeInsets.only(top: 10),
-                                child: Text(
-                                  "Text preview",
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-
-                              //Text options
-                              Container(
-                                alignment: Alignment.centerLeft,
-                                child: Form(
-                                    key: _enterTextGlobalKey,
-                                    child: Column(
-                                      children: [
-                                        //Block text
-                                        TextFormField(
-                                          onChanged: (text) {
-                                            setState(() {
-                                              if (text == "") {
-                                                textPreview = "None";
-                                              } else {
-                                                textPreview = text;
-                                              }
-                                            });
-                                          },
-                                          controller: enterBlockTextController,
-                                          decoration: InputDecoration(
-                                              labelText: 'Text'),
-                                          validator: (value) {
-                                            if (value.isEmpty) {
-                                              return 'Text required';
-                                            }
-                                            contentType = "text";
-                                            textContent["value"] = value;
-                                            return null;
-                                          },
-                                        ),
-
-                                        //Text font
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Container(
-                                                margin: EdgeInsets.only(
-                                                    top: 30, bottom: 10),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Container(
-                                                      child: Text(
-                                                        "Text font",
-                                                        style: TextStyle(
-                                                            fontSize: 13),
-                                                      ),
-                                                    ),
-                                                    SingleChildScrollView(
-                                                      scrollDirection:
-                                                          Axis.horizontal,
-                                                      child: DropdownButton(
-                                                        value: selectedFont,
-                                                        onChanged:
-                                                            (String newFont) {
-                                                          contentType = "text";
-                                                          textContent["font"] =
-                                                              newFont;
-                                                          setState(() {
-                                                            selectedFont =
-                                                                newFont;
-                                                          });
-                                                        },
-                                                        items: allFonts.map<
-                                                            DropdownMenuItem<
-                                                                String>>((String
-                                                            value) {
-                                                          return DropdownMenuItem<
-                                                              String>(
-                                                            value: value,
-                                                            child: Text(
-                                                              value,
-                                                            ),
-                                                          );
-                                                        }).toList(),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                            Container(
-                                              child: Row(
-                                                children: [
-                                                  IconButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          textContent["bold"] =
-                                                              !textContent[
-                                                                  "bold"];
-                                                        });
-                                                      },
-                                                      icon: Icon(
-                                                        Icons.format_bold,
-                                                        color:
-                                                            textContent["bold"]
-                                                                ? Colors.green
-                                                                : Colors.black,
-                                                      )),
-                                                  IconButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          textContent[
-                                                                  "italic"] =
-                                                              !textContent[
-                                                                  "italic"];
-                                                        });
-                                                      },
-                                                      icon: Icon(
-                                                        Icons.format_italic,
-                                                        color: textContent[
-                                                                "italic"]
-                                                            ? Colors.green
-                                                            : Colors.black,
-                                                      )),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                                child: Text("Text decoration",
-                                                    style: TextStyle(
-                                                        fontSize: 15))),
-                                            Container(
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  IconButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          textContent[
-                                                                  "underline"] =
-                                                              !textContent[
-                                                                  "underline"];
-                                                          if (textContent[
-                                                              "line_through"]) {
-                                                            textContent[
-                                                                    "line_through"] =
-                                                                false;
-                                                          }
-                                                        });
-                                                      },
-                                                      icon: Icon(
-                                                        Icons.format_underline,
-                                                        color: textContent[
-                                                                "underline"]
-                                                            ? Colors.green
-                                                            : Colors.black,
-                                                      )),
-                                                  IconButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          textContent[
-                                                                  "line_through"] =
-                                                              !textContent[
-                                                                  "line_through"];
-                                                          if (textContent[
-                                                              "underline"]) {
-                                                            textContent[
-                                                                    "underline"] =
-                                                                false;
-                                                          }
-                                                        });
-                                                      },
-                                                      icon: Icon(
-                                                        Icons.strikethrough_s,
-                                                        color: textContent[
-                                                                "line_through"]
-                                                            ? Colors.green
-                                                            : Colors.black,
-                                                      )),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-
-                                        //Block text font size
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextFormField(
-                                                onChanged: (size) {
-                                                  setState(() {
-                                                    if (size == "") {
-                                                      textSizePreview = 13;
-                                                    } else {
-                                                      textSizePreview =
-                                                          double.tryParse(size);
-                                                    }
-                                                  });
-                                                },
-                                                controller:
-                                                    enterBlockFontSizeController,
-                                                decoration: InputDecoration(
-                                                    labelText:
-                                                        'Text font size'),
-                                                validator: (value) {
-                                                  if (value.isEmpty) {
-                                                    return 'Font size required';
-                                                  }
-                                                  contentType = "text";
-                                                  textContent["font_size"] =
-                                                      value;
-                                                  return null;
-                                                },
-                                              ),
-                                            ),
-                                            IconButton(
-                                                iconSize: 13,
-                                                onPressed: (() {
-                                                  if (isNumeric(
-                                                      enterBlockFontSizeController
-                                                          .text)) {
-                                                    setState(() {
-                                                      textSizePreview =
-                                                          double.parse(
-                                                                  enterBlockFontSizeController
-                                                                      .text) +
-                                                              1;
-                                                      enterBlockFontSizeController
-                                                              .text =
-                                                          (textSizePreview
-                                                                  .toInt())
-                                                              .toString();
-                                                    });
-                                                  }
-                                                }),
-                                                icon: Icon(Icons.add)),
-                                            IconButton(
-                                                iconSize: 13,
-                                                onPressed: (() {
-                                                  if (isNumeric(
-                                                      enterBlockFontSizeController
-                                                          .text)) {
-                                                    setState(() {
-                                                      textSizePreview =
-                                                          double.parse(
-                                                                  enterBlockFontSizeController
-                                                                      .text) -
-                                                              1;
-                                                      enterBlockFontSizeController
-                                                              .text =
-                                                          (textSizePreview
-                                                                  .toInt())
-                                                              .toString();
-                                                    });
-                                                  }
-                                                }),
-                                                icon: Icon(Icons.remove)),
-                                          ],
-                                        ),
-
-                                        //Text Y position
-                                        Container(
-                                          margin: EdgeInsets.only(top: 20),
-                                          child: Row(
-                                            children: [
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _yPositionData += 1;
-                                                    });
-                                                    contentType = "text";
-                                                    textContent["y_pos"] =
-                                                        _yPositionData;
-                                                  },
-                                                  iconSize: 13,
-                                                  icon: Icon(Icons.add)),
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _yPositionData -= 1;
-                                                    });
-                                                    contentType = "text";
-                                                    textContent["y_pos"] =
-                                                        _yPositionData;
-                                                  },
-                                                  iconSize: 13,
-                                                  icon: Icon(Icons.remove)),
-                                              Container(
-                                                  margin:
-                                                      EdgeInsets.only(left: 20),
-                                                  child: Text(_yPositionData
-                                                      .toString())),
-                                              Expanded(
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  child: Text(
-                                                    "Y position",
-                                                    style:
-                                                        TextStyle(fontSize: 12),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        //Text X position
-                                        Container(
-                                          margin: EdgeInsets.only(top: 20),
-                                          child: Row(
-                                            children: [
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _xPositionData += 1;
-                                                    });
-                                                    contentType = "text";
-                                                    textContent["x_pos"] =
-                                                        _xPositionData;
-                                                  },
-                                                  iconSize: 13,
-                                                  icon: Icon(Icons.add)),
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _xPositionData -= 1;
-                                                    });
-                                                    contentType = "text";
-                                                    textContent["x_pos"] =
-                                                        _xPositionData;
-                                                  },
-                                                  iconSize: 13,
-                                                  icon: Icon(Icons.remove)),
-                                              Container(
-                                                  margin:
-                                                      EdgeInsets.only(left: 20),
-                                                  child: Text(_xPositionData
-                                                      .toString())),
-                                              Expanded(
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  child: Text(
-                                                    "X position",
-                                                    style:
-                                                        TextStyle(fontSize: 12),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        //Text color
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextFormField(
-                                                onChanged: (color) {
-                                                  setState(() {
-                                                    if (color == "") {
-                                                      textColorPreview =
-                                                          "#000000";
-                                                    } else {
-                                                      if (isHexColor(color)) {
-                                                        textColorPreview =
-                                                            color;
-                                                      } else {
-                                                        textColorPreview =
-                                                            "#000000";
-                                                      }
-                                                    }
-                                                  });
-                                                },
-                                                controller:
-                                                    enterBlockTextColorController,
-                                                decoration: InputDecoration(
-                                                    labelText: 'Text color'),
-                                                validator: (value) {
-                                                  if (value.isEmpty) {
-                                                    return 'Text color required';
-                                                  }
-                                                  contentType = "text";
-                                                  textContent["color"] = value;
-                                                  return null;
-                                                },
-                                              ),
-                                            ),
-                                            TextButton(
-                                                onPressed: () {
-                                                  showColorPickerDialog()
-                                                      .then((value) {
-                                                    setState(() {
-                                                      enterBlockTextColorController
-                                                              .text =
-                                                          "#${value.hex}";
-                                                    });
-                                                    contentType = "text";
-                                                    textContent["color"] =
-                                                        "#${value.hex}";
-                                                  });
-                                                },
-                                                child: Text("Pick color"))
-                                          ],
-                                        ),
-
-                                        //Combined block color
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextFormField(
-                                                onChanged: (color) {
-                                                  if (isHexColor(color)) {
-                                                    setState(() {
-                                                      blockColorPreview = color;
-                                                    });
-                                                  }
-                                                },
-                                                controller:
-                                                    enterBlockColorController,
-                                                decoration: InputDecoration(
-                                                    labelText: 'Block color'),
-                                                validator: (value) {
-                                                  contentType = "text";
-                                                  textContent["block_color"] =
-                                                      value.isEmpty
-                                                          ? ""
-                                                          : value;
-                                                  return null;
-                                                },
-                                              ),
-                                            ),
-                                            TextButton(
-                                                onPressed: () {
-                                                  showColorPickerDialog()
-                                                      .then((value) {
-                                                    setState(() {
-                                                      enterBlockColorController
-                                                              .text =
-                                                          "#${value.hex}";
-                                                    });
-                                                    contentType = "text";
-                                                    textContent["block_color"] =
-                                                        "#${value.hex}";
-                                                  });
-                                                },
-                                                child: Text("Pick color"))
-                                          ],
-                                        ),
-
-                                        //Block image link
-                                        TextFormField(
-                                          controller: enterBlockURLController,
-                                          decoration: InputDecoration(
-                                              labelText:
-                                                  'Combined block image link'),
-                                          validator: (value) {
-                                            contentType = "text";
-                                            textContent["block_image"] =
-                                                value.isEmpty ? "" : value;
-                                            return null;
-                                          },
-                                        ),
-
-                                        //Text position
-                                        Container(
-                                            margin: EdgeInsets.only(top: 40),
-                                            alignment: Alignment.center,
-                                            child: Text("Text position",
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold))),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                IconButton(
-                                                  icon: Icon(Icons.north_west),
-                                                  onPressed: () {
-                                                    textContent["position"] = 1;
-                                                    setState(() {
-                                                      textPreviewAlignment =
-                                                          Alignment.topLeft;
-                                                    });
-                                                  },
-                                                ),
-                                                IconButton(
-                                                  icon: Icon(Icons.north),
-                                                  onPressed: () {
-                                                    textContent["position"] = 2;
-                                                    setState(() {
-                                                      textPreviewAlignment =
-                                                          Alignment.topCenter;
-                                                    });
-                                                  },
-                                                ),
-                                                IconButton(
-                                                  icon: Icon(Icons.north_east),
-                                                  onPressed: () {
-                                                    textContent["position"] = 3;
-                                                    setState(() {
-                                                      textPreviewAlignment =
-                                                          Alignment.topRight;
-                                                    });
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                IconButton(
-                                                  icon: Icon(Icons.west),
-                                                  onPressed: () {
-                                                    textContent["position"] = 4;
-                                                    setState(() {
-                                                      textPreviewAlignment =
-                                                          Alignment.centerLeft;
-                                                    });
-                                                  },
-                                                ),
-                                                IconButton(
-                                                  icon: Icon(Icons
-                                                      .filter_center_focus),
-                                                  onPressed: () {
-                                                    textContent["position"] = 5;
-                                                    setState(() {
-                                                      textPreviewAlignment =
-                                                          Alignment.center;
-                                                    });
-                                                  },
-                                                ),
-                                                IconButton(
-                                                  icon: Icon(Icons.east),
-                                                  onPressed: () {
-                                                    textContent["position"] = 6;
-                                                    setState(() {
-                                                      textPreviewAlignment =
-                                                          Alignment.centerRight;
-                                                    });
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  IconButton(
-                                                    icon:
-                                                        Icon(Icons.south_west),
-                                                    onPressed: () {
-                                                      textContent["position"] =
-                                                          7;
-                                                      setState(() {
-                                                        textPreviewAlignment =
-                                                            Alignment
-                                                                .bottomLeft;
-                                                      });
-                                                    },
-                                                  ),
-                                                  IconButton(
-                                                    icon: Icon(Icons.south),
-                                                    onPressed: () {
-                                                      textContent["position"] =
-                                                          8;
-                                                      setState(() {
-                                                        textPreviewAlignment =
-                                                            Alignment
-                                                                .bottomCenter;
-                                                      });
-                                                    },
-                                                  ),
-                                                  IconButton(
-                                                    icon:
-                                                        Icon(Icons.south_east),
-                                                    onPressed: () {
-                                                      textContent["position"] =
-                                                          9;
-                                                      setState(() {
-                                                        textPreviewAlignment =
-                                                            Alignment
-                                                                .bottomRight;
-                                                      });
-                                                    },
-                                                  ),
-                                                ])
-                                          ],
-                                        )
-                                      ],
-                                    )),
                               ),
                             ],
                           ),
                         ),
-
-                        //Image/GIF
                         Visibility(
-                          visible: selectedBlockContentType == 2,
-                          child: Column(
-                            children: [
-                              Container(
-                                margin: EdgeInsets.only(right: 20),
-                                alignment: Alignment.centerLeft,
-                                child: Form(
-                                  key: _enterURLGlobalKey,
-                                  child: TextFormField(
-                                    controller: enterBlockURLController,
-                                    decoration: InputDecoration(
-                                        labelText: 'Image/GIF url'),
-                                    validator: (value) {
-                                      if (value.isEmpty) {
-                                        return 'URL required';
-                                      }
-                                      contentType = "image";
-                                      content = value;
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                              ),
-                              Wrap(
-                                children: [
-                                  TextButton(
-                                      onPressed: () async {
-                                        GiphyGif gif = await GiphyGet.getGif(
-                                          context: context, //Required
-                                          apiKey:
-                                              "ShudUpzvLP3cWyNuNyfpZjF771JmVfhL", //Required.
-                                          lang: GiphyLanguage
-                                              .english, //Optional - Language for query.
-                                          tabColor: Colors
-                                              .teal, // Optional- default accent color.
-                                        );
-                                        setState(() {
-                                          enterBlockURLController.text =
-                                              gif.images.fixedHeight.url;
-                                        });
-                                      },
-                                      child: Text("Select a GIF")),
-                                  TextButton(
-                                      onPressed: () {
-                                        selectImageFromServerDialog(
-                                            enterBlockURLController);
-                                      },
-                                      child: Text("Select from upload")),
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-
-                        //Color
-                        Visibility(
-                          visible: selectedBlockContentType == 3,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  alignment: Alignment.centerLeft,
-                                  child: Form(
-                                    key: _enterColorGlobalKey,
-                                    child: TextFormField(
-                                      controller: enterBlockColorController,
-                                      decoration:
-                                          InputDecoration(labelText: 'Color'),
-                                      validator: (value) {
-                                        if (value.isEmpty) {
-                                          return 'Hex color required';
-                                        }
-                                        contentType = "color";
-                                        content = value;
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                  onPressed: () {
-                                    showColorPickerDialog().then((value) {
-                                      setState(() {
-                                        enterBlockColorController.text =
-                                            "#${value.hex}";
-                                      });
-                                      contentType = "color";
-                                      content = "#${value.hex}";
+                            visible: selectedBlockCommandType == 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                DropdownButton(
+                                  value: selectedOnTapCommand,
+                                  items: BlockCommand.blockActions
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      selectedOnTapCommand = val;
+                                      blockCommand.onTapCommand = val;
                                     });
                                   },
-                                  child: Text("Pick color"))
-                            ],
-                          ),
-                        ),
-
-                        //Task
-                        Visibility(
-                            visible: selectedBlockContentType == 4,
-                            child: Container(
-                              alignment: Alignment.centerLeft,
-                              child: Form(
-                                key: _enterTaskIDGlobalKey,
-                                child: Column(
-                                  children: [
-                                    TextFormField(
-                                      controller: _enterTaskIDController,
-                                      decoration:
-                                          InputDecoration(labelText: "Task ID"),
-                                      validator: (value) {
-                                        if (value.isEmpty) {
-                                          return "Task ID required";
-                                        }
-                                        contentType = "task";
-                                        taskContent["id"] = value;
-                                        return null;
-                                      },
-                                    ),
-                                    Column(
-                                      children: [
-                                        TextFormField(
-                                          controller: _enterTaskImageController,
-                                          decoration: InputDecoration(
-                                              labelText: "Image link"),
-                                          validator: (value) {
-                                            contentType = "task";
-                                            taskContent["image"] = value;
-                                            return null;
-                                          },
-                                        ),
-                                        TextButton(
-                                            onPressed: () {
-                                              selectImageFromServerDialog(
-                                                  _enterTaskImageController);
-                                            },
-                                            child: Text("Select from upload")),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )),
-
-                        //Image carousel
-                        Visibility(
-                          visible: selectedBlockContentType == 5,
-                          child: Container(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  margin: EdgeInsets.only(top: 20),
-                                  child: TextButton(
-                                      onPressed: () {
-                                        imageCarouselContent["images"].add("");
-                                        contentType = "image_carousel";
-                                        setState(() {
-                                          imageCarouselInputFields
-                                              .add(TextEditingController());
-                                        });
-                                      },
-                                      child: Text("Add image")),
                                 ),
                                 Form(
-                                    key: _imageCarouselKey,
-                                    child: Container(
-                                      width: double.maxFinite,
-                                      height: 300,
-                                      child: Expanded(
-                                        child: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount:
-                                              imageCarouselInputFields.length,
-                                          itemBuilder: (context, i) {
-                                            return Container(
-                                              height: 160,
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Expanded(
-                                                    child: TextFormField(
-                                                        onChanged: (val) {
-                                                          imageCarouselContent[
-                                                                  "images"][i] =
-                                                              val;
-                                                        },
-                                                        validator:
-                                                            (String val) {
-                                                          if (val == "") {
-                                                            return "Please enter the image link";
-                                                          }
-
-                                                          return null;
-                                                        },
-                                                        controller:
-                                                            imageCarouselInputFields[
-                                                                i],
-                                                        decoration:
-                                                            InputDecoration(
-                                                          hintText:
-                                                              "Image link",
-                                                        )),
-                                                  ),
-                                                  Container(
-                                                    margin: EdgeInsets.only(
-                                                        top: 10),
-                                                    child: Row(
-                                                      children: [
-                                                        Column(
-                                                          children: [
-                                                            TextButton(
-                                                                onPressed: () {
-                                                                  selectImageFromServerDialog(
-                                                                          imageCarouselInputFields[
-                                                                              i])
-                                                                      .then(
-                                                                          (url) {
-                                                                    imageCarouselContent[
-                                                                            "images"]
-                                                                        [
-                                                                        i] = url;
-                                                                  });
-                                                                },
-                                                                child: Text(
-                                                                    "Select from upload")),
-                                                            TextButton(
-                                                                onPressed:
-                                                                    () async {
-                                                                  GiphyGif gif =
-                                                                      await GiphyGet
-                                                                          .getGif(
-                                                                    context:
-                                                                        context, //Required
-                                                                    apiKey:
-                                                                        "ShudUpzvLP3cWyNuNyfpZjF771JmVfhL", //Required.
-                                                                    lang: GiphyLanguage
-                                                                        .english, //Optional - Language for query.
-                                                                    tabColor: Colors
-                                                                        .teal, // Optional- default accent color.
-                                                                  );
-                                                                  setState(() {
-                                                                    String gifUrl = gif
-                                                                        .images
-                                                                        .fixedHeight
-                                                                        .url;
-                                                                    imageCarouselInputFields[i]
-                                                                            .text =
-                                                                        gifUrl;
-                                                                    imageCarouselContent["images"]
-                                                                            [
-                                                                            i] =
-                                                                        gifUrl;
-                                                                  });
-                                                                },
-                                                                child: Text(
-                                                                    "Select a GIF")),
-                                                          ],
-                                                        ),
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              setState(() {
-                                                                imageCarouselInputFields
-                                                                    .removeAt(
-                                                                        i);
-                                                              });
-                                                            },
-                                                            child: Text(
-                                                                "Remove",
-                                                                style: TextStyle(
-                                                                    color: Colors
-                                                                        .red))),
-                                                      ],
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
+                                    key: onTapValueKey,
+                                    child: TextFormField(
+                                      controller: onTapValueController,
+                                      onChanged: (val) {
+                                        setState(() {
+                                          blockCommand.onTapValue = val;
+                                        });
+                                      },
+                                      decoration:
+                                          InputDecoration(hintText: "Value"),
                                     ))
                               ],
-                            ),
-                          ),
-                        )
+                            )),
+                        Visibility(
+                            visible: selectedBlockCommandType == 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                DropdownButton(
+                                  value: selectedOnHoldCommand,
+                                  items: BlockCommand.blockActions
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      selectedOnHoldCommand = val;
+                                      blockCommand.onHoldCommand = val;
+                                    });
+                                  },
+                                ),
+                                Form(
+                                    key: onTapValueKey,
+                                    child: TextFormField(
+                                      controller: onTapValueController,
+                                      onChanged: (val) {
+                                        setState(() {
+                                          blockCommand.onHoldValue = val;
+                                        });
+                                      },
+                                      decoration:
+                                          InputDecoration(hintText: "Value"),
+                                    ))
+                              ],
+                            ))
                       ],
-                    )),
+                    ),
                   )
                 ],
               )),
@@ -1348,7 +1452,8 @@ class _GridUIViewState extends State<GridUIView> {
                             blockStartColumnController.text,
                             blockStartRowController.text,
                             contentType,
-                            textContent);
+                            textContent,
+                            blockCommand);
                       } else if (contentType == "task") {
                         addCombinedBlock(
                             gridJson,
@@ -1357,7 +1462,8 @@ class _GridUIViewState extends State<GridUIView> {
                             blockStartColumnController.text,
                             blockStartRowController.text,
                             contentType,
-                            taskContent);
+                            taskContent,
+                            blockCommand);
                       } else if (contentType == "image_carousel") {
                         addCombinedBlock(
                             gridJson,
@@ -1366,7 +1472,8 @@ class _GridUIViewState extends State<GridUIView> {
                             blockStartColumnController.text,
                             blockStartRowController.text,
                             contentType,
-                            imageCarouselContent);
+                            imageCarouselContent,
+                            blockCommand);
                       } else {
                         addCombinedBlock(
                             gridJson,
@@ -1375,7 +1482,8 @@ class _GridUIViewState extends State<GridUIView> {
                             blockStartColumnController.text,
                             blockStartRowController.text,
                             contentType,
-                            content);
+                            content,
+                            blockCommand);
                       }
 
                       Navigator.of(context).pop();
@@ -1717,7 +1825,8 @@ class _GridUIViewState extends State<GridUIView> {
       String startColumn,
       String startRow,
       String contentType,
-      dynamic content) {
+      dynamic content,
+      BlockCommand command) {
     Map<String, String> data;
     if (contentType == "text") {
       data = {
@@ -1728,6 +1837,7 @@ class _GridUIViewState extends State<GridUIView> {
         'target_column': startColumn,
         'target_row': startRow.toString(),
         'content_type': contentType,
+        'command': jsonEncode(command.toJSON()),
         'content': jsonEncode(content)
       };
     } else {
@@ -1739,6 +1849,7 @@ class _GridUIViewState extends State<GridUIView> {
         'target_column': startColumn,
         'target_row': startRow.toString(),
         'content_type': contentType,
+        'command': jsonEncode(command.toJSON()),
         'content': jsonEncode(content)
       };
     }
@@ -1855,6 +1966,16 @@ class _GridUIViewState extends State<GridUIView> {
     );
   }
 
+  void processButtonActionCommand(String command, String value) {
+    if (command == "Load task") {
+      String id = command;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TaskView(id, "test")),
+      );
+    }
+  }
+
   ///Create a combined block
   ///
   ///Creates a combined block in a combined group on a grid. The [combinedGroupIndexInCombinedGroupList] is the index of the combined group in the CombinedGroup list, and the
@@ -1867,10 +1988,25 @@ class _GridUIViewState extends State<GridUIView> {
     int blockQuadrant =
         0; //stores the block quadrant value when the user begins dragging the combined block
     CombBlockDragInformation dragInformation = CombBlockDragInformation();
+    BlockCommand blockCommand = block.blockCommand;
+
     Widget combinedBlock = Stack(
       children: [
-        createCombinedBlockContent(
-            block.content, numberOfColumns.toInt(), numberOfRows.toInt()),
+        GestureDetector(
+          onTap: () {
+            print(blockCommand.onTapCommand);
+            processButtonActionCommand(
+                blockCommand.onTapCommand, blockCommand.onTapValue);
+          },
+          onLongPress: () {
+            if (blockCommand.onHoldCommand != "") {
+              processButtonActionCommand(
+                  blockCommand.onHoldCommand, blockCommand.onHoldValue);
+            }
+          },
+          child: createCombinedBlockContent(
+              block.content, numberOfColumns.toInt(), numberOfRows.toInt()),
+        ),
 
         ///Block quadrants
         IgnorePointer(

@@ -1,4 +1,5 @@
 import 'package:grid_ui_implementation/enum/block_type.dart';
+import 'package:grid_ui_implementation/models/block_command.dart';
 
 import 'combined_block_content.dart';
 
@@ -18,13 +19,17 @@ class Block {
   ///Type of block
   BlockType blockType;
 
+  ///Block command
+  BlockCommand blockCommand;
+
   Block(BlockType blockType, dynamic content, int numberOfRows,
-      int numberOfColumns) {
+      int numberOfColumns, BlockCommand blockCommand) {
     this.index = index;
     this.content = content;
     this.numberOfColumns = numberOfColumns;
     this.numberOfRows = numberOfRows;
     this.blockType = blockType;
+    this.blockCommand = blockCommand;
   }
 
   Map<String, dynamic> toJSON(Block block) {
@@ -33,7 +38,8 @@ class Block {
       "blockType": blockType,
       "content": content,
       "numberOfRows": numberOfRows,
-      "numberOfColumns": numberOfColumns
+      "numberOfColumns": numberOfColumns,
+      "command": blockCommand
     };
   }
 }
