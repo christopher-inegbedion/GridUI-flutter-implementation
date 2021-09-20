@@ -729,35 +729,35 @@ class _GridPageState extends State<GridPage> {
     });
   }
 
-  void loadGrid(String gridName) {
+  Future loadGrid(String gridName) async {
     Map<String, String> data = {"grid_name": gridName};
 
-    postGridToServer(NetworkConfig.serverAddr + NetworkConfig.serverPort,
-            "/load_grid", data)
-        .then((value1) {
-      if (value1 == "") {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text('An error occured'),
-        ));
-      } else {
-        Grid.getInstance()
-            .loadJSON("", fromNetwork: true, grid: value1)
-            .then((value) {
-          setState(() {
-            grid.setData(value.gridJson, value.gridColumns, value.gridRows,
-                value.combinedGroups, value.gridCustomBackground);
+    String gridJson = await postGridToServer(
+        NetworkConfig.serverAddr + NetworkConfig.serverPort,
+        "/load_grid",
+        data);
+    if (gridJson == "") {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text('An error occured'),
+      ));
+    } else {
+      Grid grid = await Grid.getInstance()
+          .loadJSON("", fromNetwork: true, grid: gridJson);
+      setState(() {
+        grid.setData(grid.gridJson, grid.gridColumns, grid.gridRows,
+            grid.combinedGroups, grid.gridCustomBackground);
 
-            grid.buildGridView();
-          });
+        grid.buildGridView();
+      });
 
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            behavior: SnackBarBehavior.floating,
-            content: Text("Grid '$gridName' loaded"),
-          ));
-        });
-      }
-    });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text("Grid '$gridName' loaded"),
+      ));
+    }
+
+    return true;
   }
 
   void changeGridBackground(bool isColor, bool isImage, String colorOrImage) {
@@ -967,67 +967,50 @@ class _GridPageState extends State<GridPage> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: backgroundColor,
-        body: ListView(
-          children: [
-            /*====
-            * Grid
-            =====*/
-            Screenshot(
-                controller: _screenshotController,
-                child: grid.buildViewLayout()),
+        body: RefreshIndicator(
+          onRefresh: () {
+            return loadGrid(path);
+          },
+          child: ListView(
+            children: [
+              /*====
+              * Grid
+              =====*/
+              Screenshot(
+                  controller: _screenshotController,
+                  child: grid.buildViewLayout()),
 
-            /* ==============
-               * Bottom buttons
-               ===============*/
-            Visibility(
-              visible: areBtnsHidden,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Container(
-                        alignment: Alignment.centerLeft,
-                        margin: EdgeInsets.only(top: 10, left: 30),
-                        child: Text(
-                          "Pre-defined layouts:",
-                          style: GoogleFonts.sora(
-                              color: devToolsBtnColor,
-                              fontWeight: FontWeight.bold),
-                        )),
-                    Container(
-                      child: Wrap(
-                        spacing: 10,
-                        alignment: WrapAlignment.spaceEvenly,
-                        children: [
-                          buildDevTooldBtn("Add column", addNewColDialog),
-                          buildDevTooldBtn("Delete column", deleteColDialog),
-                          buildDevTooldBtn("Add row", addNewRowDialog),
-                          buildDevTooldBtn("Delete row", deleteRowDialog),
-                          buildDevTooldBtn("New grid", createGridDialog),
-                          buildDevTooldBtn("from JSON", () {
-                            grid
-                                .loadJSON("assets/json/test_grid.json",
-                                    fromNetwork: false, grid: "")
-                                .then((value) {
-                              setState(() {
-                                grid.setData(
-                                    value.gridJson,
-                                    value.gridColumns,
-                                    value.gridRows,
-                                    value.combinedGroups,
-                                    value.gridCustomBackground);
-
-                                grid.buildGridView();
-                              });
-                            });
-                          }),
-                          buildDevTooldBtn("Default", () {
-                            getGridFromServer(
-                                    NetworkConfig.serverAddr +
-                                        NetworkConfig.serverPort,
-                                    '/default')
-                                .then((value1) {
+              /* ==============
+                 * Bottom buttons
+                 ===============*/
+              Visibility(
+                visible: areBtnsHidden,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Container(
+                          alignment: Alignment.centerLeft,
+                          margin: EdgeInsets.only(top: 10, left: 30),
+                          child: Text(
+                            "Pre-defined layouts:",
+                            style: GoogleFonts.sora(
+                                color: devToolsBtnColor,
+                                fontWeight: FontWeight.bold),
+                          )),
+                      Container(
+                        child: Wrap(
+                          spacing: 10,
+                          alignment: WrapAlignment.spaceEvenly,
+                          children: [
+                            buildDevTooldBtn("Add column", addNewColDialog),
+                            buildDevTooldBtn("Delete column", deleteColDialog),
+                            buildDevTooldBtn("Add row", addNewRowDialog),
+                            buildDevTooldBtn("Delete row", deleteRowDialog),
+                            buildDevTooldBtn("New grid", createGridDialog),
+                            buildDevTooldBtn("from JSON", () {
                               grid
-                                  .loadJSON("", fromNetwork: true, grid: value1)
+                                  .loadJSON("assets/json/test_grid.json",
+                                      fromNetwork: false, grid: "")
                                   .then((value) {
                                 setState(() {
                                   grid.setData(
@@ -1040,179 +1023,206 @@ class _GridPageState extends State<GridPage> {
                                   grid.buildGridView();
                                 });
                               });
-                            });
-                          }),
-                          buildDevTooldBtn("Preset 1", () {
-                            getGridFromServer(
-                                    NetworkConfig.serverAddr +
-                                        NetworkConfig.serverPort,
-                                    '/preset1')
-                                .then((value1) {
-                              grid
-                                  .loadJSON("", fromNetwork: true, grid: value1)
-                                  .then((value) {
-                                setState(() {
-                                  grid.setData(
-                                      value.gridJson,
-                                      value.gridColumns,
-                                      value.gridRows,
-                                      value.combinedGroups,
-                                      value.gridCustomBackground);
+                            }),
+                            buildDevTooldBtn("Default", () {
+                              getGridFromServer(
+                                      NetworkConfig.serverAddr +
+                                          NetworkConfig.serverPort,
+                                      '/default')
+                                  .then((value1) {
+                                grid
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
+                                    .then((value) {
+                                  setState(() {
+                                    grid.setData(
+                                        value.gridJson,
+                                        value.gridColumns,
+                                        value.gridRows,
+                                        value.combinedGroups,
+                                        value.gridCustomBackground);
 
-                                  grid.buildGridView();
+                                    grid.buildGridView();
+                                  });
                                 });
                               });
-                            });
-                          }),
-                          buildDevTooldBtn("Preset 2", () {
-                            getGridFromServer(
-                                    NetworkConfig.serverAddr +
-                                        NetworkConfig.serverPort,
-                                    '/preset2')
-                                .then((value1) {
-                              grid
-                                  .loadJSON("", fromNetwork: true, grid: value1)
-                                  .then((value) {
-                                setState(() {
-                                  grid.setData(
-                                      value.gridJson,
-                                      value.gridColumns,
-                                      value.gridRows,
-                                      value.combinedGroups,
-                                      value.gridCustomBackground);
+                            }),
+                            buildDevTooldBtn("Preset 1", () {
+                              getGridFromServer(
+                                      NetworkConfig.serverAddr +
+                                          NetworkConfig.serverPort,
+                                      '/preset1')
+                                  .then((value1) {
+                                grid
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
+                                    .then((value) {
+                                  setState(() {
+                                    grid.setData(
+                                        value.gridJson,
+                                        value.gridColumns,
+                                        value.gridRows,
+                                        value.combinedGroups,
+                                        value.gridCustomBackground);
 
-                                  grid.buildGridView();
+                                    grid.buildGridView();
+                                  });
                                 });
                               });
-                            });
-                          }),
-                          buildDevTooldBtn("Preset 3", () {
-                            getGridFromServer(
-                                    NetworkConfig.serverAddr +
-                                        NetworkConfig.serverPort,
-                                    '/preset3')
-                                .then((value1) {
-                              grid
-                                  .loadJSON("", fromNetwork: true, grid: value1)
-                                  .then((value) {
-                                setState(() {
-                                  grid.setData(
-                                      value.gridJson,
-                                      value.gridColumns,
-                                      value.gridRows,
-                                      value.combinedGroups,
-                                      value.gridCustomBackground);
+                            }),
+                            buildDevTooldBtn("Preset 2", () {
+                              getGridFromServer(
+                                      NetworkConfig.serverAddr +
+                                          NetworkConfig.serverPort,
+                                      '/preset2')
+                                  .then((value1) {
+                                grid
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
+                                    .then((value) {
+                                  setState(() {
+                                    grid.setData(
+                                        value.gridJson,
+                                        value.gridColumns,
+                                        value.gridRows,
+                                        value.combinedGroups,
+                                        value.gridCustomBackground);
 
-                                  grid.buildGridView();
+                                    grid.buildGridView();
+                                  });
                                 });
                               });
-                            });
-                          }),
-                          buildDevTooldBtn("Load grid", loadGridDialog),
-                        ],
+                            }),
+                            buildDevTooldBtn("Preset 3", () {
+                              getGridFromServer(
+                                      NetworkConfig.serverAddr +
+                                          NetworkConfig.serverPort,
+                                      '/preset3')
+                                  .then((value1) {
+                                grid
+                                    .loadJSON("",
+                                        fromNetwork: true, grid: value1)
+                                    .then((value) {
+                                  setState(() {
+                                    grid.setData(
+                                        value.gridJson,
+                                        value.gridColumns,
+                                        value.gridRows,
+                                        value.combinedGroups,
+                                        value.gridCustomBackground);
+
+                                    grid.buildGridView();
+                                  });
+                                });
+                              });
+                            }),
+                            buildDevTooldBtn("Load grid", loadGridDialog),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    // Menu buttons 2
-                    Container(
-                        alignment: Alignment.centerLeft,
-                        margin: EdgeInsets.only(top: 10, left: 30),
-                        child: Text(
-                          "Options:",
-                          style: GoogleFonts.sora(
-                              color: devToolsBtnColor,
-                              fontWeight: FontWeight.bold),
-                        )),
-                    Container(
-                      child: Wrap(
-                        alignment: WrapAlignment.spaceEvenly,
-                        spacing: 10,
-                        children: [
-                          buildDevTooldBtn("Constraint view", () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => MainApp()),
-                            );
-                          }),
-                          buildDevTooldBtn("Upload image asset", () {
-                            firebase_storage.FirebaseStorage storage =
-                                firebase_storage.FirebaseStorage.instance;
-                            final ImagePicker _picker = ImagePicker();
-                            _picker
-                                .pickImage(source: ImageSource.gallery)
-                                .then((XFile value) {
-                              String path = value.path;
-                              File file = File(path);
-                              try {
-                                storage
-                                    .ref(value.name)
-                                    .putFile(file)
-                                    .then((p0) {
+                      // Menu buttons 2
+                      Container(
+                          alignment: Alignment.centerLeft,
+                          margin: EdgeInsets.only(top: 10, left: 30),
+                          child: Text(
+                            "Options:",
+                            style: GoogleFonts.sora(
+                                color: devToolsBtnColor,
+                                fontWeight: FontWeight.bold),
+                          )),
+                      Container(
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceEvenly,
+                          spacing: 10,
+                          children: [
+                            buildDevTooldBtn("Constraint view", () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => MainApp()),
+                              );
+                            }),
+                            buildDevTooldBtn("Upload image asset", () {
+                              firebase_storage.FirebaseStorage storage =
+                                  firebase_storage.FirebaseStorage.instance;
+                              final ImagePicker _picker = ImagePicker();
+                              _picker
+                                  .pickImage(source: ImageSource.gallery)
+                                  .then((XFile value) {
+                                String path = value.path;
+                                File file = File(path);
+                                try {
+                                  storage
+                                      .ref(value.name)
+                                      .putFile(file)
+                                      .then((p0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                            content:
+                                                Text("'$path' uploaded!")));
+                                  });
+                                } on FirebaseException catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                          content: Text("'$path' uploaded!")));
-                                });
-                              } on FirebaseException catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text("An error occured")));
-                                print(e);
-                              }
-                            });
-                          }),
-                          buildDevTooldBtn("Customise grid background", () {
-                            changeGridBackgroundDialog().then((value) {
-                              setBackgroundColor();
-                            });
-                          }),
-                          buildDevTooldBtn("Toggle edit mode", () {
-                            setState(() {
-                              grid.toggleEditMode();
-                            });
-                          }),
-                          buildDevTooldBtn("Create combined block", () {
-                            grid.gridUIView.state
-                                .createCombinedBlockialog(context, false);
-                          }),
-                          buildDevTooldBtn("Delete combined block", () {
-                            grid.gridUIView.state
-                                .deleteCombinedBlockialog(context);
-                          }),
-                          buildDevTooldBtn("Save grid", () {
-                            saveGrid(path, grid.gridJson);
-                          }),
-                          buildDevTooldBtn(
-                              "Take preview screenshot", takeScreenshot)
-                        ],
+                                          content: Text("An error occured")));
+                                  print(e);
+                                }
+                              });
+                            }),
+                            buildDevTooldBtn("Customise grid background", () {
+                              changeGridBackgroundDialog().then((value) {
+                                setBackgroundColor();
+                              });
+                            }),
+                            buildDevTooldBtn("Toggle edit mode", () {
+                              setState(() {
+                                grid.toggleEditMode();
+                              });
+                            }),
+                            buildDevTooldBtn("Create combined block", () {
+                              grid.gridUIView.state
+                                  .createCombinedBlockialog(context, false);
+                            }),
+                            buildDevTooldBtn("Delete combined block", () {
+                              grid.gridUIView.state
+                                  .deleteCombinedBlockialog(context);
+                            }),
+                            buildDevTooldBtn("Save grid", () {
+                              saveGrid(path, grid.gridJson);
+                            }),
+                            buildDevTooldBtn(
+                                "Take preview screenshot", takeScreenshot)
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            TextButton(
-              child: Visibility(
-                visible: canEdit,
-                child: Text(
-                  canEdit
-                      ? areBtnsHidden
-                          ? "Hide buttons"
-                          : "Show butttons"
-                      : "Grid cannot be edited",
-                  style: TextStyle(
-                      color: devToolsBtnColor, fontWeight: FontWeight.bold),
+              TextButton(
+                child: Visibility(
+                  visible: canEdit,
+                  child: Text(
+                    canEdit
+                        ? areBtnsHidden
+                            ? "Hide buttons"
+                            : "Show butttons"
+                        : "Grid cannot be edited",
+                    style: TextStyle(
+                        color: devToolsBtnColor, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-              onPressed: () {
-                if (canEdit) {
-                  setState(() {
-                    areBtnsHidden = !areBtnsHidden;
-                  });
-                }
-              },
-            )
-          ],
+                onPressed: () {
+                  if (canEdit) {
+                    setState(() {
+                      areBtnsHidden = !areBtnsHidden;
+                    });
+                  }
+                },
+              )
+            ],
+          ),
         ),
       ),
     );
